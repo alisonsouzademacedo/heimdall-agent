@@ -36,3 +36,25 @@ Memória de recuperação (RAG) é o que Hindsight/Mem0 fazem. **Fine-tuning nã
 1. Usuário confirma Hindsight (ou outro) → varrer a documentação com o Firecrawl e salvar em `docs/hindsight/`.
 2. Ler os guias de assinatura de cada provedor (OpenAI Codex, Claude Code, Google) e registrar limites e termos.
 3. Etapas seguintes: áudio, PDF, relatórios, MCP, Kanban.
+
+## Achados das documentações oficiais (2026-10-18)
+Fontes: `docs/openai-codex/docs/pricing.md`, `docs/openai-codex/docs/auth/ci-cd-auth.md`, `docs/hindsight/developer/models.md`, `docs/hindsight/sdks/integrations/hermes.md`.
+
+**OpenAI / ChatGPT Plus**
+- Plus custa US$ 20/mês e é descrito como "algumas sessões focadas de código por semana". Os números exatos de limite **não aparecem** nas páginas lidas (apontam para a Central de Ajuda).
+- Para automação, a OpenAI diz que "a forma certa é uma chave de API". Login ChatGPT em servidor é um fluxo **avançado**, só em infraestrutura privada confiável, com uma única máquina ou fila serializada usando o `auth.json`, que deve ser tratado como senha.
+- O GPT-5.5 deixa o Codex com login ChatGPT em 14/10/2026; modelos atuais: GPT-6.1 Sol e GPT-6 Luna. Rever nomes de modelo nas configurações.
+
+**Hindsight × assinaturas**
+| Provedor do Hindsight | Mecanismo | Observação da própria doc |
+|---|---|---|
+| `chatgpt` | "Sign in with ChatGPT" para apps open-source; API pública `/v1/responses`; credenciais próprias | Rota suportada; exige plano que permita uso em apps de terceiros; **não compartilha nem rotaciona** os tokens do Codex CLI |
+| `openai-codex` | Reusa o login do Codex CLI e chama endpoint privado | "Somente uso pessoal de desenvolvimento" |
+| `claude-code` | Claude Agent SDK com Claude Pro/Max | Aviso de termos: "somente local e pessoal, não usar em produção"; usa a cota do plano |
+| `ollama` / `lmstudio` | Modelo local | Sem custo de cota; exige hardware |
+- Plugin do Hermes: `hermes plugins install hindsight` + `hermes memory setup`. O plugin antigo via pip está **obsoleto**.
+
+**Consequências para o Heimdall**
+1. Para o Hindsight, o caminho de assinatura mais defensável é `chatgpt` (rota suportada), com credenciais separadas das do Hermes.
+2. Claude Pro serve só para uso pessoal/desenvolvimento, não para o serviço 24h.
+3. A cota do Plus é pequena. Importar o histórico inteiro e destilar tudo com o Plus tende a estourar. Alternativas a decidir: modelo local para a extração em lote; Plus só para o agente principal; ou uma chave de API para o pipeline.
