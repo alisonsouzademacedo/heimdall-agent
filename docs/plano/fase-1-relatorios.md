@@ -31,12 +31,33 @@ O markitdown **converte arquivos existentes para Markdown** (PDF, Word e outros 
 
 **Semanal:** evolução por cliente (avanços e estagnações), funil e movimentos, padrões de objeção, reuniões realizadas e resultado, compromissos da semana seguinte, desempenho do próprio processo, aprendizados do agente.
 
-## Perguntas em aberto (rígidas)
-1. **Horário e fuso** do diário e do semanal; dia da semana do semanal. O "dia" vai de 00h a 24h ou do expediente?
-2. **Conteúdo:** o rascunho acima serve? O que tirar, o que acrescentar?
-3. **Tamanho:** curto (1 página) ou detalhado por cliente?
-4. **Idioma:** português do Brasil.
-5. **Clientes sem atividade no dia:** aparecem ou não?
-6. **Tom:** direto e objetivo, ou mais analítico com recomendações ("sugiro retomar contato com X")?
-7. Pode haver **alertas fora de hora** (ex.: reunião em 30 min), ou só os dois relatórios?
-8. Usa **funil/etapas** (lead, reunião, proposta...) já definidos? Entram no relatório agora ou só com o CRM (fase 2)?
+## Decisões do usuário (2026-10-18)
+| Tema | Decisão |
+|---|---|
+| Fuso | Santa Maria/RS → `America/Sao_Paulo` (UTC-3). O Hermes tem a opção `timezone` (IANA), que vale para o cron e para o relógio do agente |
+| Semanal | **Segunda-feira, 08:00**. Abrange a semana inteira anterior, **da segunda passada** em diante |
+| Diário | **Terça a sexta, 08:00**. Abrange o **dia anterior** (terça cobre segunda; sexta cobre quinta). Sem diário na segunda (o semanal cobre) nem no fim de semana |
+| Conteúdo | Rascunho de estrutura aprovado. Foco: **ajudar com clientes, follow-ups, clientes que não deram retorno, clientes a quem o usuário não deu retorno, clientes com potencial** |
+| Tamanho | **Curto, sempre uma página** |
+| Clientes sem atividade | Podem aparecer **se houver follow-up pendente** |
+| Tom | Pode **recomendar ações** |
+| Alertas fora de hora | **Não**: só os relatórios e o que o usuário perguntar ou disser no self-chat |
+| Funil/etapas | **Só na etapa do CRM** |
+
+Janelas de tempo adotadas (confirmar): semanal = segunda anterior 00:00 até domingo 23:59:59; diário = dia anterior 00:00 a 23:59:59; ambos no fuso de Santa Maria. Pendências (follow-ups, sem retorno) são calculadas **no momento da geração**, às 08:00. A sexta-feira e o fim de semana só aparecem no semanal de segunda.
+
+Agenda (cron, fuso `America/Sao_Paulo`): semanal `0 8 * * 1`; diário `0 8 * * 2-5`.
+
+## O Heimdall como assessor
+A intenção do usuário: começar como uma IA padrão e, com memória, contexto e aprendizado, tornar-se **extensão do usuário**, como um assessor ou funcionário. Implicações de planejamento:
+- Os relatórios são o ponto de contato com o aprendizado: o usuário responde no self-chat (ex.: "esse cliente não é prioridade", "esse follow-up já resolvi") e isso vira memória.
+- Cada recomendação precisa registrar o **motivo** (dado que a sustentou), para o usuário corrigir e o agente aprender o critério.
+- Critério de "potencial", "sem retorno" e "follow-up" começa com regras simples explícitas e é refinado pelas correções. Definir as regras iniciais antes de implementar.
+- Limite de uma página obriga priorização: ordenar por urgência e potencial, não listar tudo.
+
+## Definições iniciais a fechar (próxima etapa de planejamento)
+1. **Sem retorno do cliente:** quantos dias sem resposta do cliente após mensagem do usuário contam como "não deu retorno"? (proposta inicial: 2 dias úteis)
+2. **Sem retorno do usuário:** quanto tempo sem o usuário responder uma mensagem do cliente? (proposta inicial: 1 dia útil)
+3. **Follow-up pendente:** compromisso prometido por qualquer lado cujo prazo passou, ou combinado sem data.
+4. **Potencial:** sinais iniciais (pediu proposta, perguntou preço/prazo, marcou reunião, trouxe decisor); a ser refinado.
+O usuário pode simplesmente aceitar as propostas e ajustar com o uso.

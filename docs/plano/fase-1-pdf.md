@@ -62,6 +62,9 @@ Correções do usuário ("essa transcrição é da empresa X") viram memória e 
 ## Pendências
 - Tamanho típico (páginas) para definir os limites.
 
+## Critério de aceitação (usuário, 2026-10-18)
+Ao converter a transcrição para `.md`, o Heimdall deve **ler, interpretar e interligar sozinho** com o que já sabia da reunião (marcada com o cliente pelo WhatsApp) e **incluir no contexto do cliente**. Se isso não funcionar, o processo está errado. A dúvida só deve ocorrer com cliente que **não passou antes pelo usuário** (caso raro: uma vez em um ano). Nesse caso ele pergunta no self-chat. Este vira o teste de aceitação: *dado um compromisso combinado no chat e o PDF da reunião, o Heimdall liga ao cliente certo sem perguntar*.
+
 ## Papéis dos contatos (ajuste)
 O Heimdall precisa saber que o **Pedro é gestor interno**, não cliente. O usuário espera que isso saia da primeira absorção do contexto escutado. Proposta: o aprendizado propõe o papel de cada contato (cliente, gestor/colega interno, fornecedor, pessoal) com confiança, e o usuário confirma ou corrige pelo self-chat; e um **cadastro explícito de papéis** (arquivo editável) tem prioridade sobre a inferência, para não depender de acerto estatístico em algo básico como "Pedro = interno".
 Conversas internas (Pedro) entram no contexto como **instruções e feedback do gestor**, não como conversa comercial com cliente, e aparecem em seção própria nos relatórios.
