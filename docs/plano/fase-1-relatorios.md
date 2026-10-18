@@ -55,9 +55,25 @@ A intenção do usuário: começar como uma IA padrão e, com memória, contexto
 - Critério de "potencial", "sem retorno" e "follow-up" começa com regras simples explícitas e é refinado pelas correções. Definir as regras iniciais antes de implementar.
 - Limite de uma página obriga priorização: ordenar por urgência e potencial, não listar tudo.
 
-## Definições iniciais a fechar (próxima etapa de planejamento)
-1. **Sem retorno do cliente:** quantos dias sem resposta do cliente após mensagem do usuário contam como "não deu retorno"? (proposta inicial: 2 dias úteis)
-2. **Sem retorno do usuário:** quanto tempo sem o usuário responder uma mensagem do cliente? (proposta inicial: 1 dia útil)
-3. **Follow-up pendente:** compromisso prometido por qualquer lado cujo prazo passou, ou combinado sem data.
-4. **Potencial:** sinais iniciais (pediu proposta, perguntou preço/prazo, marcou reunião, trouxe decisor); a ser refinado.
-O usuário pode simplesmente aceitar as propostas e ajustar com o uso.
+## Regras de acompanhamento (decididas pelo usuário em 2026-10-18)
+**1. Follow-up de cliente que respondeu**
+- Todo cliente abordado precisa de follow-up, **mas só vale para quem já respondeu ao menos uma vez**. Quem nunca respondeu **não gera follow-up**.
+- Intervalo entre follow-ups: **2 dias** (adotado como 2 dias úteis, seg a sex; feriados desconsiderados no início, a confirmar).
+- Premissa do usuário (estatística dele, não verificada por mim): o cliente costuma retornar a partir da 6ª tentativa. Regra: ao completar **7 tentativas sem retorno**, o cliente é **desconsiderado**.
+- **Cada resposta do cliente zera a contagem.** Se um cliente desconsiderado voltar a escrever, reativa e a contagem começa de novo.
+- Tentativa = mensagem de follow-up do usuário após a última resposta do cliente, respeitado o intervalo de 2 dias (várias mensagens dentro do mesmo intervalo contam como **uma** tentativa; confirmar).
+
+**2. Usuário sem dar retorno**
+- "Inadmissível": toda mensagem de cliente que aguarda resposta do usuário **aparece no próximo relatório**, em **primeiro lugar** e com o tempo de espera, e continua aparecendo até ser respondida.
+- Sem prazo mínimo de espera. Mensagens que não pedem resposta ("ok", "obrigado") não contam; quando houver dúvida, o Heimdall inclui (melhor um aviso a mais que um a menos).
+
+**3. Retornos e compromissos com data**
+- Se foi marcado um retorno (por qualquer lado), ele aparece **no relatório do dia** em que vence (diário de terça a sexta; na segunda, dentro do semanal, em seção "hoje"). Vencido e não cumprido continua aparecendo como atrasado.
+
+**4. Potencial** (confirmado): pediu proposta, perguntou preço ou prazo, marcou reunião, trouxe quem decide; refinado pelo uso.
+
+**Estados do cliente** (calculados em código, não pelo modelo): `sem_resposta_nunca` · `ativo` · `follow_up_devido` · `aguardando_usuario` · `desconsiderado` (7 tentativas) · `interno` (ex.: Pedro).
+Transparência proposta: ao desconsiderar um cliente, o relatório seguinte registra uma linha ("X desconsiderado após 7 tentativas"); e o semanal traz só a **contagem** de abordados que nunca responderam. O usuário pode vetar.
+
+## Pendências
+- Confirmar: dias úteis sem feriados; tentativas no mesmo intervalo contam como uma; linha de transparência de desconsiderados.
