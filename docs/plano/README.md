@@ -18,6 +18,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D8 | Onde roda (local ou VPS): **decidir depois** | usuário |
 | D9 | Dados de clientes nunca vão para o git (`data/` ignorado) | análise |
 | D11 | PDF: **markitdown** (só PDF, transcrições de reuniões do Google Meet); outros documentos e imagens ficam de fora por enquanto; exemplos de PDF só na configuração | usuário |
+| D13 | O PDF vem normalmente do **Pedro** (gestor interno); papéis dos contatos aprendidos no início, com cadastro explícito prioritário | usuário |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
@@ -41,7 +42,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 **Etapas de planejamento (ordem proposta)**
 1. ~~Áudio (STT)~~: planejado em `fase-1-audio.md` (Whisper local; teste de capacidade). Volume informado (poucos, até 3 min).
 2. ~~PDF → .md~~: planejado em `fase-1-pdf.md` (markitdown). Faltam PDFs reais de amostra.
-3. Relatórios: formato, horário, quem gera (cron do Hermes vs. listener) e quem entrega (listener, pela ponte Q).
+3. Relatórios: em andamento em `fase-1-relatorios.md` (aguardando respostas sobre conteúdo e horários).
 4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
 5. Kanban/CRM (fase 2): qual CRM, tem API/MCP, funis e etapas.
 6. Modelo de dados do acervo (tabelas, dossiês, retenção) e formato do `data/`.

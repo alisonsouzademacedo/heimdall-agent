@@ -44,7 +44,9 @@ Só **PDF**, e quase sempre **transcrições de reuniões**, que somam ao contex
 Para correlacionar, o pipeline precisa extrair das conversas os **compromissos** (reunião marcada, retorno prometido, proposta a enviar) e mantê-los num registro próprio: cliente, data e hora, assunto, estado (`marcado → ocorreu → transcrição recebida → follow-up feito`). Isso serve também ao relatório diário (reuniões do dia; reunião que ocorreu e ainda não tem transcrição; follow-ups atrasados).
 
 ## Como correlacionar a transcrição (da evidência mais forte para a mais fraca)
-1. **Conversa de origem:** se o PDF chegou dentro do chat do cliente.
+**Ajuste (2026-10-18):** o PDF quase sempre vem do **Pedro**, gestor da empresa do usuário, e não do chat do cliente. Logo, a conversa de origem **não identifica o cliente**: ela indica que o documento é uma transcrição interna. A correlação depende do conteúdo e dos compromissos.
+
+1. **Contexto da mensagem do Pedro:** texto que acompanha o PDF (ou mensagens logo antes e depois) e a data do arquivo.
 2. **Compromisso aberto:** reunião marcada para a data do PDF (ou próxima dela) com um cliente específico.
 3. **Conteúdo:** nome dos participantes, empresa, assunto citados na transcrição contra os contatos conhecidos.
 4. **Pergunta no self-chat:** abaixo de um limiar de confiança, o Heimdall pergunta ao usuário em vez de adivinhar. Como o self-chat já é o canal de conversa, perguntar custa pouco.
@@ -58,5 +60,8 @@ Correções do usuário ("essa transcrição é da empresa X") viram memória e 
 - Se a data aparece no PDF: o usuário acha que sim.
 
 ## Pendências
-- **Como o PDF chega ao WhatsApp?** Dentro do chat do cliente, ou o usuário o envia ao self-chat (ou a outro lugar)? Define o peso da correlação por conversa de origem.
 - Tamanho típico (páginas) para definir os limites.
+
+## Papéis dos contatos (ajuste)
+O Heimdall precisa saber que o **Pedro é gestor interno**, não cliente. O usuário espera que isso saia da primeira absorção do contexto escutado. Proposta: o aprendizado propõe o papel de cada contato (cliente, gestor/colega interno, fornecedor, pessoal) com confiança, e o usuário confirma ou corrige pelo self-chat; e um **cadastro explícito de papéis** (arquivo editável) tem prioridade sobre a inferência, para não depender de acerto estatístico em algo básico como "Pedro = interno".
+Conversas internas (Pedro) entram no contexto como **instruções e feedback do gestor**, não como conversa comercial com cliente, e aparecem em seção própria nos relatórios.
