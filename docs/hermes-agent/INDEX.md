@@ -1,6 +1,9 @@
 # Hermes Agent docs — índice
 
-Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por página).
+Fonte: https://hermes-agent.nousresearch.com/docs (versão em inglês, sem plugins da comunidade nem tradução).
+Páginas: 463. Cada arquivo começa com um comentário `<!-- source: URL -->`.
+
+## developer-guide (61)
 
 - [ACP Internals](developer-guide/acp-internals.md) — 6 KB
 - [Adding a Platform Adapter](developer-guide/adding-platform-adapters.md) — 43 KB
@@ -14,7 +17,7 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Chronos Managed-Cron Contract](developer-guide/chronos-managed-cron-contract.md) — 12 KB
 - [CLI Internals](developer-guide/cli-internals.md) — 14 KB
 - [Codebase Ownership Map](developer-guide/codebase-ownership.md) — 3 KB
-- [Background completion backlogs](developer-guide/completion-backlog-delivery.md) — 2 KB
+- [Background completion backlogs](developer-guide/completion-backlog-delivery.md) — 3 KB
 - [Context Compression and Caching](developer-guide/context-compression-and-caching.md) — 46 KB
 - [Context Engine Plugins](developer-guide/context-engine-plugin.md) — 20 KB
 - [Contributing](developer-guide/contributing.md) — 23 KB
@@ -31,14 +34,15 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Gateway Session Lifecycle](developer-guide/gateway-session-lifecycle.md) — 33 KB
 - [Hosted rooms across local profile owners](developer-guide/hosted-profile-owners.md) — 3 KB
 - [Image Generation Provider Plugins](developer-guide/image-gen-provider-plugin.md) — 13 KB
-- [macOS bundle updates](developer-guide/macos-bundle-updates.md) — 4 KB
+- [macOS bundle updates](developer-guide/macos-bundle-updates.md) — 5 KB
 - [Memory Provider Plugins](developer-guide/memory-provider-plugin.md) — 27 KB
 - [Micro-compaction](developer-guide/micro-compaction.md) — 19 KB
 - [Middleware](developer-guide/middleware.md) — 9 KB
-- [Model Provider Plugins](developer-guide/model-provider-plugin.md) — 41 KB
+- [Model Provider Plugins](developer-guide/model-provider-plugin.md) — 42 KB
 - [Multiplexing Gateway Internals](developer-guide/multiplexing-gateway.md) — 19 KB
 - [Observer Hooks](developer-guide/observer-hooks.md) — 13 KB
 - [Plugin LLM Access](developer-guide/plugin-llm-access.md) — 21 KB
+- [plugin.yaml — manifest v2 example](developer-guide/plugins.md) — 140 KB
 - [Application declarations](developer-guide/plugins/application-declarations.md) — 8 KB
 - [Submitting to the Plugin Catalog](developer-guide/plugins/catalog-submission.md) — 14 KB
 - [Build a Hermes Plugin](developer-guide/plugins/index.md) — 118 KB
@@ -53,7 +57,7 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Shared bundle builds](developer-guide/shared-bundle-builds.md) — 24 KB
 - [Source update completion ownership](developer-guide/source-update-completion.md) — 16 KB
 - [Stable release admission and promotion](developer-guide/stable-releases.md) — 32 KB
-- [State DB Recovery](developer-guide/state-db-recovery.md) — 4 KB
+- [State DB Recovery](developer-guide/state-db-recovery.md) — 5 KB
 - [Streaming TTS Internals](developer-guide/streaming-tts.md) — 5 KB
 - [Public Subagent Lifecycle API](developer-guide/subagent-lifecycle-api.md) — 4 KB
 - [Terminal Environment Provider Plugins](developer-guide/terminal-environment-plugin.md) — 5 KB
@@ -62,6 +66,9 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Video Generation Provider Plugins](developer-guide/video-gen-provider-plugin.md) — 9 KB
 - [Web Search Provider Plugins](developer-guide/web-search-provider-plugin.md) — 11 KB
 - [TUI & Desktop from Worktrees](developer-guide/worktree-ui-dev.md) — 9 KB
+
+## getting-started (7)
+
 - [Installation](getting-started/installation.md) — 12 KB
 - [Learning Path](getting-started/learning-path.md) — 9 KB
 - [Nix & NixOS Setup](getting-started/nix-setup.md) — 53 KB
@@ -69,6 +76,9 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Hermes Agent Quickstart](getting-started/quickstart.md) — 20 KB
 - [Android / Termux](getting-started/termux.md) — 5 KB
 - [Updating & Uninstalling](getting-started/updating.md) — 55 KB
+
+## guides (35)
+
 - [Give Your Agent Its Own Email Address](guides/agent-email-address.md) — 4 KB
 - [Automate Anything with Cron](guides/automate-with-cron.md) — 12 KB
 - [Automation Blueprints](guides/automation-blueprints.md) — 19 KB
@@ -82,7 +92,7 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Tutorial: GitHub PR Review Agent](guides/github-pr-review-agent.md) — 8 KB
 - [Google Gemini](guides/google-gemini.md) — 14 KB
 - [Google Vertex AI](guides/google-vertex.md) — 6 KB
-- [Run Local LLMs on Mac](guides/local-llm-on-mac.md) — 9 KB
+- [Run Local LLMs on Mac](guides/local-llm-on-mac.md) — 10 KB
 - [Run Hermes Locally with Ollama — Zero API Cost](guides/local-ollama-setup.md) — 13 KB
 - [Manage Hermes Cloud with MCP](guides/manage-hermes-cloud-with-mcp.md) — 7 KB
 - [Register a Microsoft Graph Application](guides/microsoft-graph-app-registration.md) — 8 KB
@@ -101,13 +111,28 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Use MCP with Hermes](guides/use-mcp-with-hermes.md) — 14 KB
 - [Use SOUL.md with Hermes](guides/use-soul-with-hermes.md) — 7 KB
 - [Use Voice Mode with Hermes](guides/use-voice-mode-with-hermes.md) — 10 KB
-- [Automated GitHub PR Comments with Webhooks](guides/webhook-github-pr-review.md) — 14 KB
+- [Automated GitHub PR Comments with Webhooks](guides/webhook-github-pr-review.md) — 15 KB
 - [Working with Skills](guides/work-with-skills.md) — 8 KB
 - [xAI Grok OAuth (SuperGrok / X Premium+)](guides/xai-grok-oauth.md) — 11 KB
+
+## (raiz) (6)
+
+- [integrations](integrations.md) — 14 KB
+- [plugins](plugins.md) — 1155 KB
+- [Search the documentation](search.md) — 0 KB
+- [skills](skills.md) — 17 KB
+- [User Stories & Use Cases](user-stories.md) — 0 KB
+- [zh-Hans](zh-Hans.md) — 5 KB
+
+## integrations (4)
+
 - [Buzz Integration](integrations/buzz.md) — 3 KB
 - [Integrations](integrations/index.md) — 10 KB
 - [Nous Portal](integrations/nous-portal.md) — 15 KB
 - [LLM and Model Providers](integrations/providers.md) — 98 KB
+
+## reference (14)
+
 - [Automation Blueprints Catalog](reference/automation-blueprints-catalog.md) — 2 KB
 - [CLI Commands Reference](reference/cli-commands.md) — 132 KB
 - [CLI Symbols Glossary](reference/cli-symbols.md) — 5 KB
@@ -122,13 +147,17 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Slash Commands Reference](reference/slash-commands.md) — 48 KB
 - [Built-in Tools Reference](reference/tools-reference.md) — 42 KB
 - [Toolsets Reference](reference/toolsets-reference.md) — 14 KB
-- [Bot Mode](user-guide/bot-mode.md) — 52 KB
-- [Checkpoints and /rollback](user-guide/checkpoints-and-rollback.md) — 13 KB
+
+## user-guide (336)
+
+- [Bot Mode](user-guide/bot-mode.md) — 53 KB
+- [Checkpoints and /rollback](user-guide/checkpoints-and-rollback.md) — 14 KB
 - [CLI Interface](user-guide/cli.md) — 35 KB
 - [Hermes Agent Configuration](user-guide/configuration.md) — 246 KB
 - [Configuring Models](user-guide/configuring-models.md) — 28 KB
 - [Hermes Desktop](user-guide/desktop.md) — 91 KB
 - [Hermes Docker Setup](user-guide/docker.md) — 54 KB
+- [user-guide/egress](user-guide/egress.md) — 0 KB
 - [Egress proxy](user-guide/egress/index.md) — 0 KB
 - [Egress credential-injection proxy (iron-proxy)](user-guide/egress/iron-proxy.md) — 39 KB
 - [Network Egress Isolation (Docker)](user-guide/egress/network-isolation.md) — 6 KB
@@ -136,7 +165,7 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [API Server](user-guide/features/api-server.md) — 55 KB
 - [Batch Processing](user-guide/features/batch-processing.md) — 8 KB
 - [Bot Screen](user-guide/features/bot-screen.md) — 25 KB
-- [Browser Automation](user-guide/features/browser.md) — 50 KB
+- [Browser Automation](user-guide/features/browser.md) — 51 KB
 - [Built-in Plugins](user-guide/features/built-in-plugins.md) — 20 KB
 - [Code Execution](user-guide/features/code-execution.md) — 15 KB
 - [Codex App-Server Runtime (optional)](user-guide/features/codex-app-server-runtime.md) — 37 KB
@@ -149,12 +178,12 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Curator](user-guide/features/curator.md) — 26 KB
 - [Subagent Delegation](user-guide/features/delegation.md) — 53 KB
 - [Deliverable Mode (Artifacts in Chat)](user-guide/features/deliverable-mode.md) — 5 KB
-- [Document Extraction](user-guide/features/document-extraction.md) — 4 KB
+- [Document Extraction](user-guide/features/document-extraction.md) — 5 KB
 - [Extending the Dashboard](user-guide/features/extending-the-dashboard.md) — 42 KB
 - [Fallback Providers](user-guide/features/fallback-providers.md) — 26 KB
 - [Persistent Goals](user-guide/features/goals.md) — 22 KB
 - [Session Heartbeats](user-guide/features/heartbeat.md) — 5 KB
-- [Honcho Memory](user-guide/features/honcho.md) — 20 KB
+- [Honcho Memory](user-guide/features/honcho.md) — 21 KB
 - [Event Hooks](user-guide/features/hooks.md) — 129 KB
 - [Image Generation](user-guide/features/image-generation.md) — 20 KB
 - [Kanban Multi-Gateway Deployment](user-guide/features/kanban-multi-gateway.md) — 2 KB
@@ -190,12 +219,13 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [X (Twitter) Search](user-guide/features/x-search.md) — 9 KB
 - [Git Worktrees](user-guide/git-worktrees.md) — 6 KB
 - [Import from Other Agents](user-guide/import-from-other-agents.md) — 4 KB
-- [Local Models](user-guide/local-models.md) — 9 KB
+- [Local Models](user-guide/local-models.md) — 10 KB
 - [Managed Scope](user-guide/managed-scope.md) — 5 KB
+- [Restrict to specific users (recommended):](user-guide/messaging.md) — 73 KB
 - [A2A (Agent-to-Agent)](user-guide/messaging/a2a.md) — 8 KB
 - [BlueBubbles (iMessage)](user-guide/messaging/bluebubbles.md) — 12 KB
 - [Buzz](user-guide/messaging/buzz.md) — 11 KB
-- [DingTalk](user-guide/messaging/dingtalk.md) — 11 KB
+- [DingTalk](user-guide/messaging/dingtalk.md) — 12 KB
 - [Discord](user-guide/messaging/discord.md) — 61 KB
 - [Email](user-guide/messaging/email.md) — 13 KB
 - [Feishu / Lark](user-guide/messaging/feishu.md) — 30 KB
@@ -204,13 +234,13 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Messaging Gateway](user-guide/messaging/index.md) — 58 KB
 - [IRC](user-guide/messaging/irc.md) — 3 KB
 - [LINE](user-guide/messaging/line.md) — 8 KB
-- [Matrix](user-guide/messaging/matrix.md) — 38 KB
+- [Matrix](user-guide/messaging/matrix.md) — 39 KB
 - [Mattermost](user-guide/messaging/mattermost.md) — 13 KB
 - [Microsoft Graph Webhook Listener](user-guide/messaging/msgraph-webhook.md) — 8 KB
 - [ntfy](user-guide/messaging/ntfy.md) — 7 KB
 - [Open WebUI](user-guide/messaging/open-webui.md) — 12 KB
-- [Photon iMessage](user-guide/messaging/photon.md) — 9 KB
-- [QQ Bot](user-guide/messaging/qqbot.md) — 4 KB
+- [Photon iMessage](user-guide/messaging/photon.md) — 10 KB
+- [QQ Bot](user-guide/messaging/qqbot.md) — 5 KB
 - [Raft](user-guide/messaging/raft.md) — 3 KB
 - [Hermes Relay](user-guide/messaging/relay.md) — 11 KB
 - [Signal](user-guide/messaging/signal.md) — 10 KB
@@ -228,9 +258,10 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [WhatsApp](user-guide/messaging/whatsapp.md) — 17 KB
 - [Yuanbao](user-guide/messaging/yuanbao.md) — 10 KB
 - [Connecting Desktop to Many Hermes Instances](user-guide/multi-connection-desktop.md) — 21 KB
-- [Running Many Gateways at Once](user-guide/multi-profile-gateways.md) — 76 KB
+- [Running Many Gateways at Once](user-guide/multi-profile-gateways.md) — 77 KB
 - [Profile Distributions: Share a Whole Agent](user-guide/profile-distributions.md) — 33 KB
 - [Profiles: Running Multiple Agents](user-guide/profiles.md) — 25 KB
+- [user-guide/secrets](user-guide/secrets.md) — 6 KB
 - [Bitwarden Secrets Manager](user-guide/secrets/bitwarden.md) — 10 KB
 - [Command Helper Secret Source](user-guide/secrets/command.md) — 3 KB
 - [Secrets](user-guide/secrets/index.md) — 5 KB
@@ -238,10 +269,221 @@ Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por p�
 - [Security](user-guide/security.md) — 63 KB
 - [Session Storage Recovery](user-guide/session-storage-recovery.md) — 6 KB
 - [Sessions](user-guide/sessions.md) — 67 KB
+- [Apple Notes](user-guide/skills/bundled/apple/apple-apple-notes.md) — 6 KB
+- [Apple Reminders](user-guide/skills/bundled/apple/apple-apple-reminders.md) — 8 KB
+- [Find My (Apple)](user-guide/skills/bundled/apple/apple-findmy.md) — 7 KB
+- [iMessage](user-guide/skills/bundled/apple/apple-imessage.md) — 6 KB
+- [Claude Code — Hermes Orchestration Guide](user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code.md) — 64 KB
+- [Codex CLI](user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex.md) — 10 KB
+- [Computer Use (universal, any-model, cross-platform)](user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-computer-use.md) — 25 KB
+- [Hermes Agent](user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent.md) — 20 KB
+- [OpenCode CLI](user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-opencode.md) — 14 KB
+- [Architecture Diagram Skill](user-guide/skills/bundled/creative/creative-architecture-diagram.md) — 12 KB
+- [ASCII Video Production Pipeline](user-guide/skills/bundled/creative/creative-ascii-video.md) — 24 KB
+- [Infographic Generator](user-guide/skills/bundled/creative/creative-baoyu-infographic.md) — 17 KB
+- [Claude Design for CLI/API Agents](user-guide/skills/bundled/creative/creative-claude-design.md) — 36 KB
+- [DESIGN.md Skill](user-guide/skills/bundled/creative/creative-design-md.md) — 12 KB
+- [Humanizer: Remove AI Writing Patterns](user-guide/skills/bundled/creative/creative-humanizer.md) — 55 KB
+- [Manim Video Production Pipeline](user-guide/skills/bundled/creative/creative-manim-video.md) — 22 KB
+- [p5.js Production Pipeline](user-guide/skills/bundled/creative/creative-p5js.md) — 40 KB
+- [Popular Web Designs](user-guide/skills/bundled/creative/creative-popular-web-designs.md) — 14 KB
+- [Songwriting & AI Music Generation](user-guide/skills/bundled/creative/creative-songwriting-and-ai-music.md) — 16 KB
+- [SDLC Review Skill](user-guide/skills/bundled/devops/devops-sdlc-review.md) — 14 KB
+- [Email Inbox Triage](user-guide/skills/bundled/email/email-email-inbox-triage.md) — 10 KB
+- [Himalaya Email CLI](user-guide/skills/bundled/email/email-himalaya.md) — 13 KB
+- [GIF Search (Tenor API)](user-guide/skills/bundled/media/media-gif-search.md) — 6 KB
+- [songsee](user-guide/skills/bundled/media/media-songsee.md) — 4 KB
+- [YouTube Content Tool](user-guide/skills/bundled/media/media-youtube-content.md) — 7 KB
+- [Obsidian Vault](user-guide/skills/bundled/note-taking/note-taking-obsidian.md) — 6 KB
+- [Airtable — Bases, Tables & Records](user-guide/skills/bundled/productivity/productivity-airtable.md) — 19 KB
+- [Box](user-guide/skills/bundled/productivity/productivity-box.md) — 17 KB
+- [Document to Action Items](user-guide/skills/bundled/productivity/productivity-document-to-action-items.md) — 9 KB
+- [Docx Skill](user-guide/skills/bundled/productivity/productivity-docx.md) — 13 KB
+- [Google Workspace](user-guide/skills/bundled/productivity/productivity-google-workspace.md) — 22 KB
+- [Maps Skill](user-guide/skills/bundled/productivity/productivity-maps.md) — 12 KB
+- [Meeting Action Items](user-guide/skills/bundled/productivity/productivity-meeting-action-items.md) — 8 KB
+- [Notion](user-guide/skills/bundled/productivity/productivity-notion.md) — 29 KB
+- [PDF Skill](user-guide/skills/bundled/productivity/productivity-pdf.md) — 15 KB
+- [Powerpoint Skill](user-guide/skills/bundled/productivity/productivity-powerpoint.md) — 16 KB
+- [Product Price Monitor](user-guide/skills/bundled/productivity/productivity-product-price-monitor.md) — 9 KB
+- [Teams Meeting Pipeline](user-guide/skills/bundled/productivity/productivity-teams-meeting-pipeline.md) — 11 KB
+- [Weekly Review and Planning](user-guide/skills/bundled/productivity/productivity-weekly-review-planning.md) — 10 KB
+- [Xlsx Skill](user-guide/skills/bundled/productivity/productivity-xlsx.md) — 13 KB
+- [arXiv Research](user-guide/skills/bundled/research/research-arxiv.md) — 19 KB
+- [Competitor News Monitor](user-guide/skills/bundled/research/research-competitor-news-monitor.md) — 10 KB
+- [Grounded Citations](user-guide/skills/bundled/research/research-grounded-citations.md) — 16 KB
+- [Karpathy's LLM Wiki](user-guide/skills/bundled/research/research-llm-wiki.md) — 28 KB
+- [xurl — X (Twitter) API via the Official CLI](user-guide/skills/bundled/social-media/social-media-xurl.md) — 25 KB
+- [Codebase Inspection with pygount](user-guide/skills/bundled/software-development/software-development-codebase-inspection.md) — 8 KB
+- [Dogfood: Systematic Web Application QA Testing](user-guide/skills/bundled/software-development/software-development-dogfood.md) — 11 KB
+- [GitHub](user-guide/skills/bundled/software-development/software-development-github.md) — 5 KB
+- [Authoring Hermes-Agent Skills (in-repo)](user-guide/skills/bundled/software-development/software-development-hermes-agent-skill-authoring.md) — 23 KB
+- [Inspecting the live Hermes desktop DOM](user-guide/skills/bundled/software-development/software-development-inspecting-hermes-desktop-dom.md) — 10 KB
+- [Node.js Inspect Debugger](user-guide/skills/bundled/software-development/software-development-node-inspect-debugger.md) — 18 KB
+- [Python Debugger (pdb + debugpy)](user-guide/skills/bundled/software-development/software-development-python-debugpy.md) — 25 KB
+- [Pre-Commit Code Verification](user-guide/skills/bundled/software-development/software-development-requesting-code-review.md) — 16 KB
+- [Simplify Code — Parallel Review & Cleanup](user-guide/skills/bundled/software-development/software-development-simplify-code.md) — 18 KB
+- [Spike](user-guide/skills/bundled/software-development/software-development-spike.md) — 14 KB
+- [Systematic Debugging](user-guide/skills/bundled/software-development/software-development-systematic-debugging.md) — 30 KB
+- [Test-Driven Development (TDD)](user-guide/skills/bundled/software-development/software-development-test-driven-development.md) — 20 KB
+- [Blocked-Page Recovery](user-guide/skills/bundled/web/web-blocked-page-recovery.md) — 9 KB
 - [Google Workspace — Gmail, Calendar, Drive, Sheets & Docs](user-guide/skills/google-workspace.md) — 6 KB
+- [Agent Merge-Conflict Arbiter](user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-agent-merge-conflict-arbiter.md) — 13 KB
+- [Antigravity CLI (`agy`)](user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-antigravity-cli.md) — 21 KB
+- [Blackbox CLI](user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-blackbox.md) — 11 KB
+- [Dynamic Workflow Skill](user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-dynamic-workflow.md) — 16 KB
+- [Grok Build CLI — Hermes Orchestration Guide](user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-grok.md) — 22 KB
+- [Honcho Memory for Hermes](user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-honcho.md) — 37 KB
+- [OpenHands CLI](user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-openhands.md) — 13 KB
+- [EVM Blockchain Skill](user-guide/skills/optional/blockchain/blockchain-evm.md) — 14 KB
+- [Hyperliquid Skill](user-guide/skills/optional/blockchain/blockchain-hyperliquid.md) — 12 KB
+- [Solana Blockchain Skill](user-guide/skills/optional/blockchain/blockchain-solana.md) — 12 KB
+- [1-3-1 Communication Rule](user-guide/skills/optional/communication/communication-one-three-one-rule.md) — 7 KB
+- [AI Presenter Video](user-guide/skills/optional/creative/creative-ai-presenter-video.md) — 12 KB
+- [Anatomy](user-guide/skills/optional/creative/creative-anatomy.md) — 37 KB
+- [Archify (upstream-maintained)](user-guide/skills/optional/creative/creative-archify.md) — 4 KB
+- [ASCII Art Skill](user-guide/skills/optional/creative/creative-ascii-art.md) — 22 KB
+- [AudioCraft: Audio Generation](user-guide/skills/optional/creative/creative-audiocraft-audio-generation.md) — 29 KB
+- [Auteur Skill](user-guide/skills/optional/creative/creative-auteur.md) — 29 KB
+- [Article Illustrator](user-guide/skills/optional/creative/creative-baoyu-article-illustrator.md) — 18 KB
+- [Knowledge Comic Creator](user-guide/skills/optional/creative/creative-baoyu-comic.md) — 21 KB
+- [Brag Slim (upstream-maintained)](user-guide/skills/optional/creative/creative-brag-slim.md) — 3 KB
+- [Brag (upstream-maintained)](user-guide/skills/optional/creative/creative-brag.md) — 4 KB
+- [ComfyUI](user-guide/skills/optional/creative/creative-comfyui.md) — 35 KB
+- [Concept Diagrams](user-guide/skills/optional/creative/creative-concept-diagrams.md) — 24 KB
+- [Creative Ideation](user-guide/skills/optional/creative/creative-creative-ideation.md) — 15 KB
+- [draw-your-font](user-guide/skills/optional/creative/creative-draw-your-font.md) — 10 KB
+- [Dream Loop Skill](user-guide/skills/optional/creative/creative-dream-loop.md) — 19 KB
+- [Excalidraw Diagram Skill](user-guide/skills/optional/creative/creative-excalidraw.md) — 12 KB
+- [HeartMuLa - Open-Source Music Generation](user-guide/skills/optional/creative/creative-heartmula.md) — 13 KB
+- [HyperFrames](user-guide/skills/optional/creative/creative-hyperframes.md) — 23 KB
+- [Impeccable (upstream-maintained)](user-guide/skills/optional/creative/creative-impeccable.md) — 2 KB
+- [IP as Logo Skill](user-guide/skills/optional/creative/creative-ip-as-logo.md) — 23 KB
+- [Kanban Video Orchestrator](user-guide/skills/optional/creative/creative-kanban-video-orchestrator.md) — 17 KB
+- [Meme Generation](user-guide/skills/optional/creative/creative-meme-generation.md) — 10 KB
+- [Mono-Color Editorial Print Skill](user-guide/skills/optional/creative/creative-mono-color.md) — 15 KB
+- [Pixel Art](user-guide/skills/optional/creative/creative-pixel-art.md) — 13 KB
+- [Pretext Creative Demos](user-guide/skills/optional/creative/creative-pretext.md) — 19 KB
+- [Simple English: Write Like an Aerospace Manual](user-guide/skills/optional/creative/creative-simple-english.md) — 30 KB
+- [Sketch](user-guide/skills/optional/creative/creative-sketch.md) — 15 KB
+- [Social Media Content Calendar](user-guide/skills/optional/creative/creative-social-media-content-calendar.md) — 9 KB
+- [System Atlas Skill](user-guide/skills/optional/creative/creative-system-atlas.md) — 12 KB
+- [tldraw offline Skill](user-guide/skills/optional/creative/creative-tldraw-offline.md) — 19 KB
+- [Unreal Engine MCP Skill](user-guide/skills/optional/creative/creative-unreal-mcp.md) — 18 KB
+- [Jupyter Notebook (hamelnb live kernel)](user-guide/skills/optional/data-science/data-science-jupyter-notebook.md) — 11 KB
+- [Actual Computer Setup Skill](user-guide/skills/optional/devops/devops-actual-setup.md) — 10 KB
+- [Docker Management](user-guide/skills/optional/devops/devops-docker-management.md) — 15 KB
+- [Hermes s6-overlay Container Supervision](user-guide/skills/optional/devops/devops-hermes-s6-container-supervision.md) — 21 KB
+- [inference.sh CLI](user-guide/skills/optional/devops/devops-inference-sh-cli.md) — 9 KB
+- [Pinggy Tunnel Skill](user-guide/skills/optional/devops/devops-pinggy-tunnel.md) — 21 KB
+- [Setup Wizard Generator](user-guide/skills/optional/devops/devops-setup-wizard-generator.md) — 9 KB
+- [Watchers](user-guide/skills/optional/devops/devops-watchers.md) — 7 KB
+- [Adversarial UX Test](user-guide/skills/optional/dogfood/dogfood-adversarial-ux-test.md) — 15 KB
+- [AgentMail Skill](user-guide/skills/optional/email/email-agentmail.md) — 6 KB
+- [3-Statement Financial Model Template Completion](user-guide/skills/optional/finance/finance-3-statement-model.md) — 34 KB
+- [Comparable Company Analysis](user-guide/skills/optional/finance/finance-comps-analysis.md) — 50 KB
+- [DCF Model Builder](user-guide/skills/optional/finance/finance-dcf-model.md) — 74 KB
+- [excel-author](user-guide/skills/optional/finance/finance-excel-author.md) — 16 KB
+- [user-guide/skills/optional/finance/finance-lbo-model](user-guide/skills/optional/finance/finance-lbo-model.md) — 30 KB
+- [Merger Model](user-guide/skills/optional/finance/finance-merger-model.md) — 10 KB
+- [Polymarket — Prediction Market Data](user-guide/skills/optional/finance/finance-polymarket.md) — 6 KB
+- [pptx-author](user-guide/skills/optional/finance/finance-pptx-author.md) — 12 KB
+- [Stocks Skill](user-guide/skills/optional/finance/finance-stocks.md) — 7 KB
+- [Minecraft Modpack Server Setup](user-guide/skills/optional/gaming/gaming-minecraft-modpack-server.md) — 12 KB
+- [Pokemon Player](user-guide/skills/optional/gaming/gaming-pokemon-player.md) — 21 KB
+- [Fitness & Nutrition](user-guide/skills/optional/health/health-fitness-nutrition.md) — 12 KB
+- [NeuroSkill BCI Integration](user-guide/skills/optional/health/health-neuroskill-bci.md) — 27 KB
+- [FastMCP](user-guide/skills/optional/mcp/mcp-fastmcp.md) — 16 KB
+- [MCP OAuth on a Remote Hermes Gateway](user-guide/skills/optional/mcp/mcp-mcp-oauth-remote-gateway.md) — 33 KB
+- [mcporter](user-guide/skills/optional/mcp/mcp-mcporter.md) — 6 KB
+- [OpenClaw -> Hermes Migration](user-guide/skills/optional/migration/migration-openclaw-migration.md) — 20 KB
+- [HuggingFace Accelerate - Unified Distributed Training](user-guide/skills/optional/mlops/mlops-accelerate.md) — 14 KB
+- [Chroma - Open-Source Embedding Database](user-guide/skills/optional/mlops/mlops-chroma.md) — 17 KB
+- [CLIP - Contrastive Language-Image Pre-Training](user-guide/skills/optional/mlops/mlops-clip.md) — 11 KB
+- [lm-evaluation-harness - LLM Benchmarking](user-guide/skills/optional/mlops/mlops-evaluation-evaluating-llms-harness.md) — 18 KB
+- [Weights & Biases: ML Experiment Tracking & MLOps](user-guide/skills/optional/mlops/mlops-evaluation-weights-and-biases.md) — 26 KB
+- [FAISS - Efficient Similarity Search](user-guide/skills/optional/mlops/mlops-faiss.md) — 10 KB
+- [Flash Attention - Fast Memory-Efficient Attention](user-guide/skills/optional/mlops/mlops-flash-attention.md) — 15 KB
+- [Guidance: Constrained LLM Generation](user-guide/skills/optional/mlops/mlops-guidance.md) — 26 KB
+- [HuggingFace Tokenizers - Fast Tokenization for NLP](user-guide/skills/optional/mlops/mlops-huggingface-tokenizers.md) — 24 KB
+- [llama.cpp + GGUF](user-guide/skills/optional/mlops/mlops-inference-llama-cpp.md) — 16 KB
+- [Outlines: Structured Text Generation](user-guide/skills/optional/mlops/mlops-inference-outlines.md) — 30 KB
+- [vLLM - High-Performance LLM Serving](user-guide/skills/optional/mlops/mlops-inference-serving-llms-vllm.md) — 14 KB
+- [Instructor: Structured LLM Outputs](user-guide/skills/optional/mlops/mlops-instructor.md) — 30 KB
+- [Lambda Labs GPU Cloud](user-guide/skills/optional/mlops/mlops-lambda-labs.md) — 30 KB
+- [LLaVA - Large Language and Vision Assistant](user-guide/skills/optional/mlops/mlops-llava.md) — 15 KB
+- [Modal Serverless GPU](user-guide/skills/optional/mlops/mlops-modal.md) — 18 KB
+- [Hugging Face CLI (`hf`) Reference Guide](user-guide/skills/optional/mlops/mlops-models-huggingface-hub.md) — 9 KB
+- [Segment Anything Model (SAM)](user-guide/skills/optional/mlops/mlops-models-segment-anything-model.md) — 27 KB
+- [NeMo Curator - GPU-Accelerated Data Curation](user-guide/skills/optional/mlops/mlops-nemo-curator.md) — 20 KB
+- [OBLITERATUS Skill](user-guide/skills/optional/mlops/mlops-obliteratus.md) — 26 KB
+- [PEFT (Parameter-Efficient Fine-Tuning)](user-guide/skills/optional/mlops/mlops-peft.md) — 22 KB
+- [Pinecone - Managed Vector Database](user-guide/skills/optional/mlops/mlops-pinecone.md) — 15 KB
+- [Pytorch-Fsdp Skill](user-guide/skills/optional/mlops/mlops-pytorch-fsdp.md) — 7 KB
+- [PyTorch Lightning - High-Level Training Framework](user-guide/skills/optional/mlops/mlops-pytorch-lightning.md) — 14 KB
+- [Qdrant - Vector Similarity Search Engine](user-guide/skills/optional/mlops/mlops-qdrant.md) — 23 KB
+- [DSPy: Declarative Language Model Programming](user-guide/skills/optional/mlops/mlops-research-dspy.md) — 28 KB
+- [SAELens: Sparse Autoencoders for Mechanistic Interpretability](user-guide/skills/optional/mlops/mlops-saelens.md) — 26 KB
+- [SimPO - Simple Preference Optimization](user-guide/skills/optional/mlops/mlops-simpo.md) — 10 KB
+- [slime: LLM Post-Training Framework for RL Scaling](user-guide/skills/optional/mlops/mlops-slime.md) — 23 KB
+- [Stable Diffusion Image Generation](user-guide/skills/optional/mlops/mlops-stable-diffusion.md) — 25 KB
+- [TensorRT-LLM](user-guide/skills/optional/mlops/mlops-tensorrt-llm.md) — 11 KB
+- [TorchTitan - PyTorch Native Distributed LLM Pretraining](user-guide/skills/optional/mlops/mlops-torchtitan.md) — 16 KB
+- [Axolotl Skill](user-guide/skills/optional/mlops/mlops-training-axolotl.md) — 10 KB
+- [TRL - Transformer Reinforcement Learning](user-guide/skills/optional/mlops/mlops-training-trl-fine-tuning.md) — 19 KB
+- [Unsloth Skill](user-guide/skills/optional/mlops/mlops-training-unsloth.md) — 7 KB
+- [Whisper - Robust Speech Recognition](user-guide/skills/optional/mlops/mlops-whisper.md) — 15 KB
+- [MPP Agent Skill](user-guide/skills/optional/payments/payments-mpp-agent.md) — 10 KB
+- [Stripe Link CLI Skill](user-guide/skills/optional/payments/payments-stripe-link-cli.md) — 13 KB
+- [Stripe Projects Skill](user-guide/skills/optional/payments/payments-stripe-projects.md) — 9 KB
+- [Canvas LMS — Course & Assignment Access](user-guide/skills/optional/productivity/productivity-canvas.md) — 6 KB
+- [Decision Questionnaire](user-guide/skills/optional/productivity/productivity-decision-questionnaire.md) — 7 KB
+- [here.now](user-guide/skills/optional/productivity/productivity-here-now.md) — 13 KB
+- [Live Dashboard](user-guide/skills/optional/productivity/productivity-live-dashboard.md) — 15 KB
+- [Memento Flashcards — Spaced-Repetition Flashcard Skill](user-guide/skills/optional/productivity/productivity-memento-flashcards.md) — 19 KB
+- [Property Listings Skill](user-guide/skills/optional/productivity/productivity-property-listings.md) — 8 KB
+- [Shop CLI Skill](user-guide/skills/optional/productivity/productivity-shop.md) — 23 KB
+- [Shopify — Admin & Storefront GraphQL APIs](user-guide/skills/optional/productivity/productivity-shopify.md) — 23 KB
+- [SiYuan Note API](user-guide/skills/optional/productivity/productivity-siyuan.md) — 17 KB
+- [Telephony — Numbers, Calls, and Texts without Core Tool Changes](user-guide/skills/optional/productivity/productivity-telephony.md) — 26 KB
+- [Bioinformatics Skills Gateway](user-guide/skills/optional/research/research-bioinformatics.md) — 23 KB
+- [Blogwatcher](user-guide/skills/optional/research/research-blogwatcher.md) — 10 KB
+- [Darwinian Evolver](user-guide/skills/optional/research/research-darwinian-evolver.md) — 13 KB
+- [Domain Intelligence — Passive OSINT](user-guide/skills/optional/research/research-domain-intel.md) — 7 KB
+- [Drug Discovery & Pharmaceutical Research](user-guide/skills/optional/research/research-drug-discovery.md) — 13 KB
+- [DuckDuckGo Search](user-guide/skills/optional/research/research-duckduckgo-search.md) — 14 KB
+- [GitNexus Explorer](user-guide/skills/optional/research/research-gitnexus-explorer.md) — 12 KB
+- [OSINT Investigation — Public Records Cross-Reference](user-guide/skills/optional/research/research-osint-investigation.md) — 17 KB
+- [Parallel CLI](user-guide/skills/optional/research/research-parallel-cli.md) — 22 KB
+- [Pinecone Research — Agent RAG & Long-Term Memory](user-guide/skills/optional/research/research-pinecone-research.md) — 6 KB
+- [QMD — Query Markup Documents](user-guide/skills/optional/research/research-qmd.md) — 26 KB
+- [Research Paper Writing Pipeline](user-guide/skills/optional/research/research-research-paper-writing.md) — 107 KB
+- [RSS Feeds Skill](user-guide/skills/optional/research/research-rss-feeds.md) — 8 KB
+- [Scrapling](user-guide/skills/optional/research/research-scrapling.md) — 19 KB
+- [SearXNG Search](user-guide/skills/optional/research/research-searxng-search.md) — 12 KB
+- [1Password CLI](user-guide/skills/optional/security/security-1password.md) — 10 KB
+- [G0DM0D3 Jailbreaking Skill](user-guide/skills/optional/security/security-godmode.md) — 31 KB
+- [OSS Security Forensics Skill](user-guide/skills/optional/security/security-oss-forensics.md) — 28 KB
+- [Sherlock OSINT Username Search](user-guide/skills/optional/security/security-sherlock.md) — 13 KB
+- [unbroker](user-guide/skills/optional/security/security-unbroker.md) — 29 KB
+- [Web Application Penetration Testing](user-guide/skills/optional/security/security-web-pentest.md) — 17 KB
+- [OpenHue CLI](user-guide/skills/optional/smart-home/smart-home-openhue.md) — 6 KB
+- [Reddit Reading Skill](user-guide/skills/optional/social-media/social-media-reddit-reading.md) — 10 KB
+- [ast-grep](user-guide/skills/optional/software-development/software-development-ast-grep.md) — 22 KB
+- [Code Wiki Skill](user-guide/skills/optional/software-development/software-development-code-wiki.md) — 24 KB
+- [Grill Me](user-guide/skills/optional/software-development/software-development-grill-me.md) — 9 KB
+- [PR Lens Skill](user-guide/skills/optional/software-development/software-development-pr-lens.md) — 13 KB
+- [API Testing & Debugging](user-guide/skills/optional/software-development/software-development-rest-graphql-debug.md) — 32 KB
+- [Subagent-Driven Development](user-guide/skills/optional/software-development/software-development-subagent-driven-development.md) — 22 KB
+- [Cloudflare Temporary Deploy Skill](user-guide/skills/optional/web-development/web-development-cloudflare-temporary-deploy.md) — 11 KB
+- [HAR-Derived API Client](user-guide/skills/optional/web-development/web-development-har-derived-api-client.md) — 14 KB
+- [page-agent](user-guide/skills/optional/web-development/web-development-page-agent.md) — 13 KB
+- [Publish Site](user-guide/skills/optional/web-development/web-development-publish-site.md) — 13 KB
+- [scrollcraft](user-guide/skills/optional/web-development/web-development-scrollcraft.md) — 18 KB
+- [Yuanbao Group Interaction](user-guide/skills/optional/yuanbao/yuanbao-yuanbao.md) — 6 KB
 - [Switching to a Source Install](user-guide/switching-to-source.md) — 6 KB
 - [TUI](user-guide/tui.md) — 20 KB
 - [Which File Does What?](user-guide/which-file-does-what.md) — 6 KB
 - [Windows (Native) Guide](user-guide/windows-native.md) — 24 KB
 - [Windows (WSL2) Guide](user-guide/windows-wsl-quickstart.md) — 19 KB
-- [User Stories & Use Cases](user-stories.md) — 0 KB
+
