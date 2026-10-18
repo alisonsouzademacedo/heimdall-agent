@@ -34,7 +34,29 @@ Só **PDF**, e quase sempre **transcrições de reuniões**, que somam ao contex
 - PDF protegido por senha ou corrompido: falha esperada, registrar e seguir.
 - Mesmo PDF reenviado várias vezes: deduplicação por hash.
 
+## Respostas do usuário (2026-10-18)
+- Sem PDFs de amostra agora: usar exemplos na configuração, no teste.
+- Origem: reuniões **sempre pelo Google Meet**.
+- A data da reunião "se não me engano aparece" no PDF; se não aparecer, não é problema.
+- **O Heimdall já sabe da reunião**, porque o usuário a marca com o cliente pelo próprio WhatsApp. Ao ler a transcrição, ele deve correlacionar com o cliente e o compromisso combinado, e integrar ao contexto do cliente, ao contexto geral e ao aprendizado do próprio agente.
+
+## Consequência: compromissos como entidade
+Para correlacionar, o pipeline precisa extrair das conversas os **compromissos** (reunião marcada, retorno prometido, proposta a enviar) e mantê-los num registro próprio: cliente, data e hora, assunto, estado (`marcado → ocorreu → transcrição recebida → follow-up feito`). Isso serve também ao relatório diário (reuniões do dia; reunião que ocorreu e ainda não tem transcrição; follow-ups atrasados).
+
+## Como correlacionar a transcrição (da evidência mais forte para a mais fraca)
+1. **Conversa de origem:** se o PDF chegou dentro do chat do cliente.
+2. **Compromisso aberto:** reunião marcada para a data do PDF (ou próxima dela) com um cliente específico.
+3. **Conteúdo:** nome dos participantes, empresa, assunto citados na transcrição contra os contatos conhecidos.
+4. **Pergunta no self-chat:** abaixo de um limiar de confiança, o Heimdall pergunta ao usuário em vez de adivinhar. Como o self-chat já é o canal de conversa, perguntar custa pouco.
+Cada correlação guarda o motivo e a confiança, para ser corrigida pelo usuário e aprendida.
+
+## Aprendizado do agente
+Correções do usuário ("essa transcrição é da empresa X") viram memória e skills do Hermes; os acertos e erros de correlação alimentam a melhoria do próprio Heimdall. Precisa de um mecanismo de registro de correções (a definir na fase de aprendizado).
+
+## Incertezas
+- O formato real do PDF de transcrição do Meet (título, data, participantes, rótulos de fala) **não foi verificado**; depende dos exemplos do teste.
+- Se a data aparece no PDF: o usuário acha que sim.
+
 ## Pendências
-- Três PDFs reais de transcrição (podem ser anonimizados) para o teste de qualidade da conversão. Quais ferramentas geram essas transcrições (Meet, Zoom, Teams, Otter, Fireflies)?
-- A data da reunião aparece dentro do PDF ou só no nome do arquivo?
+- **Como o PDF chega ao WhatsApp?** Dentro do chat do cliente, ou o usuário o envia ao self-chat (ou a outro lugar)? Define o peso da correlação por conversa de origem.
 - Tamanho típico (páginas) para definir os limites.
