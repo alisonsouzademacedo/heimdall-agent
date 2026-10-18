@@ -17,27 +17,26 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D7 | LLM: **ChatGPT Plus para tudo** (texto, áudio, documentos); sem API paga | usuário |
 | D8 | Onde roda (local ou VPS): **decidir depois** | usuário |
 | D9 | Dados de clientes nunca vão para o git (`data/` ignorado) | análise |
+| D10 | Áudio: **Whisper local**; modelo escolhido por teste de capacidade da máquina na hora da instalação | usuário |
 
 ## Biblioteca de documentação (no repo, para contexto)
-`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
+`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
 
 ## Análises feitas
 - `fase-1-planejamento.md`: o que o Hermes faz e o achado de que a escuta passiva não é nativa.
 - `fase-1-whatsapp-baileys-hermes.md`: 12 problemas do cruzamento Baileys × bridge do Hermes e arquitetura.
 - `fase-1-memoria-hermes.md`: como o Hermes trata memória e a arquitetura em 3 camadas.
 - `fase-1-memoria-e-llm.md`: Hindsight × Mem0 × claude-mem × Obsidian; assinaturas × provedores.
+- `fase-1-audio.md`: Whisper local, teste de capacidade da máquina, riscos.
 
-## Riscos abertos (por gravidade)
-1. **Cota do ChatGPT Plus** descrita pela OpenAI como "algumas sessões focadas por semana"; limites exatos não vistos. Serviço 24h com texto + áudio + PDF pode estourar. Medir no spike; plano B definido (modelo local para extração em lote).
-2. **Termos de uso** da OpenAI para automação 24h com plano de consumidor: a OpenAI recomenda chave de API para automação; o provedor `chatgpt` do Hindsight exige "plano que permita uso em apps de terceiros" (Plus não confirmado).
-3. **Conta do WhatsApp:** cliente não oficial (Baileys); risco de restrição.
-4. **LGPD:** conversas de clientes processadas por LLM externo; base legal e retenção indefinidas.
-5. **Hindsight auto-hospedado:** há discussão pública de falha ao hospedar por conta própria; não lida ainda.
-6. **Versões:** Baileys v8 muda o formato de login; Hermes fixa Baileys 7.0.0-rc13.
+## Riscos avaliados e aceitos pelo usuário (2026-10-18)
+O usuário avaliou e decidiu seguir, com base em testes próprios: cota do ChatGPT Plus (fluxo majoritariamente texto, "não é muito"), termos de uso da assinatura em agentes externos, risco da conta do WhatsApp (o agente só escuta, não responde a terceiros nem dispara em massa), LGPD (confia no provedor) e bugs (testes automáticos de regressão em produção). Mantidos aqui só como pontos a **medir** no spike, não como bloqueios.
+
+Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13.
 
 ## O que falta
 **Etapas de planejamento (ordem proposta)**
-1. Áudio (STT): sem API paga, o provável é `faster-whisper` local (CPU); validar qualidade em português e custo de CPU.
+1. ~~Áudio (STT)~~: planejado em `fase-1-audio.md` (Whisper local; teste de capacidade). Falta o volume diário de áudios.
 2. PDF → .md: conversão fora do Hermes (o listener grava o arquivo); PDF escaneado exige OCR/visão.
 3. Relatórios: formato, horário, quem gera (cron do Hermes vs. listener) e quem entrega (listener, pela ponte Q).
 4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
