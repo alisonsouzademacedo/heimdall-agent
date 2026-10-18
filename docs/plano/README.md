@@ -17,10 +17,11 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D7 | LLM: **ChatGPT Plus para tudo** (texto, áudio, documentos); sem API paga | usuário |
 | D8 | Onde roda (local ou VPS): **decidir depois** | usuário |
 | D9 | Dados de clientes nunca vão para o git (`data/` ignorado) | análise |
+| D11 | PDF: **markitdown** (só PDF, quase sempre transcrições de reuniões); outros documentos e imagens ficam de fora por enquanto | usuário |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
 ## Biblioteca de documentação (no repo, para contexto)
-`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio) · `docs/faster-whisper/` (README, código, benchmarks). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
+`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio) · `docs/faster-whisper/` (README, código, benchmarks) · `docs/markitdown/` (README, pacotes, conversor de PDF). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
 
 ## Análises feitas
 - `fase-1-planejamento.md`: o que o Hermes faz e o achado de que a escuta passiva não é nativa.
@@ -28,6 +29,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-1-memoria-hermes.md`: como o Hermes trata memória e a arquitetura em 3 camadas.
 - `fase-1-memoria-e-llm.md`: Hindsight × Mem0 × claude-mem × Obsidian; assinaturas × provedores.
 - `fase-1-audio.md`: Whisper local, teste de capacidade da máquina, riscos.
+- `fase-1-pdf.md`: markitdown, escopo só PDF, segurança e fluxo.
 
 ## Riscos avaliados e aceitos pelo usuário (2026-10-18)
 O usuário avaliou e decidiu seguir, com base em testes próprios: cota do ChatGPT Plus (fluxo majoritariamente texto, "não é muito"), termos de uso da assinatura em agentes externos, risco da conta do WhatsApp (o agente só escuta, não responde a terceiros nem dispara em massa), LGPD (confia no provedor) e bugs (testes automáticos de regressão em produção). Mantidos aqui só como pontos a **medir** no spike, não como bloqueios.
@@ -37,7 +39,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 ## O que falta
 **Etapas de planejamento (ordem proposta)**
 1. ~~Áudio (STT)~~: planejado em `fase-1-audio.md` (Whisper local; teste de capacidade). Volume informado (poucos, até 3 min).
-2. PDF → .md: conversão fora do Hermes (o listener grava o arquivo); PDF escaneado exige OCR/visão.
+2. ~~PDF → .md~~: planejado em `fase-1-pdf.md` (markitdown). Faltam PDFs reais de amostra.
 3. Relatórios: formato, horário, quem gera (cron do Hermes vs. listener) e quem entrega (listener, pela ponte Q).
 4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
 5. Kanban/CRM (fase 2): qual CRM, tem API/MCP, funis e etapas.
