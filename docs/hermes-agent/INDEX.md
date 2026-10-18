@@ -1,0 +1,247 @@
+# Hermes Agent docs — índice
+
+Fonte: https://hermes-agent.nousresearch.com/docs/llms-full.txt (dividido por página).
+
+- [ACP Internals](developer-guide/acp-internals.md) — 6 KB
+- [Adding a Platform Adapter](developer-guide/adding-platform-adapters.md) — 43 KB
+- [Adding Providers](developer-guide/adding-providers.md) — 17 KB
+- [Adding Tools](developer-guide/adding-tools.md) — 6 KB
+- [Agent Loop Internals](developer-guide/agent-loop.md) — 11 KB
+- [Architecture](developer-guide/architecture.md) — 14 KB
+- [Billing Lifecycle (TUI)](developer-guide/billing-lifecycle.md) — 17 KB
+- [Browser Provider Plugins](developer-guide/browser-provider-plugin.md) — 6 KB
+- [Browser CDP Supervisor](developer-guide/browser-supervisor.md) — 12 KB
+- [Chronos Managed-Cron Contract](developer-guide/chronos-managed-cron-contract.md) — 12 KB
+- [CLI Internals](developer-guide/cli-internals.md) — 14 KB
+- [Codebase Ownership Map](developer-guide/codebase-ownership.md) — 3 KB
+- [Background completion backlogs](developer-guide/completion-backlog-delivery.md) — 2 KB
+- [Context Compression and Caching](developer-guide/context-compression-and-caching.md) — 46 KB
+- [Context Engine Plugins](developer-guide/context-engine-plugin.md) — 20 KB
+- [Contributing](developer-guide/contributing.md) — 23 KB
+- [Creating Skills](developer-guide/creating-skills.md) — 20 KB
+- [Cron Internals](developer-guide/cron-internals.md) — 28 KB
+- [Desktop Plugin SDK (@hermes/plugin-sdk)](developer-guide/desktop-plugin-sdk.md) — 105 KB
+- [Egress proxy internals](developer-guide/egress-internals.md) — 20 KB
+- [Extending the CLI](developer-guide/extending-the-cli.md) — 7 KB
+- [Classic gateway client](developer-guide/gateway-classic-cli.md) — 7 KB
+- [Gateway command parity](developer-guide/gateway-command-parity.md) — 15 KB
+- [Gateway Internals](developer-guide/gateway-internals.md) — 53 KB
+- [Gateway local sessions](developer-guide/gateway-local-sessions.md) — 14 KB
+- [Gateway Monitoring](developer-guide/gateway-monitoring.md) — 15 KB
+- [Gateway Session Lifecycle](developer-guide/gateway-session-lifecycle.md) — 33 KB
+- [Hosted rooms across local profile owners](developer-guide/hosted-profile-owners.md) — 3 KB
+- [Image Generation Provider Plugins](developer-guide/image-gen-provider-plugin.md) — 13 KB
+- [macOS bundle updates](developer-guide/macos-bundle-updates.md) — 4 KB
+- [Memory Provider Plugins](developer-guide/memory-provider-plugin.md) — 27 KB
+- [Micro-compaction](developer-guide/micro-compaction.md) — 19 KB
+- [Middleware](developer-guide/middleware.md) — 9 KB
+- [Model Provider Plugins](developer-guide/model-provider-plugin.md) — 41 KB
+- [Multiplexing Gateway Internals](developer-guide/multiplexing-gateway.md) — 19 KB
+- [Observer Hooks](developer-guide/observer-hooks.md) — 13 KB
+- [Plugin LLM Access](developer-guide/plugin-llm-access.md) — 21 KB
+- [Application declarations](developer-guide/plugins/application-declarations.md) — 8 KB
+- [Submitting to the Plugin Catalog](developer-guide/plugins/catalog-submission.md) — 14 KB
+- [Build a Hermes Plugin](developer-guide/plugins/index.md) — 118 KB
+- [PM audit remediation status](developer-guide/pm-audit-status.md) — 13 KB
+- [Programmatic Integration](developer-guide/programmatic-integration.md) — 20 KB
+- [Prompt Assembly](developer-guide/prompt-assembly.md) — 18 KB
+- [Provider Runtime Resolution](developer-guide/provider-runtime.md) — 10 KB
+- [Relay ↔ Connector Contract](developer-guide/relay-connector-contract.md) — 52 KB
+- [Relay Shared Metrics](developer-guide/relay-shared-metrics.md) — 87 KB
+- [Secret Source Plugins](developer-guide/secret-source-plugin.md) — 10 KB
+- [Session Storage](developer-guide/session-storage.md) — 31 KB
+- [Shared bundle builds](developer-guide/shared-bundle-builds.md) — 24 KB
+- [Source update completion ownership](developer-guide/source-update-completion.md) — 16 KB
+- [Stable release admission and promotion](developer-guide/stable-releases.md) — 32 KB
+- [State DB Recovery](developer-guide/state-db-recovery.md) — 4 KB
+- [Streaming TTS Internals](developer-guide/streaming-tts.md) — 5 KB
+- [Public Subagent Lifecycle API](developer-guide/subagent-lifecycle-api.md) — 4 KB
+- [Terminal Environment Provider Plugins](developer-guide/terminal-environment-plugin.md) — 5 KB
+- [Tools Runtime](developer-guide/tools-runtime.md) — 11 KB
+- [Trajectory Format](developer-guide/trajectory-format.md) — 8 KB
+- [Video Generation Provider Plugins](developer-guide/video-gen-provider-plugin.md) — 9 KB
+- [Web Search Provider Plugins](developer-guide/web-search-provider-plugin.md) — 11 KB
+- [TUI & Desktop from Worktrees](developer-guide/worktree-ui-dev.md) — 9 KB
+- [Installation](getting-started/installation.md) — 12 KB
+- [Learning Path](getting-started/learning-path.md) — 9 KB
+- [Nix & NixOS Setup](getting-started/nix-setup.md) — 53 KB
+- [Platform Support](getting-started/platform-support.md) — 5 KB
+- [Hermes Agent Quickstart](getting-started/quickstart.md) — 20 KB
+- [Android / Termux](getting-started/termux.md) — 5 KB
+- [Updating & Uninstalling](getting-started/updating.md) — 55 KB
+- [Give Your Agent Its Own Email Address](guides/agent-email-address.md) — 4 KB
+- [Automate Anything with Cron](guides/automate-with-cron.md) — 12 KB
+- [Automation Blueprints](guides/automation-blueprints.md) — 19 KB
+- [AWS Bedrock](guides/aws-bedrock.md) — 11 KB
+- [Microsoft Foundry](guides/azure-foundry.md) — 23 KB
+- [Script-Only Cron Jobs (No LLM)](guides/cron-script-only.md) — 12 KB
+- [Cron Troubleshooting](guides/cron-troubleshooting.md) — 10 KB
+- [Tutorial: Daily Briefing Bot](guides/daily-briefing-bot.md) — 10 KB
+- [Delegation & Parallel Work](guides/delegation-patterns.md) — 11 KB
+- [Desktop Native Sign-In (RFC 8252)](guides/desktop-native-signin.md) — 5 KB
+- [Tutorial: GitHub PR Review Agent](guides/github-pr-review-agent.md) — 8 KB
+- [Google Gemini](guides/google-gemini.md) — 14 KB
+- [Google Vertex AI](guides/google-vertex.md) — 6 KB
+- [Run Local LLMs on Mac](guides/local-llm-on-mac.md) — 9 KB
+- [Run Hermes Locally with Ollama — Zero API Cost](guides/local-ollama-setup.md) — 13 KB
+- [Manage Hermes Cloud with MCP](guides/manage-hermes-cloud-with-mcp.md) — 7 KB
+- [Register a Microsoft Graph Application](guides/microsoft-graph-app-registration.md) — 8 KB
+- [Migrate from OpenClaw](guides/migrate-from-openclaw.md) — 15 KB
+- [MiniMax OAuth](guides/minimax-oauth.md) — 8 KB
+- [OAuth over SSH / Remote Hosts](guides/oauth-over-ssh.md) — 9 KB
+- [Operate the Teams Meeting Pipeline](guides/operate-teams-meeting-pipeline.md) — 8 KB
+- [Pipe Script Output to Messaging Platforms](guides/pipe-script-output.md) — 9 KB
+- [Using Hermes as a Python Library](guides/python-library.md) — 10 KB
+- [Run Hermes Agent with Nous Portal](guides/run-hermes-with-nous-portal.md) — 11 KB
+- [Run Nemotron 3 Ultra free in Hermes Agent](guides/run-nemotron-3-ultra-free.md) — 4 KB
+- [Running Hermes on a Personal or Work Machine](guides/secure-hermes-on-a-work-machine.md) — 10 KB
+- [Tutorial: Team Telegram Assistant](guides/team-telegram-assistant.md) — 13 KB
+- [Tips & Best Practices](guides/tips.md) — 12 KB
+- [Troubleshooting: \"My Agent Feels Dumber\"](guides/troubleshooting-agent-quality.md) — 10 KB
+- [Use MCP with Hermes](guides/use-mcp-with-hermes.md) — 14 KB
+- [Use SOUL.md with Hermes](guides/use-soul-with-hermes.md) — 7 KB
+- [Use Voice Mode with Hermes](guides/use-voice-mode-with-hermes.md) — 10 KB
+- [Automated GitHub PR Comments with Webhooks](guides/webhook-github-pr-review.md) — 14 KB
+- [Working with Skills](guides/work-with-skills.md) — 8 KB
+- [xAI Grok OAuth (SuperGrok / X Premium+)](guides/xai-grok-oauth.md) — 11 KB
+- [Buzz Integration](integrations/buzz.md) — 3 KB
+- [Integrations](integrations/index.md) — 10 KB
+- [Nous Portal](integrations/nous-portal.md) — 15 KB
+- [LLM and Model Providers](integrations/providers.md) — 98 KB
+- [Automation Blueprints Catalog](reference/automation-blueprints-catalog.md) — 2 KB
+- [CLI Commands Reference](reference/cli-commands.md) — 132 KB
+- [CLI Symbols Glossary](reference/cli-symbols.md) — 5 KB
+- [Environment Variables](reference/environment-variables.md) — 109 KB
+- [FAQ & Troubleshooting](reference/faq.md) — 42 KB
+- [MCP Config Reference](reference/mcp-config-reference.md) — 22 KB
+- [Model Catalog](reference/model-catalog.md) — 6 KB
+- [Optional Skills Catalog](reference/optional-skills-catalog.md) — 25 KB
+- [Package Management](reference/package-management.md) — 34 KB
+- [Profile Commands Reference](reference/profile-commands.md) — 23 KB
+- [Bundled Skills Catalog](reference/skills-catalog.md) — 12 KB
+- [Slash Commands Reference](reference/slash-commands.md) — 48 KB
+- [Built-in Tools Reference](reference/tools-reference.md) — 42 KB
+- [Toolsets Reference](reference/toolsets-reference.md) — 14 KB
+- [Bot Mode](user-guide/bot-mode.md) — 52 KB
+- [Checkpoints and /rollback](user-guide/checkpoints-and-rollback.md) — 13 KB
+- [CLI Interface](user-guide/cli.md) — 35 KB
+- [Hermes Agent Configuration](user-guide/configuration.md) — 246 KB
+- [Configuring Models](user-guide/configuring-models.md) — 28 KB
+- [Hermes Desktop](user-guide/desktop.md) — 91 KB
+- [Hermes Docker Setup](user-guide/docker.md) — 54 KB
+- [Egress proxy](user-guide/egress/index.md) — 0 KB
+- [Egress credential-injection proxy (iron-proxy)](user-guide/egress/iron-proxy.md) — 39 KB
+- [Network Egress Isolation (Docker)](user-guide/egress/network-isolation.md) — 6 KB
+- [ACP Host Integration](user-guide/features/acp.md) — 17 KB
+- [API Server](user-guide/features/api-server.md) — 55 KB
+- [Batch Processing](user-guide/features/batch-processing.md) — 8 KB
+- [Bot Screen](user-guide/features/bot-screen.md) — 25 KB
+- [Browser Automation](user-guide/features/browser.md) — 50 KB
+- [Built-in Plugins](user-guide/features/built-in-plugins.md) — 20 KB
+- [Code Execution](user-guide/features/code-execution.md) — 15 KB
+- [Codex App-Server Runtime (optional)](user-guide/features/codex-app-server-runtime.md) — 37 KB
+- [Computer Use](user-guide/features/computer-use.md) — 34 KB
+- [Context Files](user-guide/features/context-files.md) — 12 KB
+- [Context References](user-guide/features/context-references.md) — 5 KB
+- [Credential Pools](user-guide/features/credential-pools.md) — 21 KB
+- [Passwords & Logins](user-guide/features/credential-vault.md) — 5 KB
+- [Scheduled Tasks (Cron)](user-guide/features/cron.md) — 79 KB
+- [Curator](user-guide/features/curator.md) — 26 KB
+- [Subagent Delegation](user-guide/features/delegation.md) — 53 KB
+- [Deliverable Mode (Artifacts in Chat)](user-guide/features/deliverable-mode.md) — 5 KB
+- [Document Extraction](user-guide/features/document-extraction.md) — 4 KB
+- [Extending the Dashboard](user-guide/features/extending-the-dashboard.md) — 42 KB
+- [Fallback Providers](user-guide/features/fallback-providers.md) — 26 KB
+- [Persistent Goals](user-guide/features/goals.md) — 22 KB
+- [Session Heartbeats](user-guide/features/heartbeat.md) — 5 KB
+- [Honcho Memory](user-guide/features/honcho.md) — 20 KB
+- [Event Hooks](user-guide/features/hooks.md) — 129 KB
+- [Image Generation](user-guide/features/image-generation.md) — 20 KB
+- [Kanban Multi-Gateway Deployment](user-guide/features/kanban-multi-gateway.md) — 2 KB
+- [Kanban tutorial](user-guide/features/kanban-tutorial.md) — 20 KB
+- [Kanban worker lanes](user-guide/features/kanban-worker-lanes.md) — 13 KB
+- [Kanban (Multi-Agent Board)](user-guide/features/kanban.md) — 123 KB
+- [Language Packs](user-guide/features/language-packs.md) — 6 KB
+- [Recurring Loops](user-guide/features/loops.md) — 8 KB
+- [LSP — Semantic Diagnostics](user-guide/features/lsp.md) — 23 KB
+- [MCP (Model Context Protocol)](user-guide/features/mcp.md) — 52 KB
+- [Memory Providers](user-guide/features/memory-providers.md) — 47 KB
+- [Persistent Memory](user-guide/features/memory.md) — 31 KB
+- [Mixture of Agents](user-guide/features/mixture-of-agents.md) — 14 KB
+- [Features Overview](user-guide/features/overview.md) — 7 KB
+- [Personality & SOUL.md](user-guide/features/personality.md) — 9 KB
+- [Pets (Petdex Mascots)](user-guide/features/pets.md) — 10 KB
+- [Plugin Catalog](user-guide/features/plugin-catalog.md) — 16 KB
+- [Plugins](user-guide/features/plugins.md) — 69 KB
+- [Provider Routing](user-guide/features/provider-routing.md) — 7 KB
+- [Skills System](user-guide/features/skills.md) — 57 KB
+- [Skins & Themes](user-guide/features/skins.md) — 13 KB
+- [Spotify](user-guide/features/spotify.md) — 14 KB
+- [Subscription Proxy](user-guide/features/subscription-proxy.md) — 6 KB
+- [Nous Tool Gateway](user-guide/features/tool-gateway.md) — 16 KB
+- [Tool Search](user-guide/features/tool-search.md) — 18 KB
+- [Tools & Toolsets](user-guide/features/tools.md) — 17 KB
+- [Voice & TTS](user-guide/features/tts.md) — 47 KB
+- [Vision & Image Paste](user-guide/features/vision.md) — 16 KB
+- [Voice Mode](user-guide/features/voice-mode.md) — 33 KB
+- [Wake Word](user-guide/features/wake-word.md) — 16 KB
+- [Hermes Web Dashboard](user-guide/features/web-dashboard.md) — 81 KB
+- [Web Search & Extract](user-guide/features/web-search.md) — 24 KB
+- [X (Twitter) Search](user-guide/features/x-search.md) — 9 KB
+- [Git Worktrees](user-guide/git-worktrees.md) — 6 KB
+- [Import from Other Agents](user-guide/import-from-other-agents.md) — 4 KB
+- [Local Models](user-guide/local-models.md) — 9 KB
+- [Managed Scope](user-guide/managed-scope.md) — 5 KB
+- [A2A (Agent-to-Agent)](user-guide/messaging/a2a.md) — 8 KB
+- [BlueBubbles (iMessage)](user-guide/messaging/bluebubbles.md) — 12 KB
+- [Buzz](user-guide/messaging/buzz.md) — 11 KB
+- [DingTalk](user-guide/messaging/dingtalk.md) — 11 KB
+- [Discord](user-guide/messaging/discord.md) — 61 KB
+- [Email](user-guide/messaging/email.md) — 13 KB
+- [Feishu / Lark](user-guide/messaging/feishu.md) — 30 KB
+- [Google Chat](user-guide/messaging/google_chat.md) — 16 KB
+- [Home Assistant](user-guide/messaging/homeassistant.md) — 12 KB
+- [Messaging Gateway](user-guide/messaging/index.md) — 58 KB
+- [IRC](user-guide/messaging/irc.md) — 3 KB
+- [LINE](user-guide/messaging/line.md) — 8 KB
+- [Matrix](user-guide/messaging/matrix.md) — 38 KB
+- [Mattermost](user-guide/messaging/mattermost.md) — 13 KB
+- [Microsoft Graph Webhook Listener](user-guide/messaging/msgraph-webhook.md) — 8 KB
+- [ntfy](user-guide/messaging/ntfy.md) — 7 KB
+- [Open WebUI](user-guide/messaging/open-webui.md) — 12 KB
+- [Photon iMessage](user-guide/messaging/photon.md) — 9 KB
+- [QQ Bot](user-guide/messaging/qqbot.md) — 4 KB
+- [Raft](user-guide/messaging/raft.md) — 3 KB
+- [Hermes Relay](user-guide/messaging/relay.md) — 11 KB
+- [Signal](user-guide/messaging/signal.md) — 10 KB
+- [SimpleX Chat](user-guide/messaging/simplex.md) — 6 KB
+- [Slack](user-guide/messaging/slack.md) — 55 KB
+- [SMS (Twilio)](user-guide/messaging/sms.md) — 6 KB
+- [Teams Meetings](user-guide/messaging/teams-meetings.md) — 8 KB
+- [Microsoft Teams](user-guide/messaging/teams.md) — 12 KB
+- [Telegram](user-guide/messaging/telegram.md) — 76 KB
+- [Webhooks](user-guide/messaging/webhooks.md) — 35 KB
+- [WeCom Callback (Self-Built App)](user-guide/messaging/wecom-callback.md) — 7 KB
+- [WeCom (Enterprise WeChat)](user-guide/messaging/wecom.md) — 13 KB
+- [Weixin (WeChat)](user-guide/messaging/weixin.md) — 18 KB
+- [WhatsApp Business (Cloud API)](user-guide/messaging/whatsapp-cloud.md) — 23 KB
+- [WhatsApp](user-guide/messaging/whatsapp.md) — 17 KB
+- [Yuanbao](user-guide/messaging/yuanbao.md) — 10 KB
+- [Connecting Desktop to Many Hermes Instances](user-guide/multi-connection-desktop.md) — 21 KB
+- [Running Many Gateways at Once](user-guide/multi-profile-gateways.md) — 76 KB
+- [Profile Distributions: Share a Whole Agent](user-guide/profile-distributions.md) — 33 KB
+- [Profiles: Running Multiple Agents](user-guide/profiles.md) — 25 KB
+- [Bitwarden Secrets Manager](user-guide/secrets/bitwarden.md) — 10 KB
+- [Command Helper Secret Source](user-guide/secrets/command.md) — 3 KB
+- [Secrets](user-guide/secrets/index.md) — 5 KB
+- [1Password](user-guide/secrets/onepassword.md) — 11 KB
+- [Security](user-guide/security.md) — 63 KB
+- [Session Storage Recovery](user-guide/session-storage-recovery.md) — 6 KB
+- [Sessions](user-guide/sessions.md) — 67 KB
+- [Google Workspace — Gmail, Calendar, Drive, Sheets & Docs](user-guide/skills/google-workspace.md) — 6 KB
+- [Switching to a Source Install](user-guide/switching-to-source.md) — 6 KB
+- [TUI](user-guide/tui.md) — 20 KB
+- [Which File Does What?](user-guide/which-file-does-what.md) — 6 KB
+- [Windows (Native) Guide](user-guide/windows-native.md) — 24 KB
+- [Windows (WSL2) Guide](user-guide/windows-wsl-quickstart.md) — 19 KB
+- [User Stories & Use Cases](user-stories.md) — 0 KB
