@@ -1,0 +1,108 @@
+<!-- source: https://hindsight.vectorize.io/cookbook/applications/go-memory-service -->
+[Skip to main content](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#__docusaurus_skipToContent_fallback)
+
+New: **Introducing Hindsight Memlake**, serving 100M memories at <100ms p99 on object storage. [Read the post →](https://hindsight.vectorize.io/blog/2026/10/13/memlake)
+
+Complete Application
+
+This is a complete, runnable application demonstrating Hindsight integration.
+[**View source on GitHub →**](https://github.com/vectorize-io/hindsight-cookbook/tree/main/applications/go-memory-service)
+
+A Go HTTP microservice demonstrating per-user memory isolation with Hindsight. Remembers each user's tech stack, problems solved, and preferences to provide personalized assistance.
+
+## Features [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#features "Direct link to Features")
+
+- 🔐 **Per-User Isolation**: Each user gets their own memory bank
+- 🧠 **Context-Aware Responses**: Uses recall + reflect for personalized answers
+- 🏃 **Fire-and-Forget Memory**: Background goroutines store interactions without blocking responses
+- 🏷️ **Tag-Based Partitioning**: Organize memories by type (projects, debugging, preferences)
+
+## Setup [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#setup "Direct link to Setup")
+
+### 1\. Start Hindsight [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#1-start-hindsight "Direct link to 1. Start Hindsight")
+
+```bash
+export OPENAI_API_KEY=your-key
+
+docker run --rm -it --pull always -p 8888:8888 -p 9999:9999 \
+  -e HINDSIGHT_API_LLM_API_KEY=$OPENAI_API_KEY \
+  -e HINDSIGHT_API_LLM_MODEL=o3-mini \
+  -v $HOME/.hindsight-docker:/home/hindsight/.pg0 \
+  ghcr.io/vectorize-io/hindsight:latest
+```
+
+### 2\. Run the service [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#2-run-the-service "Direct link to 2. Run the service")
+
+```bash
+go run main.go
+```
+
+### 3\. Try it out [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#3-try-it-out "Direct link to 3. Try it out")
+
+```bash
+# Store memories
+curl -s localhost:8080/learn -d '{
+  "user_id": "alice",
+  "content": "I am building a Go microservice with gRPC and PostgreSQL",
+  "tags": ["project"]
+}'
+
+curl -s localhost:8080/learn -d '{
+  "user_id": "alice",
+  "content": "I prefer structured logging with slog over zerolog",
+  "tags": ["preferences"]
+}'
+
+# Ask questions (uses recall + reflect)
+curl -s localhost:8080/ask -d '{
+  "user_id": "alice",
+  "query": "What tech stack am I using?"
+}' | jq .
+
+# Raw memory recall
+curl -s "localhost:8080/recall/alice?q=database" | jq .
+```
+
+## API Endpoints [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#api-endpoints "Direct link to API Endpoints")
+
+- `POST /learn` \- Store new information for a user
+- `POST /ask` \- Ask a question using the user's memories
+- `GET /recall/{userID}?q=query` \- Direct memory recall
+- `GET /health` \- Health check
+
+## Key Patterns [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#key-patterns "Direct link to Key Patterns")
+
+**Per-User Banks**: Each user gets an isolated memory bank (`user-alice`, `user-bob`)
+
+**Async Memory Storage**: Interactions are stored in background goroutines:
+
+```go
+go func() {
+    bgCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    retainReq := hindsight.RetainRequest{
+        Items: []hindsight.MemoryItem{{
+            Content: interaction,
+            Context: *hindsight.NewNullableString(hindsight.PtrString("Q&A interaction")),
+        }},
+    }
+    client.MemoryAPI.RetainMemories(bgCtx, bankID).RetainRequest(retainReq).Execute()
+}()
+```
+
+**Tag-Based Filtering**: Partition memories within a bank by type for scoped retrieval
+
+## Learn More [​](https://hindsight.vectorize.io/cookbook/applications/go-memory-service\#learn-more "Direct link to Learn More")
+
+- [Go SDK Documentation](https://hindsight.vectorize.io/sdks/go)
+- [Hindsight Documentation](https://hindsight.vectorize.io/)
+
+- [Features](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#features)
+- [Setup](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#setup)
+  - [1\. Start Hindsight](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#1-start-hindsight)
+  - [2\. Run the service](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#2-run-the-service)
+  - [3\. Try it out](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#3-try-it-out)
+- [API Endpoints](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#api-endpoints)
+- [Key Patterns](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#key-patterns)
+- [Learn More](https://hindsight.vectorize.io/cookbook/applications/go-memory-service#learn-more)

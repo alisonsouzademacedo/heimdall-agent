@@ -1,4 +1,4 @@
-<!-- source: https://learn.chatgpt.com/docs/developer-commands?surface=cli.md -->
+<!-- source: https://learn.chatgpt.com/docs/developer-commands?surface=cli -->
 # Developer commands
 
 > For the complete documentation index, see [llms.txt](https://learn.chatgpt.com/llms.txt). Markdown versions of documentation pages are available by appending `.md` to the page URL.
