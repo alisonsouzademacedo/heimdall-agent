@@ -1,0 +1,18 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/CallLogMessage/overview -->
+# CallLogMessage
+Source: https://baileys.wiki/proto-reference/Message/CallLogMessage/overview
+
+Protobuf symbol CallLogMessage generated from WAProto.
+
+## Enumerations
+
+* [CallOutcome](/proto-reference/Message/CallLogMessage/enumerations/CallOutcome)
+* [CallType](/proto-reference/Message/CallLogMessage/enumerations/CallType)
+
+## Classes
+
+* [CallParticipant](/proto-reference/Message/CallLogMessage/classes/CallParticipant)
+
+## Interfaces
+
+* [ICallParticipant](/proto-reference/Message/CallLogMessage/interfaces/ICallParticipant)

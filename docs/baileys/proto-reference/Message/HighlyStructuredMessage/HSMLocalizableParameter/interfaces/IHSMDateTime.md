@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/interfaces/IHSMDateTime -->
+# IHSMDateTime
+Source: https://baileys.wiki/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/interfaces/IHSMDateTime
+
+Protobuf interface IHSMDateTime generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6472](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6472)
+
+## Properties
+
+### component?
+
+> `optional` **component**: `null` | [`IHSMDateTimeComponent`](/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/interfaces/IHSMDateTimeComponent)
+
+Defined in: [WAProto/index.d.ts:6473](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6473)
+
+***
+
+### unixEpoch?
+
+> `optional` **unixEpoch**: `null` | [`IHSMDateTimeUnixEpoch`](/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/interfaces/IHSMDateTimeUnixEpoch)
+
+Defined in: [WAProto/index.d.ts:6474](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6474)

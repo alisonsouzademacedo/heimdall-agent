@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ISyncActionMessageRange -->
+# ISyncActionMessageRange
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ISyncActionMessageRange
+
+Protobuf interface ISyncActionMessageRange generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12840](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12840)
+
+## Properties
+
+### lastMessageTimestamp?
+
+> `optional` **lastMessageTimestamp**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:12841](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12841)
+
+***
+
+### lastSystemMessageTimestamp?
+
+> `optional` **lastSystemMessageTimestamp**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:12842](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12842)
+
+***
+
+### messages?
+
+> `optional` **messages**: `null` | [`ISyncActionMessage`](/proto-reference/SyncActionValue/interfaces/ISyncActionMessage)\[]
+
+Defined in: [WAProto/index.d.ts:12843](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12843)

@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/DeviceCapabilities/enumerations/ChatLockSupportLevel -->
+# ChatLockSupportLevel
+Source: https://baileys.wiki/proto-reference/DeviceCapabilities/enumerations/ChatLockSupportLevel
+
+Protobuf enumeration ChatLockSupportLevel generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:3774](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L3774)
+
+## Enumeration Members
+
+### FULL
+
+> **FULL**: `2`
+
+Defined in: [WAProto/index.d.ts:3777](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L3777)
+
+***
+
+### MINIMAL
+
+> **MINIMAL**: `1`
+
+Defined in: [WAProto/index.d.ts:3776](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L3776)
+
+***
+
+### NONE
+
+> **NONE**: `0`
+
+Defined in: [WAProto/index.d.ts:3775](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L3775)

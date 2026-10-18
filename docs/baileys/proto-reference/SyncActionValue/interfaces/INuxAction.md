@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/INuxAction -->
+# INuxAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/INuxAction
+
+Protobuf interface INuxAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12436](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12436)
+
+## Properties
+
+### acknowledged?
+
+> `optional` **acknowledged**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:12437](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12437)

@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/PeerDataOperationRequestResponseMessage/PeerDataOperationResult/interfaces/ISyncDSnapshotFatalRecoveryResponse -->
+# ISyncDSnapshotFatalRecoveryResponse
+Source: https://baileys.wiki/proto-reference/Message/PeerDataOperationRequestResponseMessage/PeerDataOperationResult/interfaces/ISyncDSnapshotFatalRecoveryResponse
+
+Protobuf interface ISyncDSnapshotFatalRecoveryResponse generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8189](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8189)
+
+## Properties
+
+### collectionSnapshot?
+
+> `optional` **collectionSnapshot**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:8190](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8190)
+
+***
+
+### isCompressed?
+
+> `optional` **isCompressed**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:8191](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8191)

@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/HSMDateTimeComponent/enumerations/CalendarType -->
+# CalendarType
+Source: https://baileys.wiki/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/HSMDateTimeComponent/enumerations/CalendarType
+
+Protobuf enumeration CalendarType generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6523](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6523)
+
+## Enumeration Members
+
+### GREGORIAN
+
+> **GREGORIAN**: `1`
+
+Defined in: [WAProto/index.d.ts:6524](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6524)
+
+***
+
+### SOLAR\_HIJRI
+
+> **SOLAR\_HIJRI**: `2`
+
+Defined in: [WAProto/index.d.ts:6525](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6525)

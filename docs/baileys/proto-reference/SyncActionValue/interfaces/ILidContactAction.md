@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ILidContactAction -->
+# ILidContactAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ILidContactAction
+
+Protobuf interface ILidContactAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12148](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12148)
+
+## Properties
+
+### firstName?
+
+> `optional` **firstName**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:12150](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12150)
+
+***
+
+### fullName?
+
+> `optional` **fullName**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:12149](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12149)
+
+***
+
+### username?
+
+> `optional` **username**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:12151](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12151)

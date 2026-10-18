@@ -1,0 +1,22 @@
+<!-- source: https://baileys.wiki/proto-reference/DeviceCapabilities/overview -->
+# DeviceCapabilities
+Source: https://baileys.wiki/proto-reference/DeviceCapabilities/overview
+
+Protobuf symbol DeviceCapabilities generated from WAProto.
+
+## Enumerations
+
+* [ChatLockSupportLevel](/proto-reference/DeviceCapabilities/enumerations/ChatLockSupportLevel)
+* [MemberNameTagPrimarySupport](/proto-reference/DeviceCapabilities/enumerations/MemberNameTagPrimarySupport)
+
+## Classes
+
+* [BusinessBroadcast](/proto-reference/DeviceCapabilities/classes/BusinessBroadcast)
+* [LIDMigration](/proto-reference/DeviceCapabilities/classes/LIDMigration)
+* [UserHasAvatar](/proto-reference/DeviceCapabilities/classes/UserHasAvatar)
+
+## Interfaces
+
+* [IBusinessBroadcast](/proto-reference/DeviceCapabilities/interfaces/IBusinessBroadcast)
+* [ILIDMigration](/proto-reference/DeviceCapabilities/interfaces/ILIDMigration)
+* [IUserHasAvatar](/proto-reference/DeviceCapabilities/interfaces/IUserHasAvatar)

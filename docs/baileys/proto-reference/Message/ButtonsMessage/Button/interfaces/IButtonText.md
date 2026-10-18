@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ButtonsMessage/Button/interfaces/IButtonText -->
+# IButtonText
+Source: https://baileys.wiki/proto-reference/Message/ButtonsMessage/Button/interfaces/IButtonText
+
+Protobuf interface IButtonText generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:5675](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L5675)
+
+## Properties
+
+### displayText?
+
+> `optional` **displayText**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:5676](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L5676)

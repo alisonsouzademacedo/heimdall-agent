@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ICustomPaymentMethodsAction -->
+# ICustomPaymentMethodsAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ICustomPaymentMethodsAction
+
+Protobuf interface ICustomPaymentMethodsAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:11894](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11894)
+
+## Properties
+
+### customPaymentMethods?
+
+> `optional` **customPaymentMethods**: `null` | [`ICustomPaymentMethod`](/proto-reference/SyncActionValue/interfaces/ICustomPaymentMethod)\[]
+
+Defined in: [WAProto/index.d.ts:11895](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11895)

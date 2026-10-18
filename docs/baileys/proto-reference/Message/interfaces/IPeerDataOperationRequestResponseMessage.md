@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IPeerDataOperationRequestResponseMessage -->
+# IPeerDataOperationRequestResponseMessage
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IPeerDataOperationRequestResponseMessage
+
+Protobuf interface IPeerDataOperationRequestResponseMessage generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7939](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7939)
+
+## Properties
+
+### peerDataOperationRequestType?
+
+> `optional` **peerDataOperationRequestType**: `null` | [`PeerDataOperationRequestType`](/proto-reference/Message/enumerations/PeerDataOperationRequestType)
+
+Defined in: [WAProto/index.d.ts:7940](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7940)
+
+***
+
+### peerDataOperationResult?
+
+> `optional` **peerDataOperationResult**: `null` | [`IPeerDataOperationResult`](/proto-reference/Message/PeerDataOperationRequestResponseMessage/interfaces/IPeerDataOperationResult)\[]
+
+Defined in: [WAProto/index.d.ts:7942](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7942)
+
+***
+
+### stanzaId?
+
+> `optional` **stanzaId**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:7941](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7941)

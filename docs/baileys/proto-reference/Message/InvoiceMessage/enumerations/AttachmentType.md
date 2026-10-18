@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/InvoiceMessage/enumerations/AttachmentType -->
+# AttachmentType
+Source: https://baileys.wiki/proto-reference/Message/InvoiceMessage/enumerations/AttachmentType
+
+Protobuf enumeration AttachmentType generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7064](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7064)
+
+## Enumeration Members
+
+### IMAGE
+
+> **IMAGE**: `0`
+
+Defined in: [WAProto/index.d.ts:7065](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7065)
+
+***
+
+### PDF
+
+> **PDF**: `1`
+
+Defined in: [WAProto/index.d.ts:7066](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7066)

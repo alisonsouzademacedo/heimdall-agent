@@ -1,0 +1,19 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/overview -->
+# HSMDateTime
+Source: https://baileys.wiki/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/overview
+
+Protobuf symbol HSMDateTime generated from WAProto.
+
+## Namespaces
+
+* [HSMDateTimeComponent](/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/HSMDateTimeComponent/overview)
+
+## Classes
+
+* [HSMDateTimeComponent](/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/classes/HSMDateTimeComponent)
+* [HSMDateTimeUnixEpoch](/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/classes/HSMDateTimeUnixEpoch)
+
+## Interfaces
+
+* [IHSMDateTimeComponent](/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/interfaces/IHSMDateTimeComponent)
+* [IHSMDateTimeUnixEpoch](/proto-reference/Message/HighlyStructuredMessage/HSMLocalizableParameter/HSMDateTime/interfaces/IHSMDateTimeUnixEpoch)

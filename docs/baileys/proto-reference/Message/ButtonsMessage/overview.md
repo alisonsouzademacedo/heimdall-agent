@@ -1,0 +1,21 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ButtonsMessage/overview -->
+# ButtonsMessage
+Source: https://baileys.wiki/proto-reference/Message/ButtonsMessage/overview
+
+Protobuf symbol ButtonsMessage generated from WAProto.
+
+## Namespaces
+
+* [Button](/proto-reference/Message/ButtonsMessage/Button/overview)
+
+## Enumerations
+
+* [HeaderType](/proto-reference/Message/ButtonsMessage/enumerations/HeaderType)
+
+## Classes
+
+* [Button](/proto-reference/Message/ButtonsMessage/classes/Button)
+
+## Interfaces
+
+* [IButton](/proto-reference/Message/ButtonsMessage/interfaces/IButton)

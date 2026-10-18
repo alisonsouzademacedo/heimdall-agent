@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ListMessage/interfaces/IProductListInfo -->
+# IProductListInfo
+Source: https://baileys.wiki/proto-reference/Message/ListMessage/interfaces/IProductListInfo
+
+Protobuf interface IProductListInfo generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7206](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7206)
+
+## Properties
+
+### businessOwnerJid?
+
+> `optional` **businessOwnerJid**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:7209](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7209)
+
+***
+
+### headerImage?
+
+> `optional` **headerImage**: `null` | [`IProductListHeaderImage`](/proto-reference/Message/ListMessage/interfaces/IProductListHeaderImage)
+
+Defined in: [WAProto/index.d.ts:7208](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7208)
+
+***
+
+### productSections?
+
+> `optional` **productSections**: `null` | [`IProductSection`](/proto-reference/Message/ListMessage/interfaces/IProductSection)\[]
+
+Defined in: [WAProto/index.d.ts:7207](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7207)

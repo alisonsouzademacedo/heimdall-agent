@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IMuteAction -->
+# IMuteAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IMuteAction
+
+Protobuf interface IMuteAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12342](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12342)
+
+## Properties
+
+### autoMuted?
+
+> `optional` **autoMuted**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:12345](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12345)
+
+***
+
+### muted?
+
+> `optional` **muted**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:12343](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12343)
+
+***
+
+### muteEndTimestamp?
+
+> `optional` **muteEndTimestamp**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:12344](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12344)

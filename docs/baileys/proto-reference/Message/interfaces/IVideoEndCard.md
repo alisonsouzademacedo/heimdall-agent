@@ -1,0 +1,39 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IVideoEndCard -->
+# IVideoEndCard
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IVideoEndCard
+
+Protobuf interface IVideoEndCard generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:9294](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L9294)
+
+## Properties
+
+### caption?
+
+> `optional` **caption**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:9296](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L9296)
+
+***
+
+### profilePictureUrl?
+
+> `optional` **profilePictureUrl**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:9298](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L9298)
+
+***
+
+### thumbnailImageUrl?
+
+> `optional` **thumbnailImageUrl**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:9297](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L9297)
+
+***
+
+### username?
+
+> `optional` **username**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:9295](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L9295)

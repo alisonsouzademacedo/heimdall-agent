@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/GroupInviteMessage/enumerations/GroupType -->
+# GroupType
+Source: https://baileys.wiki/proto-reference/Message/GroupInviteMessage/enumerations/GroupType
+
+Protobuf enumeration GroupType generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6391](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6391)
+
+## Enumeration Members
+
+### DEFAULT
+
+> **DEFAULT**: `0`
+
+Defined in: [WAProto/index.d.ts:6392](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6392)
+
+***
+
+### PARENT
+
+> **PARENT**: `1`
+
+Defined in: [WAProto/index.d.ts:6393](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6393)

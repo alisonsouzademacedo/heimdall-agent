@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IInitialSecurityNotificationSettingSync -->
+# IInitialSecurityNotificationSettingSync
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IInitialSecurityNotificationSettingSync
+
+Protobuf interface IInitialSecurityNotificationSettingSync generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6716](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6716)
+
+## Properties
+
+### securityNotificationEnabled?
+
+> `optional` **securityNotificationEnabled**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:6717](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6717)

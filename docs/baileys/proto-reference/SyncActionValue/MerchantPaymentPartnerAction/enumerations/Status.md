@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/MerchantPaymentPartnerAction/enumerations/Status -->
+# Status
+Source: https://baileys.wiki/proto-reference/SyncActionValue/MerchantPaymentPartnerAction/enumerations/Status
+
+Protobuf enumeration Status generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12318](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12318)
+
+## Enumeration Members
+
+### ACTIVE
+
+> **ACTIVE**: `0`
+
+Defined in: [WAProto/index.d.ts:12319](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12319)
+
+***
+
+### INACTIVE
+
+> **INACTIVE**: `1`
+
+Defined in: [WAProto/index.d.ts:12320](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12320)

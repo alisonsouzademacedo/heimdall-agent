@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IPinInChatMessage -->
+# IPinInChatMessage
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IPinInChatMessage
+
+Protobuf interface IPinInChatMessage generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8242](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8242)
+
+## Properties
+
+### key?
+
+> `optional` **key**: `null` | [`IMessageKey`](/proto-reference/interfaces/IMessageKey)
+
+Defined in: [WAProto/index.d.ts:8243](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8243)
+
+***
+
+### senderTimestampMs?
+
+> `optional` **senderTimestampMs**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:8245](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8245)
+
+***
+
+### type?
+
+> `optional` **type**: `null` | [`Type`](/proto-reference/Message/PinInChatMessage/enumerations/Type)
+
+Defined in: [WAProto/index.d.ts:8244](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8244)

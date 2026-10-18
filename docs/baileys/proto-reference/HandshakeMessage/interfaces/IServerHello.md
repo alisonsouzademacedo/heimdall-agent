@@ -1,0 +1,39 @@
+<!-- source: https://baileys.wiki/proto-reference/HandshakeMessage/interfaces/IServerHello -->
+# IServerHello
+Source: https://baileys.wiki/proto-reference/HandshakeMessage/interfaces/IServerHello
+
+Protobuf interface IServerHello generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:4494](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4494)
+
+## Properties
+
+### ephemeral?
+
+> `optional` **ephemeral**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:4495](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4495)
+
+***
+
+### extendedStatic?
+
+> `optional` **extendedStatic**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:4498](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4498)
+
+***
+
+### payload?
+
+> `optional` **payload**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:4497](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4497)
+
+***
+
+### static?
+
+> `optional` **static**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:4496](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4496)

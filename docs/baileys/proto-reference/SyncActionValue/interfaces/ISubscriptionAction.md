@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ISubscriptionAction -->
+# ISubscriptionAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/ISubscriptionAction
+
+Protobuf interface ISubscriptionAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12802](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12802)
+
+## Properties
+
+### expirationDate?
+
+> `optional` **expirationDate**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:12805](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12805)
+
+***
+
+### isAutoRenewing?
+
+> `optional` **isAutoRenewing**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:12804](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12804)
+
+***
+
+### isDeactivated?
+
+> `optional` **isDeactivated**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:12803](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12803)

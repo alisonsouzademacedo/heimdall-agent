@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IPrivacySettingDisableLinkPreviewsAction -->
+# IPrivacySettingDisableLinkPreviewsAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IPrivacySettingDisableLinkPreviewsAction
+
+Protobuf interface IPrivacySettingDisableLinkPreviewsAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12573](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12573)
+
+## Properties
+
+### isPreviewsDisabled?
+
+> `optional` **isPreviewsDisabled**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:12574](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12574)

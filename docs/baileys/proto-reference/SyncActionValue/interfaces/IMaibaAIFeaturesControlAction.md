@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IMaibaAIFeaturesControlAction -->
+# IMaibaAIFeaturesControlAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IMaibaAIFeaturesControlAction
+
+Protobuf interface IMaibaAIFeaturesControlAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12200](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12200)
+
+## Properties
+
+### aiFeatureStatus?
+
+> `optional` **aiFeatureStatus**: `null` | [`MaibaAIFeatureStatus`](/proto-reference/SyncActionValue/MaibaAIFeaturesControlAction/enumerations/MaibaAIFeatureStatus)
+
+Defined in: [WAProto/index.d.ts:12201](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12201)

@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IKeyExpiration -->
+# IKeyExpiration
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IKeyExpiration
+
+Protobuf interface IKeyExpiration generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12052](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12052)
+
+## Properties
+
+### expiredKeyEpoch?
+
+> `optional` **expiredKeyEpoch**: `null` | `number`
+
+Defined in: [WAProto/index.d.ts:12053](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12053)

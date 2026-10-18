@@ -1,0 +1,17 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/CloudAPIThreadControlNotification/overview -->
+# CloudAPIThreadControlNotification
+Source: https://baileys.wiki/proto-reference/Message/CloudAPIThreadControlNotification/overview
+
+Protobuf symbol CloudAPIThreadControlNotification generated from WAProto.
+
+## Enumerations
+
+* [CloudAPIThreadControl](/proto-reference/Message/CloudAPIThreadControlNotification/enumerations/CloudAPIThreadControl)
+
+## Classes
+
+* [CloudAPIThreadControlNotificationContent](/proto-reference/Message/CloudAPIThreadControlNotification/classes/CloudAPIThreadControlNotificationContent)
+
+## Interfaces
+
+* [ICloudAPIThreadControlNotificationContent](/proto-reference/Message/CloudAPIThreadControlNotification/interfaces/ICloudAPIThreadControlNotificationContent)

@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/PeerDataOperationRequestResponseMessage/PeerDataOperationResult/interfaces/ICompanionCanonicalUserNonceFetchResponse -->
+# ICompanionCanonicalUserNonceFetchResponse
+Source: https://baileys.wiki/proto-reference/Message/PeerDataOperationRequestResponseMessage/PeerDataOperationResult/interfaces/ICompanionCanonicalUserNonceFetchResponse
+
+Protobuf interface ICompanionCanonicalUserNonceFetchResponse generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7997](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7997)
+
+## Properties
+
+### forceRefresh?
+
+> `optional` **forceRefresh**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:8000](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8000)
+
+***
+
+### nonce?
+
+> `optional` **nonce**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:7998](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7998)
+
+***
+
+### waFbid?
+
+> `optional` **waFbid**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:7999](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7999)

@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IAppStateSyncKeyId -->
+# IAppStateSyncKeyId
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IAppStateSyncKeyId
+
+Protobuf interface IAppStateSyncKeyId generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:5487](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L5487)
+
+## Properties
+
+### keyId?
+
+> `optional` **keyId**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:5488](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L5488)

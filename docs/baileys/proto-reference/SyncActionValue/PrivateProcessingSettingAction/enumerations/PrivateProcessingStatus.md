@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/PrivateProcessingSettingAction/enumerations/PrivateProcessingStatus -->
+# PrivateProcessingStatus
+Source: https://baileys.wiki/proto-reference/SyncActionValue/PrivateProcessingSettingAction/enumerations/PrivateProcessingStatus
+
+Protobuf enumeration PrivateProcessingStatus generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12623](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12623)
+
+## Enumeration Members
+
+### DISABLED
+
+> **DISABLED**: `2`
+
+Defined in: [WAProto/index.d.ts:12626](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12626)
+
+***
+
+### ENABLED
+
+> **ENABLED**: `1`
+
+Defined in: [WAProto/index.d.ts:12625](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12625)
+
+***
+
+### UNDEFINED
+
+> **UNDEFINED**: `0`
+
+Defined in: [WAProto/index.d.ts:12624](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12624)

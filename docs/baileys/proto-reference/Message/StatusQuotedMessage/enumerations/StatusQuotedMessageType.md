@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/StatusQuotedMessage/enumerations/StatusQuotedMessageType -->
+# StatusQuotedMessageType
+Source: https://baileys.wiki/proto-reference/Message/StatusQuotedMessage/enumerations/StatusQuotedMessageType
+
+Protobuf enumeration StatusQuotedMessageType generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8956](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8956)
+
+## Enumeration Members
+
+### QUESTION\_ANSWER
+
+> **QUESTION\_ANSWER**: `1`
+
+Defined in: [WAProto/index.d.ts:8957](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8957)

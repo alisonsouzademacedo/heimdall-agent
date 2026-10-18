@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/PaymentBackground/enumerations/Type -->
+# Type
+Source: https://baileys.wiki/proto-reference/PaymentBackground/enumerations/Type
+
+Protobuf enumeration Type generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:10188](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L10188)
+
+## Enumeration Members
+
+### DEFAULT
+
+> **DEFAULT**: `1`
+
+Defined in: [WAProto/index.d.ts:10190](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L10190)
+
+***
+
+### UNKNOWN
+
+> **UNKNOWN**: `0`
+
+Defined in: [WAProto/index.d.ts:10189](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L10189)

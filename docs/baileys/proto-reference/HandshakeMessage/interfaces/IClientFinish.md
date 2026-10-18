@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/HandshakeMessage/interfaces/IClientFinish -->
+# IClientFinish
+Source: https://baileys.wiki/proto-reference/HandshakeMessage/interfaces/IClientFinish
+
+Protobuf interface IClientFinish generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:4450](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4450)
+
+## Properties
+
+### extendedCiphertext?
+
+> `optional` **extendedCiphertext**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:4453](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4453)
+
+***
+
+### payload?
+
+> `optional` **payload**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:4452](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4452)
+
+***
+
+### static?
+
+> `optional` **static**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:4451](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4451)

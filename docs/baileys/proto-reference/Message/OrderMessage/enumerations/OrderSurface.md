@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/OrderMessage/enumerations/OrderSurface -->
+# OrderSurface
+Source: https://baileys.wiki/proto-reference/Message/OrderMessage/enumerations/OrderSurface
+
+Protobuf enumeration OrderSurface generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7611](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7611)
+
+## Enumeration Members
+
+### CATALOG
+
+> **CATALOG**: `1`
+
+Defined in: [WAProto/index.d.ts:7612](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7612)

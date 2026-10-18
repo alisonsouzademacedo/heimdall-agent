@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/PaymentLinkMetadata/interfaces/IPaymentLinkHeader -->
+# IPaymentLinkHeader
+Source: https://baileys.wiki/proto-reference/Message/PaymentLinkMetadata/interfaces/IPaymentLinkHeader
+
+Protobuf interface IPaymentLinkHeader generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7702](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7702)
+
+## Properties
+
+### headerType?
+
+> `optional` **headerType**: `null` | [`PaymentLinkHeaderType`](/proto-reference/Message/PaymentLinkMetadata/PaymentLinkHeader/enumerations/PaymentLinkHeaderType)
+
+Defined in: [WAProto/index.d.ts:7703](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7703)

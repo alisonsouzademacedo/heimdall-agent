@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IWaffleAccountLinkStateAction -->
+# IWaffleAccountLinkStateAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IWaffleAccountLinkStateAction
+
+Protobuf interface IWaffleAccountLinkStateAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12948](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12948)
+
+## Properties
+
+### linkState?
+
+> `optional` **linkState**: `null` | [`AccountLinkState`](/proto-reference/SyncActionValue/WaffleAccountLinkStateAction/enumerations/AccountLinkState)
+
+Defined in: [WAProto/index.d.ts:12949](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12949)

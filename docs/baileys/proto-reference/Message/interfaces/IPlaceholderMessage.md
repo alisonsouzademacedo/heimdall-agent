@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IPlaceholderMessage -->
+# IPlaceholderMessage
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IPlaceholderMessage
+
+Protobuf interface IPlaceholderMessage generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8271](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8271)
+
+## Properties
+
+### type?
+
+> `optional` **type**: `null` | [`MASK_LINKED_DEVICES`](/proto-reference/Message/PlaceholderMessage/enumerations/PlaceholderType#mask_linked_devices)
+
+Defined in: [WAProto/index.d.ts:8272](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8272)

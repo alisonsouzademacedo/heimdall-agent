@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IEncReactionMessage -->
+# IEncReactionMessage
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IEncReactionMessage
+
+Protobuf interface IEncReactionMessage generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6131](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6131)
+
+## Properties
+
+### encIv?
+
+> `optional` **encIv**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:6134](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6134)
+
+***
+
+### encPayload?
+
+> `optional` **encPayload**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:6133](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6133)
+
+***
+
+### targetMessageKey?
+
+> `optional` **targetMessageKey**: `null` | [`IMessageKey`](/proto-reference/interfaces/IMessageKey)
+
+Defined in: [WAProto/index.d.ts:6132](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6132)

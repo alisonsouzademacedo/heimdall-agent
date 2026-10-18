@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IWamoUserIdentifierAction -->
+# IWamoUserIdentifierAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IWamoUserIdentifierAction
+
+Protobuf interface IWamoUserIdentifierAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12973](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12973)
+
+## Properties
+
+### identifier?
+
+> `optional` **identifier**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:12974](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12974)

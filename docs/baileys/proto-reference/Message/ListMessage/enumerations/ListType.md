@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ListMessage/enumerations/ListType -->
+# ListType
+Source: https://baileys.wiki/proto-reference/Message/ListMessage/enumerations/ListType
+
+Protobuf enumeration ListType generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7166](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7166)
+
+## Enumeration Members
+
+### PRODUCT\_LIST
+
+> **PRODUCT\_LIST**: `2`
+
+Defined in: [WAProto/index.d.ts:7169](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7169)
+
+***
+
+### SINGLE\_SELECT
+
+> **SINGLE\_SELECT**: `1`
+
+Defined in: [WAProto/index.d.ts:7168](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7168)
+
+***
+
+### UNKNOWN
+
+> **UNKNOWN**: `0`
+
+Defined in: [WAProto/index.d.ts:7167](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7167)

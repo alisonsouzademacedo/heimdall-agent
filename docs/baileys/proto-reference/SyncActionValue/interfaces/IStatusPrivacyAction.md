@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IStatusPrivacyAction -->
+# IStatusPrivacyAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IStatusPrivacyAction
+
+Protobuf interface IStatusPrivacyAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12734](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12734)
+
+## Properties
+
+### mode?
+
+> `optional` **mode**: `null` | [`StatusDistributionMode`](/proto-reference/SyncActionValue/StatusPrivacyAction/enumerations/StatusDistributionMode)
+
+Defined in: [WAProto/index.d.ts:12735](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12735)
+
+***
+
+### userJid?
+
+> `optional` **userJid**: `null` | `string`\[]
+
+Defined in: [WAProto/index.d.ts:12736](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12736)

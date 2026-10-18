@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/SessionStructure/Chain/interfaces/IChainKey -->
+# IChainKey
+Source: https://baileys.wiki/proto-reference/SessionStructure/Chain/interfaces/IChainKey
+
+Protobuf interface IChainKey generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:10940](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L10940)
+
+## Properties
+
+### index?
+
+> `optional` **index**: `null` | `number`
+
+Defined in: [WAProto/index.d.ts:10941](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L10941)
+
+***
+
+### key?
+
+> `optional` **key**: `null` | `Uint8Array`\<`ArrayBufferLike`>
+
+Defined in: [WAProto/index.d.ts:10942](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L10942)

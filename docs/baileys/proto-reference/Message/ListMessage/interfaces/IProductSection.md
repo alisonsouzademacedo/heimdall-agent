@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ListMessage/interfaces/IProductSection -->
+# IProductSection
+Source: https://baileys.wiki/proto-reference/Message/ListMessage/interfaces/IProductSection
+
+Protobuf interface IProductSection generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7226](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7226)
+
+## Properties
+
+### products?
+
+> `optional` **products**: `null` | [`IProduct`](/proto-reference/Message/ListMessage/interfaces/IProduct)\[]
+
+Defined in: [WAProto/index.d.ts:7228](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7228)
+
+***
+
+### title?
+
+> `optional` **title**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:7227](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7227)

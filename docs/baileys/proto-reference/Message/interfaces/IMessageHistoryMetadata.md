@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IMessageHistoryMetadata -->
+# IMessageHistoryMetadata
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IMessageHistoryMetadata
+
+Protobuf interface IMessageHistoryMetadata generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:7471](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7471)
+
+## Properties
+
+### historyReceivers?
+
+> `optional` **historyReceivers**: `null` | `string`\[]
+
+Defined in: [WAProto/index.d.ts:7472](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7472)
+
+***
+
+### messageCount?
+
+> `optional` **messageCount**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:7474](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7474)
+
+***
+
+### oldestMessageTimestamp?
+
+> `optional` **oldestMessageTimestamp**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:7473](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L7473)

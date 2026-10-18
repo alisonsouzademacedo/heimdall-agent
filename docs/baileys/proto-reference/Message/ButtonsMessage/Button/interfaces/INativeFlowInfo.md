@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ButtonsMessage/Button/interfaces/INativeFlowInfo -->
+# INativeFlowInfo
+Source: https://baileys.wiki/proto-reference/Message/ButtonsMessage/Button/interfaces/INativeFlowInfo
+
+Protobuf interface INativeFlowInfo generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:5691](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L5691)
+
+## Properties
+
+### name?
+
+> `optional` **name**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:5692](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L5692)
+
+***
+
+### paramsJson?
+
+> `optional` **paramsJson**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:5693](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L5693)

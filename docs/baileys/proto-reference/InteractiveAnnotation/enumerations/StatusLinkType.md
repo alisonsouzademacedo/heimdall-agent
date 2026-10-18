@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/InteractiveAnnotation/enumerations/StatusLinkType -->
+# StatusLinkType
+Source: https://baileys.wiki/proto-reference/InteractiveAnnotation/enumerations/StatusLinkType
+
+Protobuf enumeration StatusLinkType generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:4854](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4854)
+
+## Enumeration Members
+
+### RASTERIZED\_LINK\_FULL\_URL
+
+> **RASTERIZED\_LINK\_FULL\_URL**: `3`
+
+Defined in: [WAProto/index.d.ts:4857](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4857)
+
+***
+
+### RASTERIZED\_LINK\_PREVIEW
+
+> **RASTERIZED\_LINK\_PREVIEW**: `1`
+
+Defined in: [WAProto/index.d.ts:4855](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4855)
+
+***
+
+### RASTERIZED\_LINK\_TRUNCATED
+
+> **RASTERIZED\_LINK\_TRUNCATED**: `2`
+
+Defined in: [WAProto/index.d.ts:4856](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4856)

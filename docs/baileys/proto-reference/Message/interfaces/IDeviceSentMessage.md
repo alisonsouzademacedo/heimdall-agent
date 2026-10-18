@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IDeviceSentMessage -->
+# IDeviceSentMessage
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IDeviceSentMessage
+
+Protobuf interface IDeviceSentMessage generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6013](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6013)
+
+## Properties
+
+### destinationJid?
+
+> `optional` **destinationJid**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:6014](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6014)
+
+***
+
+### message?
+
+> `optional` **message**: `null` | [`IMessage`](/proto-reference/interfaces/IMessage)
+
+Defined in: [WAProto/index.d.ts:6015](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6015)
+
+***
+
+### phash?
+
+> `optional` **phash**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:6016](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6016)

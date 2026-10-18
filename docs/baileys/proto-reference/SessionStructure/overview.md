@@ -1,0 +1,21 @@
+<!-- source: https://baileys.wiki/proto-reference/SessionStructure/overview -->
+# SessionStructure
+Source: https://baileys.wiki/proto-reference/SessionStructure/overview
+
+Protobuf symbol SessionStructure generated from WAProto.
+
+## Namespaces
+
+* [Chain](/proto-reference/SessionStructure/Chain/overview)
+
+## Classes
+
+* [Chain](/proto-reference/SessionStructure/classes/Chain)
+* [PendingKeyExchange](/proto-reference/SessionStructure/classes/PendingKeyExchange)
+* [PendingPreKey](/proto-reference/SessionStructure/classes/PendingPreKey)
+
+## Interfaces
+
+* [IChain](/proto-reference/SessionStructure/interfaces/IChain)
+* [IPendingKeyExchange](/proto-reference/SessionStructure/interfaces/IPendingKeyExchange)
+* [IPendingPreKey](/proto-reference/SessionStructure/interfaces/IPendingPreKey)

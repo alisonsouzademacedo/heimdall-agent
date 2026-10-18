@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ScheduledCallEditMessage/enumerations/EditType -->
+# EditType
+Source: https://baileys.wiki/proto-reference/Message/ScheduledCallEditMessage/enumerations/EditType
+
+Protobuf enumeration EditType generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8807](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8807)
+
+## Enumeration Members
+
+### CANCEL
+
+> **CANCEL**: `1`
+
+Defined in: [WAProto/index.d.ts:8809](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8809)
+
+***
+
+### UNKNOWN
+
+> **UNKNOWN**: `0`
+
+Defined in: [WAProto/index.d.ts:8808](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8808)

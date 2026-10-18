@@ -1,0 +1,17 @@
+<!-- source: https://baileys.wiki/proto-reference/TemplateButton/overview -->
+# TemplateButton
+Source: https://baileys.wiki/proto-reference/TemplateButton/overview
+
+Protobuf symbol TemplateButton generated from WAProto.
+
+## Classes
+
+* [CallButton](/proto-reference/TemplateButton/classes/CallButton)
+* [QuickReplyButton](/proto-reference/TemplateButton/classes/QuickReplyButton)
+* [URLButton](/proto-reference/TemplateButton/classes/URLButton)
+
+## Interfaces
+
+* [ICallButton](/proto-reference/TemplateButton/interfaces/ICallButton)
+* [IQuickReplyButton](/proto-reference/TemplateButton/interfaces/IQuickReplyButton)
+* [IURLButton](/proto-reference/TemplateButton/interfaces/IURLButton)

@@ -1,0 +1,483 @@
+# Baileys docs — índice
+
+Fonte: https://baileys.wiki (llms-full.txt dividido por página). Páginas: 1778. Sem a tradução pt-BR.
+Leia primeiro: introduction, quickstart, faq, concepts/, authentication/, features/, messaging/, advanced/, migration/. `api-reference/` e `proto-reference/` são referência de consulta.
+
+## advanced (5)
+
+- [Calls](advanced/calls.md) — 1 KB
+- [Custom functionality](advanced/custom-functionality.md) — 5 KB
+- [History sync](advanced/history-sync.md) — 2 KB
+- [Troubleshooting](advanced/troubleshooting.md) — 12 KB
+- [USync](advanced/usync.md) — 2 KB
+
+## api-reference (418)
+
+- [BinaryInfo](api-reference/classes/BinaryInfo.md) — 1 KB
+- [MessageRetryManager](api-reference/classes/MessageRetryManager.md) — 6 KB
+- [USyncContactProtocol](api-reference/classes/USyncContactProtocol.md) — 2 KB
+- [USyncDeviceProtocol](api-reference/classes/USyncDeviceProtocol.md) — 2 KB
+- [USyncDisappearingModeProtocol](api-reference/classes/USyncDisappearingModeProtocol.md) — 2 KB
+- [USyncQuery](api-reference/classes/USyncQuery.md) — 5 KB
+- [USyncStatusProtocol](api-reference/classes/USyncStatusProtocol.md) — 2 KB
+- [USyncUser](api-reference/classes/USyncUser.md) — 4 KB
+- [USyncUsernameProtocol](api-reference/classes/USyncUsernameProtocol.md) — 2 KB
+- [CompanionWebClientType](api-reference/enumerations/CompanionWebClientType.md) — 2 KB
+- [DisconnectReason](api-reference/enumerations/DisconnectReason.md) — 2 KB
+- [NewChatMessageCappingMVStatusType](api-reference/enumerations/NewChatMessageCappingMVStatusType.md) — 1 KB
+- [NewChatMessageCappingOTEStatusType](api-reference/enumerations/NewChatMessageCappingOTEStatusType.md) — 1 KB
+- [NewChatMessageCappingStatusType](api-reference/enumerations/NewChatMessageCappingStatusType.md) — 1 KB
+- [QueryIds](api-reference/enumerations/QueryIds.md) — 2 KB
+- [ReachoutTimelockEnforcementType](api-reference/enumerations/ReachoutTimelockEnforcementType.md) — 4 KB
+- [RetryReason](api-reference/enumerations/RetryReason.md) — 3 KB
+- [SyncState](api-reference/enumerations/SyncState.md) — 1 KB
+- [WAJIDDomains](api-reference/enumerations/WAJIDDomains.md) — 1 KB
+- [WAMessageAddressingMode](api-reference/enumerations/WAMessageAddressingMode.md) — 0 KB
+- [XWAPaths](api-reference/enumerations/XWAPaths.md) — 3 KB
+- [addTransactionCapability](api-reference/functions/addTransactionCapability.md) — 1 KB
+- [aesDecrypt](api-reference/functions/aesDecrypt.md) — 0 KB
+- [aesDecryptCTR](api-reference/functions/aesDecryptCTR.md) — 0 KB
+- [aesDecryptGCM](api-reference/functions/aesDecryptGCM.md) — 0 KB
+- [aesDecryptWithIV](api-reference/functions/aesDecryptWithIV.md) — 0 KB
+- [aesEncrypWithIV](api-reference/functions/aesEncrypWithIV.md) — 0 KB
+- [aesEncrypt](api-reference/functions/aesEncrypt.md) — 0 KB
+- [aesEncryptCTR](api-reference/functions/aesEncryptCTR.md) — 0 KB
+- [aesEncryptGCM](api-reference/functions/aesEncryptGCM.md) — 0 KB
+- [aggregateMessageKeysNotFromMe](api-reference/functions/aggregateMessageKeysNotFromMe.md) — 0 KB
+- [areJidsSameUser](api-reference/functions/areJidsSameUser.md) — 0 KB
+- [assertMeId](api-reference/functions/assertMeId.md) — 0 KB
+- [assertMediaContent](api-reference/functions/assertMediaContent.md) — 1 KB
+- [assertNodeErrorFree](api-reference/functions/assertNodeErrorFree.md) — 0 KB
+- [binaryNodeToString](api-reference/functions/binaryNodeToString.md) — 0 KB
+- [bindWaitForConnectionUpdate](api-reference/functions/bindWaitForConnectionUpdate.md) — 0 KB
+- [bindWaitForEvent](api-reference/functions/bindWaitForEvent.md) — 0 KB
+- [buildAckStanza](api-reference/functions/buildAckStanza.md) — 0 KB
+- [buildPairingQRData](api-reference/functions/buildPairingQRData.md) — 0 KB
+- [bytesToCrockford](api-reference/functions/bytesToCrockford.md) — 0 KB
+- [chatModificationToAppPatch](api-reference/functions/chatModificationToAppPatch.md) — 0 KB
+- [cleanMessage](api-reference/functions/cleanMessage.md) — 0 KB
+- [configureSuccessfulPairing](api-reference/functions/configureSuccessfulPairing.md) — 0 KB
+- [createSignalIdentity](api-reference/functions/createSignalIdentity.md) — 0 KB
+- [debouncedTimeout](api-reference/functions/debouncedTimeout.md) — 1 KB
+- [decodeBinaryNode](api-reference/functions/decodeBinaryNode.md) — 0 KB
+- [decodeDecompressedBinaryNode](api-reference/functions/decodeDecompressedBinaryNode.md) — 0 KB
+- [decodeMediaRetryNode](api-reference/functions/decodeMediaRetryNode.md) — 0 KB
+- [decodeMessageNode](api-reference/functions/decodeMessageNode.md) — 0 KB
+- [decodePatches](api-reference/functions/decodePatches.md) — 1 KB
+- [decodeSyncdMutations](api-reference/functions/decodeSyncdMutations.md) — 0 KB
+- [decodeSyncdPatch](api-reference/functions/decodeSyncdPatch.md) — 0 KB
+- [decodeSyncdSnapshot](api-reference/functions/decodeSyncdSnapshot.md) — 1 KB
+- [decompressingIfRequired](api-reference/functions/decompressingIfRequired.md) — 0 KB
+- [decryptEventResponse](api-reference/functions/decryptEventResponse.md) — 0 KB
+- [decryptMediaRetryData](api-reference/functions/decryptMediaRetryData.md) — 0 KB
+- [decryptMessageNode](api-reference/functions/decryptMessageNode.md) — 0 KB
+- [decryptPollVote](api-reference/functions/decryptPollVote.md) — 0 KB
+- [delay](api-reference/functions/delay.md) — 0 KB
+- [delayCancellable](api-reference/functions/delayCancellable.md) — 0 KB
+- [derivePairingCodeKey](api-reference/functions/derivePairingCodeKey.md) — 0 KB
+- [downloadAndProcessHistorySyncNotification](api-reference/functions/downloadAndProcessHistorySyncNotification.md) — 1 KB
+- [downloadContentFromMessage](api-reference/functions/downloadContentFromMessage.md) — 1 KB
+- [downloadEncryptedContent](api-reference/functions/downloadEncryptedContent.md) — 0 KB
+- [downloadExternalBlob](api-reference/functions/downloadExternalBlob.md) — 0 KB
+- [downloadExternalPatch](api-reference/functions/downloadExternalPatch.md) — 0 KB
+- [downloadHistory](api-reference/functions/downloadHistory.md) — 0 KB
+- [downloadMediaMessage](api-reference/functions/downloadMediaMessage.md) — 0 KB
+- [encodeBase64EncodedStringForUpload](api-reference/functions/encodeBase64EncodedStringForUpload.md) — 0 KB
+- [encodeBigEndian](api-reference/functions/encodeBigEndian.md) — 0 KB
+- [encodeBinaryNode](api-reference/functions/encodeBinaryNode.md) — 0 KB
+- [encodeNewsletterMessage](api-reference/functions/encodeNewsletterMessage.md) — 0 KB
+- [encodeSignedDeviceIdentity](api-reference/functions/encodeSignedDeviceIdentity.md) — 0 KB
+- [encodeSyncdPatch](api-reference/functions/encodeSyncdPatch.md) — 1 KB
+- [encodeWAM](api-reference/functions/encodeWAM.md) — 0 KB
+- [encodeWAMessage](api-reference/functions/encodeWAMessage.md) — 0 KB
+- [encryptMediaRetryRequest](api-reference/functions/encryptMediaRetryRequest.md) — 0 KB
+- [encryptedStream](api-reference/functions/encryptedStream.md) — 1 KB
+- [ensureLTHashStateVersion](api-reference/functions/ensureLTHashStateVersion.md) — 0 KB
+- [extensionForMediaMessage](api-reference/functions/extensionForMediaMessage.md) — 0 KB
+- [extractAddressingContext](api-reference/functions/extractAddressingContext.md) — 0 KB
+- [extractDeviceJids](api-reference/functions/extractDeviceJids.md) — 0 KB
+- [extractE2ESessionFromRetryReceipt](api-reference/functions/extractE2ESessionFromRetryReceipt.md) — 1 KB
+- [extractImageThumb](api-reference/functions/extractImageThumb.md) — 0 KB
+- [extractMessageContent](api-reference/functions/extractMessageContent.md) — 0 KB
+- [extractSyncdPatches](api-reference/functions/extractSyncdPatches.md) — 2 KB
+- [extractUrlFromText](api-reference/functions/extractUrlFromText.md) — 0 KB
+- [fetchLatestBaileysVersion](api-reference/functions/fetchLatestBaileysVersion.md) — 1 KB
+- [fetchLatestWaWebVersion](api-reference/functions/fetchLatestWaWebVersion.md) — 1 KB
+- [generateForwardMessageContent](api-reference/functions/generateForwardMessageContent.md) — 0 KB
+- [generateLinkPreviewIfRequired](api-reference/functions/generateLinkPreviewIfRequired.md) — 0 KB
+- [generateLoginNode](api-reference/functions/generateLoginNode.md) — 0 KB
+- [generateMdTagPrefix](api-reference/functions/generateMdTagPrefix.md) — 0 KB
+- [generateMessageID](api-reference/functions/generateMessageID.md) — 0 KB
+- [generateMessageIDV2](api-reference/functions/generateMessageIDV2.md) — 0 KB
+- [generateOrGetPreKeys](api-reference/functions/generateOrGetPreKeys.md) — 0 KB
+- [generateParticipantHashV2](api-reference/functions/generateParticipantHashV2.md) — 0 KB
+- [generateProfilePicture](api-reference/functions/generateProfilePicture.md) — 0 KB
+- [generateRegistrationId](api-reference/functions/generateRegistrationId.md) — 0 KB
+- [generateRegistrationNode](api-reference/functions/generateRegistrationNode.md) — 0 KB
+- [generateSignalPubKey](api-reference/functions/generateSignalPubKey.md) — 0 KB
+- [generateThumbnail](api-reference/functions/generateThumbnail.md) — 0 KB
+- [generateWAMessage](api-reference/functions/generateWAMessage.md) — 0 KB
+- [generateWAMessageContent](api-reference/functions/generateWAMessageContent.md) — 0 KB
+- [generateWAMessageFromContent](api-reference/functions/generateWAMessageFromContent.md) — 0 KB
+- [getAggregateResponsesInEventMessage](api-reference/functions/getAggregateResponsesInEventMessage.md) — 0 KB
+- [getAggregateVotesInPollMessage](api-reference/functions/getAggregateVotesInPollMessage.md) — 0 KB
+- [getAllBinaryNodeChildren](api-reference/functions/getAllBinaryNodeChildren.md) — 0 KB
+- [getAudioDuration](api-reference/functions/getAudioDuration.md) — 0 KB
+- [getAudioWaveform](api-reference/functions/getAudioWaveform.md) — 0 KB
+- [getBinaryNodeChild](api-reference/functions/getBinaryNodeChild.md) — 0 KB
+- [getBinaryNodeChildBuffer](api-reference/functions/getBinaryNodeChildBuffer.md) — 0 KB
+- [getBinaryNodeChildString](api-reference/functions/getBinaryNodeChildString.md) — 0 KB
+- [getBinaryNodeChildUInt](api-reference/functions/getBinaryNodeChildUInt.md) — 0 KB
+- [getBinaryNodeChildren](api-reference/functions/getBinaryNodeChildren.md) — 0 KB
+- [getBinaryNodeMessages](api-reference/functions/getBinaryNodeMessages.md) — 0 KB
+- [getCallStatusFromNode](api-reference/functions/getCallStatusFromNode.md) — 0 KB
+- [getChatId](api-reference/functions/getChatId.md) — 0 KB
+- [getCodeFromWSError](api-reference/functions/getCodeFromWSError.md) — 0 KB
+- [getCompanionPlatformId](api-reference/functions/getCompanionPlatformId.md) — 0 KB
+- [getCompanionWebClientType](api-reference/functions/getCompanionWebClientType.md) — 0 KB
+- [getContentType](api-reference/functions/getContentType.md) — 0 KB
+- [getDecryptionJid](api-reference/functions/getDecryptionJid.md) — 0 KB
+- [getDevice](api-reference/functions/getDevice.md) — 0 KB
+- [getErrorCodeFromStreamError](api-reference/functions/getErrorCodeFromStreamError.md) — 0 KB
+- [getHistoryMsg](api-reference/functions/getHistoryMsg.md) — 0 KB
+- [getHttpStream](api-reference/functions/getHttpStream.md) — 0 KB
+- [getKeyAuthor](api-reference/functions/getKeyAuthor.md) — 0 KB
+- [getMediaKeys](api-reference/functions/getMediaKeys.md) — 1 KB
+- [getNextPreKeys](api-reference/functions/getNextPreKeys.md) — 0 KB
+- [getNextPreKeysNode](api-reference/functions/getNextPreKeysNode.md) — 0 KB
+- [getPlatformId](api-reference/functions/getPlatformId.md) — 0 KB
+- [getPreKeys](api-reference/functions/getPreKeys.md) — 0 KB
+- [getRawMediaUploadData](api-reference/functions/getRawMediaUploadData.md) — 1 KB
+- [getServerFromDomainType](api-reference/functions/getServerFromDomainType.md) — 0 KB
+- [getStatusCodeForMediaRetry](api-reference/functions/getStatusCodeForMediaRetry.md) — 0 KB
+- [getStatusFromReceiptType](api-reference/functions/getStatusFromReceiptType.md) — 0 KB
+- [getStream](api-reference/functions/getStream.md) — 0 KB
+- [getUrlFromDirectPath](api-reference/functions/getUrlFromDirectPath.md) — 0 KB
+- [getUrlInfo](api-reference/functions/getUrlInfo.md) — 0 KB
+- [getWAUploadToServer](api-reference/functions/getWAUploadToServer.md) — 0 KB
+- [handleIdentityChange](api-reference/functions/handleIdentityChange.md) — 0 KB
+- [hasNonNullishProperty](api-reference/functions/hasNonNullishProperty.md) — 5 KB
+- [hkdfInfoKey](api-reference/functions/hkdfInfoKey.md) — 0 KB
+- [hmacSign](api-reference/functions/hmacSign.md) — 0 KB
+- [initAuthCreds](api-reference/functions/initAuthCreds.md) — 0 KB
+- [isAppStateSyncIrrecoverable](api-reference/functions/isAppStateSyncIrrecoverable.md) — 0 KB
+- [isHostedLidUser](api-reference/functions/isHostedLidUser.md) — 0 KB
+- [isHostedPnUser](api-reference/functions/isHostedPnUser.md) — 0 KB
+- [isJidBot](api-reference/functions/isJidBot.md) — 0 KB
+- [isJidBroadcast](api-reference/functions/isJidBroadcast.md) — 0 KB
+- [isJidGroup](api-reference/functions/isJidGroup.md) — 0 KB
+- [isJidMetaAI](api-reference/functions/isJidMetaAI.md) — 0 KB
+- [isJidNewsletter](api-reference/functions/isJidNewsletter.md) — 0 KB
+- [isJidStatusBroadcast](api-reference/functions/isJidStatusBroadcast.md) — 0 KB
+- [isLidUser](api-reference/functions/isLidUser.md) — 0 KB
+- [isMissingKeyError](api-reference/functions/isMissingKeyError.md) — 0 KB
+- [isPnUser](api-reference/functions/isPnUser.md) — 0 KB
+- [isRealMessage](api-reference/functions/isRealMessage.md) — 0 KB
+- [isStringNullOrEmpty](api-reference/functions/isStringNullOrEmpty.md) — 0 KB
+- [isWABusinessPlatform](api-reference/functions/isWABusinessPlatform.md) — 0 KB
+- [jidDecode](api-reference/functions/jidDecode.md) — 0 KB
+- [jidEncode](api-reference/functions/jidEncode.md) — 0 KB
+- [jidNormalizedUser](api-reference/functions/jidNormalizedUser.md) — 0 KB
+- [makeCacheableSignalKeyStore](api-reference/functions/makeCacheableSignalKeyStore.md) — 0 KB
+- [makeEventBuffer](api-reference/functions/makeEventBuffer.md) — 0 KB
+- [makeLtHashGenerator](api-reference/functions/makeLtHashGenerator.md) — 0 KB
+- [makeNoiseHandler](api-reference/functions/makeNoiseHandler.md) — 2 KB
+- [makeWASocket](api-reference/functions/makeWASocket.md) — 40 KB
+- [mediaMessageSHA256B64](api-reference/functions/mediaMessageSHA256B64.md) — 0 KB
+- [newLTHashState](api-reference/functions/newLTHashState.md) — 0 KB
+- [normalizeMessageContent](api-reference/functions/normalizeMessageContent.md) — 0 KB
+- [parseAndInjectE2ESessions](api-reference/functions/parseAndInjectE2ESessions.md) — 0 KB
+- [prepareDisappearingMessageSettingContent](api-reference/functions/prepareDisappearingMessageSettingContent.md) — 0 KB
+- [prepareWAMessageMedia](api-reference/functions/prepareWAMessageMedia.md) — 0 KB
+- [processHistoryMessage](api-reference/functions/processHistoryMessage.md) — 1 KB
+- [processSyncAction](api-reference/functions/processSyncAction.md) — 0 KB
+- [promiseTimeout](api-reference/functions/promiseTimeout.md) — 0 KB
+- [reduceBinaryNodeToDictionary](api-reference/functions/reduceBinaryNodeToDictionary.md) — 0 KB
+- [sha256](api-reference/functions/sha256.md) — 0 KB
+- [shouldIncrementChatUnread](api-reference/functions/shouldIncrementChatUnread.md) — 0 KB
+- [signedKeyPair](api-reference/functions/signedKeyPair.md) — 0 KB
+- [toBuffer](api-reference/functions/toBuffer.md) — 0 KB
+- [toNumber](api-reference/functions/toNumber.md) — 0 KB
+- [toReadable](api-reference/functions/toReadable.md) — 0 KB
+- [transferDevice](api-reference/functions/transferDevice.md) — 0 KB
+- [trimUndefined](api-reference/functions/trimUndefined.md) — 0 KB
+- [unixTimestampSeconds](api-reference/functions/unixTimestampSeconds.md) — 0 KB
+- [unpadRandomMax16](api-reference/functions/unpadRandomMax16.md) — 0 KB
+- [updateMessageWithEventResponse](api-reference/functions/updateMessageWithEventResponse.md) — 0 KB
+- [updateMessageWithPollUpdate](api-reference/functions/updateMessageWithPollUpdate.md) — 0 KB
+- [updateMessageWithReaction](api-reference/functions/updateMessageWithReaction.md) — 0 KB
+- [updateMessageWithReceipt](api-reference/functions/updateMessageWithReceipt.md) — 0 KB
+- [uploadWithNodeHttp](api-reference/functions/uploadWithNodeHttp.md) — 0 KB
+- [useMultiFileAuthState](api-reference/functions/useMultiFileAuthState.md) — 1 KB
+- [writeRandomPadMax16](api-reference/functions/writeRandomPadMax16.md) — 0 KB
+- [xmppPreKey](api-reference/functions/xmppPreKey.md) — 0 KB
+- [xmppSignedPreKey](api-reference/functions/xmppSignedPreKey.md) — 0 KB
+- [BaileysEventEmitter](api-reference/interfaces/BaileysEventEmitter.md) — 1 KB
+- [Contact](api-reference/interfaces/Contact.md) — 2 KB
+- [GroupMetadata](api-reference/interfaces/GroupMetadata.md) — 7 KB
+- [GroupModificationResponse](api-reference/interfaces/GroupModificationResponse.md) — 0 KB
+- [NewsletterCreateResponse](api-reference/interfaces/NewsletterCreateResponse.md) — 2 KB
+- [NewsletterMetadata](api-reference/interfaces/NewsletterMetadata.md) — 2 KB
+- [PresenceData](api-reference/interfaces/PresenceData.md) — 0 KB
+- [RecentMessage](api-reference/interfaces/RecentMessage.md) — 0 KB
+- [RecentMessageKey](api-reference/interfaces/RecentMessageKey.md) — 0 KB
+- [RetryCounter](api-reference/interfaces/RetryCounter.md) — 0 KB
+- [RetryStatistics](api-reference/interfaces/RetryStatistics.md) — 1 KB
+- [SessionRecreateHistory](api-reference/interfaces/SessionRecreateHistory.md) — 0 KB
+- [SignalRepositoryWithLIDStore](api-reference/interfaces/SignalRepositoryWithLIDStore.md) — 6 KB
+- [WAGroupCreateResponse](api-reference/interfaces/WAGroupCreateResponse.md) — 0 KB
+- [WAUrlInfo](api-reference/interfaces/WAUrlInfo.md) — 1 KB
+- [API reference](api-reference/overview.md) — 2 KB
+- [AccountSettings](api-reference/type-aliases/AccountSettings.md) — 0 KB
+- [AlbumMessageOptions](api-reference/type-aliases/AlbumMessageOptions.md) — 0 KB
+- [AnyMediaMessageContent](api-reference/type-aliases/AnyMediaMessageContent.md) — 0 KB
+- [AnyMessageContent](api-reference/type-aliases/AnyMessageContent.md) — 1 KB
+- [AnyRegularMessageContent](api-reference/type-aliases/AnyRegularMessageContent.md) — 1 KB
+- [AuthenticationCreds](api-reference/type-aliases/AuthenticationCreds.md) — 2 KB
+- [AuthenticationState](api-reference/type-aliases/AuthenticationState.md) — 0 KB
+- [BaileysEvent](api-reference/type-aliases/BaileysEvent.md) — 0 KB
+- [BaileysEventMap](api-reference/type-aliases/BaileysEventMap.md) — 9 KB
+- [BinaryNode](api-reference/type-aliases/BinaryNode.md) — 0 KB
+- [BinaryNodeAttributes](api-reference/type-aliases/BinaryNodeAttributes.md) — 0 KB
+- [BinaryNodeCodingOptions](api-reference/type-aliases/BinaryNodeCodingOptions.md) — 0 KB
+- [BinaryNodeData](api-reference/type-aliases/BinaryNodeData.md) — 0 KB
+- [BotListInfo](api-reference/type-aliases/BotListInfo.md) — 0 KB
+- [BrowsersMap](api-reference/type-aliases/BrowsersMap.md) — 0 KB
+- [BufferedEventData](api-reference/type-aliases/BufferedEventData.md) — 2 KB
+- [ButtonReplyInfo](api-reference/type-aliases/ButtonReplyInfo.md) — 0 KB
+- [CacheStore](api-reference/type-aliases/CacheStore.md) — 1 KB
+- [CatalogCollection](api-reference/type-aliases/CatalogCollection.md) — 0 KB
+- [CatalogCursor](api-reference/type-aliases/CatalogCursor.md) — 0 KB
+- [CatalogResult](api-reference/type-aliases/CatalogResult.md) — 0 KB
+- [CatalogStatus](api-reference/type-aliases/CatalogStatus.md) — 0 KB
+- [Chat](api-reference/type-aliases/Chat.md) — 0 KB
+- [ChatModification](api-reference/type-aliases/ChatModification.md) — 4 KB
+- [ChatMutation](api-reference/type-aliases/ChatMutation.md) — 0 KB
+- [ChatMutationMap](api-reference/type-aliases/ChatMutationMap.md) — 0 KB
+- [ChatUpdate](api-reference/type-aliases/ChatUpdate.md) — 0 KB
+- [ConnectionState](api-reference/type-aliases/ConnectionState.md) — 1 KB
+- [CurveKeyPair](api-reference/type-aliases/CurveKeyPair.md) — 0 KB
+- [DebouncedTimeout](api-reference/type-aliases/DebouncedTimeout.md) — 0 KB
+- [DeviceListData](api-reference/type-aliases/DeviceListData.md) — 0 KB
+- [DisappearingModeData](api-reference/type-aliases/DisappearingModeData.md) — 0 KB
+- [DownloadableMessage](api-reference/type-aliases/DownloadableMessage.md) — 0 KB
+- [Event](api-reference/type-aliases/Event.md) — 0 KB
+- [EventInputType](api-reference/type-aliases/EventInputType.md) — 0 KB
+- [EventMessageOptions](api-reference/type-aliases/EventMessageOptions.md) — 1 KB
+- [FullJid](api-reference/type-aliases/FullJid.md) — 0 KB
+- [GetCatalogOptions](api-reference/type-aliases/GetCatalogOptions.md) — 0 KB
+- [Global](api-reference/type-aliases/Global.md) — 0 KB
+- [GroupInviteInfo](api-reference/type-aliases/GroupInviteInfo.md) — 0 KB
+- [GroupMetadataParticipants](api-reference/type-aliases/GroupMetadataParticipants.md) — 0 KB
+- [GroupParticipant](api-reference/type-aliases/GroupParticipant.md) — 0 KB
+- [IdentityChangeContext](api-reference/type-aliases/IdentityChangeContext.md) — 1 KB
+- [IdentityChangeResult](api-reference/type-aliases/IdentityChangeResult.md) — 0 KB
+- [InitialAppStateSyncOptions](api-reference/type-aliases/InitialAppStateSyncOptions.md) — 0 KB
+- [InitialReceivedChatsState](api-reference/type-aliases/InitialReceivedChatsState.md) — 0 KB
+- [JidServer](api-reference/type-aliases/JidServer.md) — 0 KB
+- [JidWithDevice](api-reference/type-aliases/JidWithDevice.md) — 0 KB
+- [KeyIndexData](api-reference/type-aliases/KeyIndexData.md) — 0 KB
+- [KeyPair](api-reference/type-aliases/KeyPair.md) — 0 KB
+- [LIDMapping](api-reference/type-aliases/LIDMapping.md) — 0 KB
+- [LTHashState](api-reference/type-aliases/LTHashState.md) — 0 KB
+- [LastMessageList](api-reference/type-aliases/LastMessageList.md) — 0 KB
+- [MediaConnInfo](api-reference/type-aliases/MediaConnInfo.md) — 0 KB
+- [MediaDecryptionKeyInfo](api-reference/type-aliases/MediaDecryptionKeyInfo.md) — 0 KB
+- [MediaDownloadOptions](api-reference/type-aliases/MediaDownloadOptions.md) — 0 KB
+- [MediaGenerationOptions](api-reference/type-aliases/MediaGenerationOptions.md) — 1 KB
+- [MediaType](api-reference/type-aliases/MediaType.md) — 0 KB
+- [MessageContentGenerationOptions](api-reference/type-aliases/MessageContentGenerationOptions.md) — 1 KB
+- [MessageGenerationOptions](api-reference/type-aliases/MessageGenerationOptions.md) — 0 KB
+- [MessageGenerationOptionsFromContent](api-reference/type-aliases/MessageGenerationOptionsFromContent.md) — 0 KB
+- [MessageReceiptType](api-reference/type-aliases/MessageReceiptType.md) — 0 KB
+- [MessageRelayOptions](api-reference/type-aliases/MessageRelayOptions.md) — 1 KB
+- [MessageType](api-reference/type-aliases/MessageType.md) — 0 KB
+- [MessageUpsertType](api-reference/type-aliases/MessageUpsertType.md) — 0 KB
+- [MessageUserReceipt](api-reference/type-aliases/MessageUserReceipt.md) — 0 KB
+- [MessageUserReceiptUpdate](api-reference/type-aliases/MessageUserReceiptUpdate.md) — 0 KB
+- [MessageWithContextInfo](api-reference/type-aliases/MessageWithContextInfo.md) — 1 KB
+- [MinimalMessage](api-reference/type-aliases/MinimalMessage.md) — 0 KB
+- [MiscMessageGenerationOptions](api-reference/type-aliases/MiscMessageGenerationOptions.md) — 1 KB
+- [NewChatMessageCapInfo](api-reference/type-aliases/NewChatMessageCapInfo.md) — 1 KB
+- [NewsletterUpdate](api-reference/type-aliases/NewsletterUpdate.md) — 0 KB
+- [NewsletterViewRole](api-reference/type-aliases/NewsletterViewRole.md) — 0 KB
+- [OrderDetails](api-reference/type-aliases/OrderDetails.md) — 0 KB
+- [OrderPrice](api-reference/type-aliases/OrderPrice.md) — 0 KB
+- [OrderProduct](api-reference/type-aliases/OrderProduct.md) — 0 KB
+- [ParsedDeviceInfo](api-reference/type-aliases/ParsedDeviceInfo.md) — 0 KB
+- [ParticipantAction](api-reference/type-aliases/ParticipantAction.md) — 0 KB
+- [PatchedMessageWithRecipientJID](api-reference/type-aliases/PatchedMessageWithRecipientJID.md) — 0 KB
+- [PendingPhoneRequest](api-reference/type-aliases/PendingPhoneRequest.md) — 0 KB
+- [PollMessageOptions](api-reference/type-aliases/PollMessageOptions.md) — 0 KB
+- [PossiblyExtendedCacheStore](api-reference/type-aliases/PossiblyExtendedCacheStore.md) — 1 KB
+- [Product](api-reference/type-aliases/Product.md) — 0 KB
+- [ProductAvailability](api-reference/type-aliases/ProductAvailability.md) — 0 KB
+- [ProductBase](api-reference/type-aliases/ProductBase.md) — 0 KB
+- [ProductCreate](api-reference/type-aliases/ProductCreate.md) — 0 KB
+- [ProductCreateResult](api-reference/type-aliases/ProductCreateResult.md) — 0 KB
+- [ProductUpdate](api-reference/type-aliases/ProductUpdate.md) — 0 KB
+- [ProtocolAddress](api-reference/type-aliases/ProtocolAddress.md) — 0 KB
+- [ReachoutTimelockState](api-reference/type-aliases/ReachoutTimelockState.md) — 0 KB
+- [RequestJoinAction](api-reference/type-aliases/RequestJoinAction.md) — 0 KB
+- [RequestJoinMethod](api-reference/type-aliases/RequestJoinMethod.md) — 0 KB
+- [SignalAuthState](api-reference/type-aliases/SignalAuthState.md) — 0 KB
+- [SignalCreds](api-reference/type-aliases/SignalCreds.md) — 0 KB
+- [SignalDataSet](api-reference/type-aliases/SignalDataSet.md) — 0 KB
+- [SignalDataTypeMap](api-reference/type-aliases/SignalDataTypeMap.md) — 1 KB
+- [SignalIdentity](api-reference/type-aliases/SignalIdentity.md) — 0 KB
+- [SignalKeyStore](api-reference/type-aliases/SignalKeyStore.md) — 0 KB
+- [SignalKeyStoreWithTransaction](api-reference/type-aliases/SignalKeyStoreWithTransaction.md) — 0 KB
+- [SignalRepository](api-reference/type-aliases/SignalRepository.md) — 2 KB
+- [SignedKeyPair](api-reference/type-aliases/SignedKeyPair.md) — 0 KB
+- [SocketConfig](api-reference/type-aliases/SocketConfig.md) — 7 KB
+- [StatusData](api-reference/type-aliases/StatusData.md) — 0 KB
+- [TransactionCapabilityOptions](api-reference/type-aliases/TransactionCapabilityOptions.md) — 0 KB
+- [URLGenerationOptions](api-reference/type-aliases/URLGenerationOptions.md) — 0 KB
+- [USyncQueryResult](api-reference/type-aliases/USyncQueryResult.md) — 0 KB
+- [USyncQueryResultList](api-reference/type-aliases/USyncQueryResultList.md) — 0 KB
+- [UploadParams](api-reference/type-aliases/UploadParams.md) — 0 KB
+- [UserFacingSocketConfig](api-reference/type-aliases/UserFacingSocketConfig.md) — 0 KB
+- [Value](api-reference/type-aliases/Value.md) — 0 KB
+- [WABrowserDescription](api-reference/type-aliases/WABrowserDescription.md) — 0 KB
+- [WABusinessHoursConfig](api-reference/type-aliases/WABusinessHoursConfig.md) — 0 KB
+- [WABusinessProfile](api-reference/type-aliases/WABusinessProfile.md) — 1 KB
+- [WACallEvent](api-reference/type-aliases/WACallEvent.md) — 0 KB
+- [WACallUpdateType](api-reference/type-aliases/WACallUpdateType.md) — 0 KB
+- [WAConnectionState](api-reference/type-aliases/WAConnectionState.md) — 0 KB
+- [WAContactMessage](api-reference/type-aliases/WAContactMessage.md) — 0 KB
+- [WAContactsArrayMessage](api-reference/type-aliases/WAContactsArrayMessage.md) — 0 KB
+- [WAContextInfo](api-reference/type-aliases/WAContextInfo.md) — 0 KB
+- [WAGenericMediaMessage](api-reference/type-aliases/WAGenericMediaMessage.md) — 0 KB
+- [WAInitResponse](api-reference/type-aliases/WAInitResponse.md) — 0 KB
+- [WALocationMessage](api-reference/type-aliases/WALocationMessage.md) — 0 KB
+- [WAMediaPayloadStream](api-reference/type-aliases/WAMediaPayloadStream.md) — 0 KB
+- [WAMediaPayloadURL](api-reference/type-aliases/WAMediaPayloadURL.md) — 0 KB
+- [WAMediaUpload](api-reference/type-aliases/WAMediaUpload.md) — 0 KB
+- [WAMediaUploadFunction](api-reference/type-aliases/WAMediaUploadFunction.md) — 0 KB
+- [WAMessage](api-reference/type-aliases/WAMessage.md) — 0 KB
+- [WAMessageContent](api-reference/type-aliases/WAMessageContent.md) — 0 KB
+- [WAMessageCursor](api-reference/type-aliases/WAMessageCursor.md) — 0 KB
+- [WAMessageKey](api-reference/type-aliases/WAMessageKey.md) — 0 KB
+- [WAMessageUpdate](api-reference/type-aliases/WAMessageUpdate.md) — 0 KB
+- [WAPatchCreate](api-reference/type-aliases/WAPatchCreate.md) — 0 KB
+- [WAPatchName](api-reference/type-aliases/WAPatchName.md) — 0 KB
+- [WAPresence](api-reference/type-aliases/WAPresence.md) — 0 KB
+- [WAPrivacyCallValue](api-reference/type-aliases/WAPrivacyCallValue.md) — 0 KB
+- [WAPrivacyGroupAddValue](api-reference/type-aliases/WAPrivacyGroupAddValue.md) — 0 KB
+- [WAPrivacyMessagesValue](api-reference/type-aliases/WAPrivacyMessagesValue.md) — 0 KB
+- [WAPrivacyOnlineValue](api-reference/type-aliases/WAPrivacyOnlineValue.md) — 0 KB
+- [WAPrivacyValue](api-reference/type-aliases/WAPrivacyValue.md) — 0 KB
+- [WAReadReceiptsValue](api-reference/type-aliases/WAReadReceiptsValue.md) — 0 KB
+- [WASendableProduct](api-reference/type-aliases/WASendableProduct.md) — 0 KB
+- [WASocket](api-reference/type-aliases/WASocket.md) — 0 KB
+- [WATextMessage](api-reference/type-aliases/WATextMessage.md) — 0 KB
+- [WAVersion](api-reference/type-aliases/WAVersion.md) — 0 KB
+- [ACCOUNT_RESTRICTED_TEXT](api-reference/variables/ACCOUNT_RESTRICTED_TEXT.md) — 0 KB
+- [ALL_WA_PATCH_NAMES](api-reference/variables/ALL_WA_PATCH_NAMES.md) — 0 KB
+- [Browsers](api-reference/variables/Browsers.md) — 0 KB
+- [BufferJSON](api-reference/variables/BufferJSON.md) — 0 KB
+- [CALL_AUDIO_PREFIX](api-reference/variables/CALL_AUDIO_PREFIX.md) — 0 KB
+- [CALL_VIDEO_PREFIX](api-reference/variables/CALL_VIDEO_PREFIX.md) — 0 KB
+- [Curve](api-reference/variables/Curve.md) — 1 KB
+- [DECRYPTION_RETRY_CONFIG](api-reference/variables/DECRYPTION_RETRY_CONFIG.md) — 0 KB
+- [DEFAULT_CACHE_TTLS](api-reference/variables/DEFAULT_CACHE_TTLS.md) — 0 KB
+- [DEFAULT_CONNECTION_CONFIG](api-reference/variables/DEFAULT_CONNECTION_CONFIG.md) — 0 KB
+- [DEFAULT_ORIGIN](api-reference/variables/DEFAULT_ORIGIN.md) — 0 KB
+- [DEF_CALLBACK_PREFIX](api-reference/variables/DEF_CALLBACK_PREFIX.md) — 0 KB
+- [DEF_MEDIA_HOST](api-reference/variables/DEF_MEDIA_HOST.md) — 0 KB
+- [DEF_TAG_PREFIX](api-reference/variables/DEF_TAG_PREFIX.md) — 0 KB
+- [DICT_VERSION](api-reference/variables/DICT_VERSION.md) — 0 KB
+- [FLAG_BYTE](api-reference/variables/FLAG_BYTE.md) — 0 KB
+- [FLAG_EVENT](api-reference/variables/FLAG_EVENT.md) — 0 KB
+- [FLAG_EXTENDED](api-reference/variables/FLAG_EXTENDED.md) — 0 KB
+- [FLAG_FIELD](api-reference/variables/FLAG_FIELD.md) — 0 KB
+- [FLAG_GLOBAL](api-reference/variables/FLAG_GLOBAL.md) — 0 KB
+- [HISTORY_SYNC_PAUSED_TIMEOUT_MS](api-reference/variables/HISTORY_SYNC_PAUSED_TIMEOUT_MS.md) — 0 KB
+- [INITIAL_PREKEY_COUNT](api-reference/variables/INITIAL_PREKEY_COUNT.md) — 0 KB
+- [KEY_BUNDLE_TYPE](api-reference/variables/KEY_BUNDLE_TYPE.md) — 0 KB
+- [LT_HASH_ANTI_TAMPERING](api-reference/variables/LT_HASH_ANTI_TAMPERING.md) — 0 KB
+- [MAX_SYNC_ATTEMPTS](api-reference/variables/MAX_SYNC_ATTEMPTS.md) — 0 KB
+- [MEDIA_HKDF_KEY_MAPPING](api-reference/variables/MEDIA_HKDF_KEY_MAPPING.md) — 1 KB
+- [MEDIA_KEYS](api-reference/variables/MEDIA_KEYS.md) — 0 KB
+- [MEDIA_PATH_MAP](api-reference/variables/MEDIA_PATH_MAP.md) — 0 KB
+- [META_AI_JID](api-reference/variables/META_AI_JID.md) — 0 KB
+- [MIN_PREKEY_COUNT](api-reference/variables/MIN_PREKEY_COUNT.md) — 0 KB
+- [MISSING_KEYS_ERROR_TEXT](api-reference/variables/MISSING_KEYS_ERROR_TEXT.md) — 0 KB
+- [NACK_REASONS](api-reference/variables/NACK_REASONS.md) — 1 KB
+- [NOISE_MODE](api-reference/variables/NOISE_MODE.md) — 0 KB
+- [NOISE_WA_HEADER](api-reference/variables/NOISE_WA_HEADER.md) — 0 KB
+- [NO_MESSAGE_FOUND_ERROR_TEXT](api-reference/variables/NO_MESSAGE_FOUND_ERROR_TEXT.md) — 0 KB
+- [OFFICIAL_BIZ_JID](api-reference/variables/OFFICIAL_BIZ_JID.md) — 0 KB
+- [PHONE_CONNECTION_CB](api-reference/variables/PHONE_CONNECTION_CB.md) — 0 KB
+- [PLACEHOLDER_MAX_AGE_SECONDS](api-reference/variables/PLACEHOLDER_MAX_AGE_SECONDS.md) — 0 KB
+- [PROCESSABLE_HISTORY_TYPES](api-reference/variables/PROCESSABLE_HISTORY_TYPES.md) — 0 KB
+- [PSA_WID](api-reference/variables/PSA_WID.md) — 0 KB
+- [SERVER_ERROR_CODES](api-reference/variables/SERVER_ERROR_CODES.md) — 1 KB
+- [SERVER_JID](api-reference/variables/SERVER_JID.md) — 0 KB
+- [STATUS_EXPIRY_SECONDS](api-reference/variables/STATUS_EXPIRY_SECONDS.md) — 0 KB
+- [STORIES_JID](api-reference/variables/STORIES_JID.md) — 0 KB
+- [S_WHATSAPP_NET](api-reference/variables/S_WHATSAPP_NET.md) — 0 KB
+- [TimeMs](api-reference/variables/TimeMs.md) — 0 KB
+- [UNAUTHORIZED_CODES](api-reference/variables/UNAUTHORIZED_CODES.md) — 0 KB
+- [UPLOAD_TIMEOUT](api-reference/variables/UPLOAD_TIMEOUT.md) — 0 KB
+- [URL_REGEX](api-reference/variables/URL_REGEX.md) — 0 KB
+- [WAMessageStatus](api-reference/variables/WAMessageStatus.md) — 0 KB
+- [WAMessageStubType](api-reference/variables/WAMessageStubType.md) — 0 KB
+- [WA_ADV_ACCOUNT_SIG_PREFIX](api-reference/variables/WA_ADV_ACCOUNT_SIG_PREFIX.md) — 0 KB
+- [WA_ADV_DEVICE_SIG_PREFIX](api-reference/variables/WA_ADV_DEVICE_SIG_PREFIX.md) — 0 KB
+- [WA_ADV_HOSTED_ACCOUNT_SIG_PREFIX](api-reference/variables/WA_ADV_HOSTED_ACCOUNT_SIG_PREFIX.md) — 0 KB
+- [WA_ADV_HOSTED_DEVICE_SIG_PREFIX](api-reference/variables/WA_ADV_HOSTED_DEVICE_SIG_PREFIX.md) — 0 KB
+- [WA_CERT_DETAILS](api-reference/variables/WA_CERT_DETAILS.md) — 0 KB
+- [WA_DEFAULT_EPHEMERAL](api-reference/variables/WA_DEFAULT_EPHEMERAL.md) — 0 KB
+- [WEB_EVENTS](api-reference/variables/WEB_EVENTS.md) — 0 KB
+- [WEB_GLOBALS](api-reference/variables/WEB_GLOBALS.md) — 0 KB
+
+## authentication (3)
+
+- [Pairing code](authentication/pairing-code.md) — 4 KB
+- [QR code](authentication/qr-code.md) — 3 KB
+- [Session management](authentication/session-management.md) — 6 KB
+
+## community (3)
+
+- [Contributing](community/contributing.md) — 1 KB
+- [Sponsor](community/sponsor.md) — 1 KB
+- [Translations](community/translations.md) — 1 KB
+
+## concepts (4)
+
+- [Data store](concepts/data-store.md) — 8 KB
+- [Events](concepts/events.md) — 13 KB
+- [JIDs](concepts/jids.md) — 12 KB
+- [Socket config](concepts/socket-config.md) — 12 KB
+
+## (raiz) (4)
+
+- [FAQ](faq.md) — 5 KB
+- [Installation](installation.md) — 4 KB
+- [Introduction](introduction.md) — 3 KB
+- [Quickstart](quickstart.md) — 7 KB
+
+## features (4)
+
+- [Broadcasts & Stories](features/broadcasts-stories.md) — 3 KB
+- [Groups](features/groups.md) — 8 KB
+- [Presence](features/presence.md) — 4 KB
+- [Privacy](features/privacy.md) — 4 KB
+
+## messaging (4)
+
+- [Manage chats](messaging/chat-management.md) — 5 KB
+- [Media messages](messaging/media-messages.md) — 5 KB
+- [Message actions](messaging/message-actions.md) — 3 KB
+- [Send messages](messaging/sending-messages.md) — 6 KB
+
+## migration (2)
+
+- [v7 migration](migration/v7.md) — 5 KB
+- [v8 migration](migration/v8.md) — 1 KB
+
+## proto-reference (1331)
+
+Referência do protobuf do WhatsApp (1 arquivo por mensagem/enum). Consulte por nome de arquivo.
+

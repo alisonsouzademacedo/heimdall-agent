@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IPrivateProcessingSettingAction -->
+# IPrivateProcessingSettingAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IPrivateProcessingSettingAction
+
+Protobuf interface IPrivateProcessingSettingAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12605](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12605)
+
+## Properties
+
+### privateProcessingStatus?
+
+> `optional` **privateProcessingStatus**: `null` | [`PrivateProcessingStatus`](/proto-reference/SyncActionValue/PrivateProcessingSettingAction/enumerations/PrivateProcessingStatus)
+
+Defined in: [WAProto/index.d.ts:12606](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12606)

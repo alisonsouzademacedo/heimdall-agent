@@ -1,0 +1,13 @@
+<!-- source: https://baileys.wiki/proto-reference/UserPassword/TransformerArg/overview -->
+# TransformerArg
+Source: https://baileys.wiki/proto-reference/UserPassword/TransformerArg/overview
+
+Protobuf symbol TransformerArg generated from WAProto.
+
+## Classes
+
+* [Value](/proto-reference/UserPassword/TransformerArg/classes/Value)
+
+## Interfaces
+
+* [IValue](/proto-reference/UserPassword/TransformerArg/interfaces/IValue)

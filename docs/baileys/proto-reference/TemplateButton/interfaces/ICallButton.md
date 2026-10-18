@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/TemplateButton/interfaces/ICallButton -->
+# ICallButton
+Source: https://baileys.wiki/proto-reference/TemplateButton/interfaces/ICallButton
+
+Protobuf interface ICallButton generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:13197](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L13197)
+
+## Properties
+
+### displayText?
+
+> `optional` **displayText**: `null` | [`IHighlyStructuredMessage`](/proto-reference/Message/interfaces/IHighlyStructuredMessage)
+
+Defined in: [WAProto/index.d.ts:13198](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L13198)
+
+***
+
+### phoneNumber?
+
+> `optional` **phoneNumber**: `null` | [`IHighlyStructuredMessage`](/proto-reference/Message/interfaces/IHighlyStructuredMessage)
+
+Defined in: [WAProto/index.d.ts:13199](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L13199)

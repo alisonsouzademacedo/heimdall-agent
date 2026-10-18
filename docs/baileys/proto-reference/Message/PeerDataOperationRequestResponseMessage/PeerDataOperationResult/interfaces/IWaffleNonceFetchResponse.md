@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/PeerDataOperationRequestResponseMessage/PeerDataOperationResult/interfaces/IWaffleNonceFetchResponse -->
+# IWaffleNonceFetchResponse
+Source: https://baileys.wiki/proto-reference/Message/PeerDataOperationRequestResponseMessage/PeerDataOperationResult/interfaces/IWaffleNonceFetchResponse
+
+Protobuf interface IWaffleNonceFetchResponse generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8207](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8207)
+
+## Properties
+
+### nonce?
+
+> `optional` **nonce**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:8208](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8208)
+
+***
+
+### waEntFbid?
+
+> `optional` **waEntFbid**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:8209](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8209)

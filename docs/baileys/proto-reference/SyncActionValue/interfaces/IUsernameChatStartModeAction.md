@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IUsernameChatStartModeAction -->
+# IUsernameChatStartModeAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IUsernameChatStartModeAction
+
+Protobuf interface IUsernameChatStartModeAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12924](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12924)
+
+## Properties
+
+### chatStartMode?
+
+> `optional` **chatStartMode**: `null` | [`ChatStartMode`](/proto-reference/SyncActionValue/UsernameChatStartModeAction/enumerations/ChatStartMode)
+
+Defined in: [WAProto/index.d.ts:12925](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12925)

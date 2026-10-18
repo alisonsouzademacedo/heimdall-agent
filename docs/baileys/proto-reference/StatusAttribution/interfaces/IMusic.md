@@ -1,0 +1,55 @@
+<!-- source: https://baileys.wiki/proto-reference/StatusAttribution/interfaces/IMusic -->
+# IMusic
+Source: https://baileys.wiki/proto-reference/StatusAttribution/interfaces/IMusic
+
+Protobuf interface IMusic generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:11213](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11213)
+
+## Properties
+
+### artistAttribution?
+
+> `optional` **artistAttribution**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:11218](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11218)
+
+***
+
+### author?
+
+> `optional` **author**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:11217](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11217)
+
+***
+
+### authorName?
+
+> `optional` **authorName**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:11214](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11214)
+
+***
+
+### isExplicit?
+
+> `optional` **isExplicit**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:11219](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11219)
+
+***
+
+### songId?
+
+> `optional` **songId**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:11215](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11215)
+
+***
+
+### title?
+
+> `optional` **title**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:11216](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11216)

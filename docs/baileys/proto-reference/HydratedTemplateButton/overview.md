@@ -1,0 +1,21 @@
+<!-- source: https://baileys.wiki/proto-reference/HydratedTemplateButton/overview -->
+# HydratedTemplateButton
+Source: https://baileys.wiki/proto-reference/HydratedTemplateButton/overview
+
+Protobuf symbol HydratedTemplateButton generated from WAProto.
+
+## Namespaces
+
+* [HydratedURLButton](/proto-reference/HydratedTemplateButton/HydratedURLButton/overview)
+
+## Classes
+
+* [HydratedCallButton](/proto-reference/HydratedTemplateButton/classes/HydratedCallButton)
+* [HydratedQuickReplyButton](/proto-reference/HydratedTemplateButton/classes/HydratedQuickReplyButton)
+* [HydratedURLButton](/proto-reference/HydratedTemplateButton/classes/HydratedURLButton)
+
+## Interfaces
+
+* [IHydratedCallButton](/proto-reference/HydratedTemplateButton/interfaces/IHydratedCallButton)
+* [IHydratedQuickReplyButton](/proto-reference/HydratedTemplateButton/interfaces/IHydratedQuickReplyButton)
+* [IHydratedURLButton](/proto-reference/HydratedTemplateButton/interfaces/IHydratedURLButton)

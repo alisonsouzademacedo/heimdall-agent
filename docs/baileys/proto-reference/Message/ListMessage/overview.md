@@ -1,0 +1,27 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/ListMessage/overview -->
+# ListMessage
+Source: https://baileys.wiki/proto-reference/Message/ListMessage/overview
+
+Protobuf symbol ListMessage generated from WAProto.
+
+## Enumerations
+
+* [ListType](/proto-reference/Message/ListMessage/enumerations/ListType)
+
+## Classes
+
+* [Product](/proto-reference/Message/ListMessage/classes/Product)
+* [ProductListHeaderImage](/proto-reference/Message/ListMessage/classes/ProductListHeaderImage)
+* [ProductListInfo](/proto-reference/Message/ListMessage/classes/ProductListInfo)
+* [ProductSection](/proto-reference/Message/ListMessage/classes/ProductSection)
+* [Row](/proto-reference/Message/ListMessage/classes/Row)
+* [Section](/proto-reference/Message/ListMessage/classes/Section)
+
+## Interfaces
+
+* [IProduct](/proto-reference/Message/ListMessage/interfaces/IProduct)
+* [IProductListHeaderImage](/proto-reference/Message/ListMessage/interfaces/IProductListHeaderImage)
+* [IProductListInfo](/proto-reference/Message/ListMessage/interfaces/IProductListInfo)
+* [IProductSection](/proto-reference/Message/ListMessage/interfaces/IProductSection)
+* [IRow](/proto-reference/Message/ListMessage/interfaces/IRow)
+* [ISection](/proto-reference/Message/ListMessage/interfaces/ISection)

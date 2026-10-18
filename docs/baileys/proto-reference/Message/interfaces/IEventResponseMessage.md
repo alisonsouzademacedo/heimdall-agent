@@ -1,0 +1,31 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IEventResponseMessage -->
+# IEventResponseMessage
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IEventResponseMessage
+
+Protobuf interface IEventResponseMessage generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6189](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6189)
+
+## Properties
+
+### extraGuestCount?
+
+> `optional` **extraGuestCount**: `null` | `number`
+
+Defined in: [WAProto/index.d.ts:6192](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6192)
+
+***
+
+### response?
+
+> `optional` **response**: `null` | [`EventResponseType`](/proto-reference/Message/EventResponseMessage/enumerations/EventResponseType)
+
+Defined in: [WAProto/index.d.ts:6190](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6190)
+
+***
+
+### timestampMs?
+
+> `optional` **timestampMs**: `null` | `number` | `Long`
+
+Defined in: [WAProto/index.d.ts:6191](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6191)

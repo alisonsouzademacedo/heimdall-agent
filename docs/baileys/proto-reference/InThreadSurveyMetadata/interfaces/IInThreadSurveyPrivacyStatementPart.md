@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/InThreadSurveyMetadata/interfaces/IInThreadSurveyPrivacyStatementPart -->
+# IInThreadSurveyPrivacyStatementPart
+Source: https://baileys.wiki/proto-reference/InThreadSurveyMetadata/interfaces/IInThreadSurveyPrivacyStatementPart
+
+Protobuf interface IInThreadSurveyPrivacyStatementPart generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:4782](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4782)
+
+## Properties
+
+### text?
+
+> `optional` **text**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:4783](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4783)
+
+***
+
+### url?
+
+> `optional` **url**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:4784](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L4784)

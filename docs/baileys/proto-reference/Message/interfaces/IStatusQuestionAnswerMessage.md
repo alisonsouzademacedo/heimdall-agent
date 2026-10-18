@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IStatusQuestionAnswerMessage -->
+# IStatusQuestionAnswerMessage
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IStatusQuestionAnswerMessage
+
+Protobuf interface IStatusQuestionAnswerMessage generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8914](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8914)
+
+## Properties
+
+### key?
+
+> `optional` **key**: `null` | [`IMessageKey`](/proto-reference/interfaces/IMessageKey)
+
+Defined in: [WAProto/index.d.ts:8915](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8915)
+
+***
+
+### text?
+
+> `optional` **text**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:8916](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8916)

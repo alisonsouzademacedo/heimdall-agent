@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IHistorySyncMessageAccessStatus -->
+# IHistorySyncMessageAccessStatus
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IHistorySyncMessageAccessStatus
+
+Protobuf interface IHistorySyncMessageAccessStatus generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6558](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6558)
+
+## Properties
+
+### completeAccessGranted?
+
+> `optional` **completeAccessGranted**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:6559](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6559)

@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/RequestWelcomeMessageMetadata/enumerations/LocalChatState -->
+# LocalChatState
+Source: https://baileys.wiki/proto-reference/Message/RequestWelcomeMessageMetadata/enumerations/LocalChatState
+
+Protobuf enumeration LocalChatState generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:8752](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8752)
+
+## Enumeration Members
+
+### EMPTY
+
+> **EMPTY**: `0`
+
+Defined in: [WAProto/index.d.ts:8753](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8753)
+
+***
+
+### NON\_EMPTY
+
+> **NON\_EMPTY**: `1`
+
+Defined in: [WAProto/index.d.ts:8754](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L8754)

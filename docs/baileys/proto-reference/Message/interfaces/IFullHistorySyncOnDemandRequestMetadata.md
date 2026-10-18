@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/Message/interfaces/IFullHistorySyncOnDemandRequestMetadata -->
+# IFullHistorySyncOnDemandRequestMetadata
+Source: https://baileys.wiki/proto-reference/Message/interfaces/IFullHistorySyncOnDemandRequestMetadata
+
+Protobuf interface IFullHistorySyncOnDemandRequestMetadata generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:6327](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6327)
+
+## Properties
+
+### requestId?
+
+> `optional` **requestId**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:6328](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L6328)

@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IBusinessBroadcastAssociationAction -->
+# IBusinessBroadcastAssociationAction
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IBusinessBroadcastAssociationAction
+
+Protobuf interface IBusinessBroadcastAssociationAction generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:11712](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11712)
+
+## Properties
+
+### deleted?
+
+> `optional` **deleted**: `null` | `boolean`
+
+Defined in: [WAProto/index.d.ts:11713](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11713)

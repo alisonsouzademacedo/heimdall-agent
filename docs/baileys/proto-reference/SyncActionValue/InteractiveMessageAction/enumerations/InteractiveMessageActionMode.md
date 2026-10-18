@@ -1,0 +1,15 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/InteractiveMessageAction/enumerations/InteractiveMessageActionMode -->
+# InteractiveMessageActionMode
+Source: https://baileys.wiki/proto-reference/SyncActionValue/InteractiveMessageAction/enumerations/InteractiveMessageActionMode
+
+Protobuf enumeration InteractiveMessageActionMode generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:12047](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12047)
+
+## Enumeration Members
+
+### DISABLE\_CTA
+
+> **DISABLE\_CTA**: `1`
+
+Defined in: [WAProto/index.d.ts:12048](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L12048)

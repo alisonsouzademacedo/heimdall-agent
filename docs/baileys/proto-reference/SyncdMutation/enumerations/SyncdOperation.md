@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncdMutation/enumerations/SyncdOperation -->
+# SyncdOperation
+Source: https://baileys.wiki/proto-reference/SyncdMutation/enumerations/SyncdOperation
+
+Protobuf enumeration SyncdOperation generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:13026](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L13026)
+
+## Enumeration Members
+
+### REMOVE
+
+> **REMOVE**: `1`
+
+Defined in: [WAProto/index.d.ts:13028](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L13028)
+
+***
+
+### SET
+
+> **SET**: `0`
+
+Defined in: [WAProto/index.d.ts:13027](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L13027)

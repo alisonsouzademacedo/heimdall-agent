@@ -1,0 +1,23 @@
+<!-- source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IBroadcastListParticipant -->
+# IBroadcastListParticipant
+Source: https://baileys.wiki/proto-reference/SyncActionValue/interfaces/IBroadcastListParticipant
+
+Protobuf interface IBroadcastListParticipant generated from WAProto.
+
+Defined in: [WAProto/index.d.ts:11694](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11694)
+
+## Properties
+
+### lidJid?
+
+> `optional` **lidJid**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:11695](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11695)
+
+***
+
+### pnJid?
+
+> `optional` **pnJid**: `null` | `string`
+
+Defined in: [WAProto/index.d.ts:11696](https://github.com/WhiskeySockets/Baileys/blob/master/WAProto/index.d.ts#L11696)
