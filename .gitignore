@@ -2,3 +2,7 @@
 .env.*
 !.env.example
 node_modules/
+data/
+*.sqlite
+*.sqlite3
+auth_info*/
