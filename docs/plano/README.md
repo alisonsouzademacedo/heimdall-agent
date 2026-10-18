@@ -17,10 +17,10 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D7 | LLM: **ChatGPT Plus para tudo** (texto, áudio, documentos); sem API paga | usuário |
 | D8 | Onde roda (local ou VPS): **decidir depois** | usuário |
 | D9 | Dados de clientes nunca vão para o git (`data/` ignorado) | análise |
-| D10 | Áudio: **Whisper local**; modelo escolhido por teste de capacidade da máquina na hora da instalação | usuário |
+| D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
 ## Biblioteca de documentação (no repo, para contexto)
-`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
+`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio) · `docs/faster-whisper/` (README, código, benchmarks). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
 
 ## Análises feitas
 - `fase-1-planejamento.md`: o que o Hermes faz e o achado de que a escuta passiva não é nativa.
@@ -36,7 +36,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 
 ## O que falta
 **Etapas de planejamento (ordem proposta)**
-1. ~~Áudio (STT)~~: planejado em `fase-1-audio.md` (Whisper local; teste de capacidade). Falta o volume diário de áudios.
+1. ~~Áudio (STT)~~: planejado em `fase-1-audio.md` (Whisper local; teste de capacidade). Volume informado (poucos, até 3 min).
 2. PDF → .md: conversão fora do Hermes (o listener grava o arquivo); PDF escaneado exige OCR/visão.
 3. Relatórios: formato, horário, quem gera (cron do Hermes vs. listener) e quem entrega (listener, pela ponte Q).
 4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
