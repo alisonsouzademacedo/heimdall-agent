@@ -34,6 +34,9 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-1-memoria-e-llm.md`: Hindsight × Mem0 × claude-mem × Obsidian; assinaturas × provedores.
 - `fase-1-audio.md`: Whisper local, teste de capacidade da máquina, riscos.
 - `fase-1-pdf.md`: markitdown, escopo só PDF, segurança e fluxo.
+- `fase-1-relatorios.md`: horários, regras de follow-up, estados do cliente.
+- `fase-1-mcp.md`: MCP do Hindsight + MCP próprio.
+- `fase-1-modelo-de-dados.md`: tabelas, princípios e fluxo para o Hindsight.
 
 ## Riscos avaliados e aceitos pelo usuário (2026-10-18)
 O usuário avaliou e decidiu seguir, com base em testes próprios: cota do ChatGPT Plus (fluxo majoritariamente texto, "não é muito"), termos de uso da assinatura em agentes externos, risco da conta do WhatsApp (o agente só escuta, não responde a terceiros nem dispara em massa), LGPD (confia no provedor) e bugs (testes automáticos de regressão em produção). Mantidos aqui só como pontos a **medir** no spike, não como bloqueios.
@@ -47,7 +50,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 3. ~~Relatórios~~: decididos em `fase-1-relatorios.md`. Falta fechar as regras iniciais de "sem retorno" e "potencial" (propostas no documento).
 4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
 5. Kanban/CRM (fase 2): qual CRM, tem API/MCP, funis e etapas.
-6. Modelo de dados do acervo (tabelas, dossiês, retenção) e formato do `data/`.
+6. ~~Modelo de dados~~: proposto em `fase-1-modelo-de-dados.md`; aguardando 4 decisões (apagadas/editadas, grupos, retenção, cliente=empresa).
 
 **Spike (antes de construir)**
 - Ler o código do bridge do Hermes direto (a análise atual veio de resumo parcial).
