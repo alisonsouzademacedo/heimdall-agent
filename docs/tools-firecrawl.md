@@ -1,15 +1,19 @@
 # Firecrawl
 
-Transforma páginas web em markdown/JSON limpo para o agente (scrape, crawl, map, search, extract).
+Usado como **ferramenta de pesquisa** (scrape, crawl, map, search) para reunir informação que alimenta o agente (hermes-agent). Não faz parte do runtime do agente.
 
-## Integração
-- **Desenvolvimento (Claude Code):** MCP via `.mcp.json` (`firecrawl-mcp`, lido de `FIRECRAWL_API_KEY`).
-- **Runtime do agente:** usar a API/SDK oficial (`https://api.firecrawl.dev/v2`), que dá controle de timeout, retry e custo.
+## Integração: MCP hospedado (OAuth)
+`.mcp.json` aponta para `https://mcp.firecrawl.dev/v2/mcp-oauth`. Não há chave no repositório: no primeiro uso, o cliente abre o login do Firecrawl e você escolhe o time.
 
-## Configuração
-1. `cp .env.example .env` e preencha `FIRECRAWL_API_KEY`.
-2. Exporte a variável no shell (`export FIRECRAWL_API_KEY=...`) antes de abrir o Claude Code.
-3. No Claude Code, aprove o servidor `firecrawl` quando solicitado e rode `/mcp` para conferir.
+### Claude Code
+1. Abra o Claude Code neste repo e aprove o servidor `firecrawl`.
+2. Rode `/mcp`, selecione `firecrawl` e autentique.
+
+### Alternativa sem navegador (CI / execução sem interação)
+Use o mesmo URL com o header `Authorization: Bearer $FIRECRAWL_API_KEY` ou o URL `https://mcp.firecrawl.dev/v2/mcp`. A chave fica só em variável de ambiente ou `.env` (git-ignorado), nunca no URL nem no git.
 
 ## Ferramentas MCP principais
 `firecrawl_scrape`, `firecrawl_map`, `firecrawl_crawl`, `firecrawl_search`, `firecrawl_agent`, `firecrawl_interact`, `firecrawl_credit_usage`.
+
+## Pesquisas
+Salvar os resultados de pesquisa em `docs/research/` (um arquivo por tema).
