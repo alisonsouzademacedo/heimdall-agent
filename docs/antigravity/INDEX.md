@@ -1,0 +1,78 @@
+# Antigravity docs — índice
+
+Fonte: https://antigravity.google/docs/ (cópia `.md` de cada página, a partir do `llms.txt`).
+Não incluídas: SDK, changelog, enterprise e migração do Firebase Studio.
+Leia primeiro: `rules` (lê AGENTS.md e GEMINI.md), `getting-started`, `permissions`, `sandbox`, `mcp`, `skills`, `hooks`, `cli/best-practices`, `cli/troubleshooting`.
+Páginas: 71.
+
+- [Agent settings](agent-settings.md) — 2 KB
+- [Artifact review](artifact-review.md) — 1 KB
+- [Artifacts](artifacts.md) — 2 KB
+- [boost.md](boost.md) — 3 KB
+- [Build with Google](build-with-google.md) — 10 KB
+- [Reviewing artifacts](cli/artifacts.md) — 10 KB
+- [CLI best practices](cli/best-practices.md) — 5 KB
+- [Agents command (/agents)](cli/commands/agents.md) — 6 KB
+- [Side question command (/btw)](cli/commands/btw.md) — 5 KB
+- [Code search command (/codesearch)](cli/commands/codesearch.md) — 4 KB
+- [Context command (/context)](cli/commands/context.md) — 5 KB
+- [AI credits command (/credits)](cli/commands/credits.md) — 1 KB
+- [Diff command (/diff)](cli/commands/diff.md) — 5 KB
+- [Effort command (/effort)](cli/commands/effort.md) — 4 KB
+- [Permissions command (/permissions)](cli/commands/permissions.md) — 4 KB
+- [Resume command (/resume)](cli/commands/resume.md) — 4 KB
+- [Status line command (/statusline)](cli/commands/statusline.md) — 1 KB
+- [Window title command (/title)](cli/commands/title.md) — 1 KB
+- [Model quotas (/usage)](cli/commands/usage.md) — 1 KB
+- [Voice dictation (/voice)](cli/commands/voice.md) — 7 KB
+- [Managing conversations](cli/conversations.md) — 2 KB
+- [credits.md](cli/credits.md) — 0 KB
+- [Antigravity CLI features](cli/features.md) — 12 KB
+- [Migrating from Gemini CLI](cli/gcli-migration.md) — 4 KB
+- [Headless mode](cli/headless.md) — 27 KB
+- [modes.md](cli/modes.md) — 2 KB
+- [Prompting and interaction](cli/prompting.md) — 3 KB
+- [CLI commands](cli/reference.md) — 12 KB
+- [Status line customization](cli/statusline.md) — 6 KB
+- [Terminal title customization](cli/title.md) — 2 KB
+- [troubleshooting.md](cli/troubleshooting.md) — 2 KB
+- [using.md](cli/using.md) — 1 KB
+- [Vim editor mode](cli/vim-editor-mode.md) — 10 KB
+- [browser.md](commands/browser.md) — 2 KB
+- [Goal command (/goal)](commands/goal.md) — 5 KB
+- [Learn command (/learn)](commands/learn.md) — 4 KB
+- [Schedule command (/schedule)](commands/schedule.md) — 5 KB
+- [FAQ](faq.md) — 7 KB
+- [Antigravity App features](features.md) — 6 KB
+- [Get started](getting-started.md) — 18 KB
+- [Hooks](hooks.md) — 19 KB
+- [Agent side panel](ide/agent-side-panel.md) — 0 KB
+- [Allowlist and denylist](ide/allowlist-denylist.md) — 1 KB
+- [Browser recordings](ide/browser-recordings.md) — 0 KB
+- [Browser overview](ide/browser.md) — 1 KB
+- [Review changes](ide/review-changes-editor.md) — 0 KB
+- [Separate Chrome profile](ide/separate-chrome-profile.md) — 0 KB
+- [Antigravity IDE: Tab and navigation](ide/tab.md) — 2 KB
+- [Workflows](ide/workflows.md) — 2 KB
+- [Implementation plan](implementation-plan.md) — 2 KB
+- [Authenticate](install.md) — 13 KB
+- [Marketplace](marketplace.md) — 7 KB
+- [Model Context Protocol (MCP)](mcp.md) — 15 KB
+- [models.md](models.md) — 1 KB
+- [overview.md](overview.md) — 6 KB
+- [Agent permissions](permissions.md) — 27 KB
+- [Plan (/plan)](plan.md) — 6 KB
+- [Plans](plans.md) — 2 KB
+- [Plugins](plugins.md) — 9 KB
+- [Projects](projects.md) — 5 KB
+- [remote-control.md](remote-control.md) — 4 KB
+- [Rules](rules.md) — 9 KB
+- [Terminal sandbox](sandbox.md) — 10 KB
+- [Screenshots](screenshots.md) — 0 KB
+- [Settings](settings.md) — 18 KB
+- [Sidecars](sidecars.md) — 4 KB
+- [Agent skills](skills.md) — 6 KB
+- [Slash commands overview](slash-commands.md) — 14 KB
+- [subagents.md](subagents.md) — 5 KB
+- [Teamwork agent teams (/teamwork-preview)](teamwork.md) — 11 KB
+- [Walkthrough](walkthrough.md) — 0 KB

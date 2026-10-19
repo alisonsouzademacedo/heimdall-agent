@@ -14,7 +14,7 @@ Para clientes comerciais **sem IA instaladora**, a camada da IA vira um **instal
 **0. Ambiente.** Roda a verificação de `spike/preflight/` dentro da tela (sistema, memória, disco, Docker, rede) e mostra o que falta.
 **1. Conectar o WhatsApp.** Botão "Gerar QR Code" → mostra o QR na tela (o Baileys entrega o código no evento `connection.update`; o Hermes documenta que o QR renova a cada ~20 s). O usuário escaneia em *Aparelhos conectados*. A tela mostra "Conectado" quando a conexão abre. É normal o WhatsApp **forçar uma reconexão logo após o QR** (FAQ do Baileys); a tela deve esconder isso do usuário. Depois de conectado, o QR some.
 **2. Sincronizar com o telefone.** Barra de progresso real: o evento `messaging-history.set` informa `progress` (0 a 100), quantas conversas, contatos e mensagens chegaram, e a marca `isLatest` no fim. Pontos de atenção: histórico completo exige `syncFullHistory` com perfil de navegador desktop e consome memória; o telefone deve ficar ligado e conectado; o Baileys só recebe **o que o telefone entregar**.
-**3. Extrair.** Botão "Começar extração": grava mensagens no acervo e **baixa áudios e PDFs originais** (a mídia expira nos servidores). Barra: itens processados ÷ total, com contadores por tipo. Não usa LLM.
+**3. Extrair.** (Veja as estratégias de carga em `fase-1-carga-inicial.md`: tela de orçamento com confirmação, prioridade ao recente, quarentena, teste rápido de 7 dias.) Botão "Começar extração": grava mensagens no acervo e **baixa áudios e PDFs originais** (a mídia expira nos servidores). Barra: itens processados ÷ total, com contadores por tipo. Não usa LLM.
 **4. Conectar a LLM.** Botão "Entrar com o ChatGPT": abre o login (o Hindsight usa retorno em `127.0.0.1:1455`; o Hermes usa login por código de dispositivo). Mostra "Conectado" e o plano detectado. Teste: uma resposta curta do modelo.
 **5. Processar.** Transcrição dos áudios (Whisper local), conversão dos PDFs, extração (compromissos, papéis, sinais de potencial) e envio ao Hindsight por dia fechado. Barra de progresso a partir da **fila durável** (`fila`: pendentes ÷ total), com tempo estimado e **uso da cota do plano**. Pausa e retomada sem perder progresso.
 **6. CRM.** Botão "Criar funil" (as 5 etapas) no Krayin; teste que cria um lead de teste, move de etapa e remove.
@@ -36,8 +36,11 @@ Segurança: aceitar conexões **só da própria máquina**, com um código de us
 ## Reflexo no modelo de dados
 Adicionar tabelas `onboarding_etapas` (passo, estado, início, fim, erro) e `configuracao` (valores não secretos). Segredos (credenciais do WhatsApp, tokens) ficam fora dessas tabelas.
 
-## Perguntas em aberto
-1. A sincronização (passo 2) deve ser obrigatória, ou o usuário pode **limitar o histórico** (por exemplo, últimos 30 dias)? O usuário disse que o histórico é o menos importante.
-2. A tela só em português do Brasil, ou já pensando em outros idiomas para clientes?
-3. A tela deve poder ser acessada **de outro dispositivo** na mesma rede (celular, outro computador)? Recomendação: não, só na própria máquina.
-4. Clientes comerciais terão uma IA para instalar, ou precisam de instalador próprio?
+## Decisões do usuário (2026-10-19)
+1. **Sincronização obrigatória:** no início o Heimdall puxa **tudo** o que o servidor do WhatsApp entregar (criar contexto, memória e autoaprendizado). Nada de limitar o histórico.
+2. **Estratégias para a carga grande:** ver `docs/plano/fase-1-carga-inicial.md` (orçamento antes de começar, processamento por prioridade, ritmo controlado, quarentena, teste rápido, entre outras).
+3. **Idioma:** português do Brasil.
+4. **Instalação:** feita por IA (Claude Code, Codex ou Antigravity). Um instalador próprio fica para depois.
+
+## Ainda sem resposta
+- A tela deve ficar acessível **só na própria máquina** (recomendado) ou também de outro dispositivo da rede? Até a resposta, vale **só local**.

@@ -24,11 +24,15 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D16 | Modelo de dados aprovado: manter apagadas/editadas marcadas; grupos só internos, absorvidos sem avisos; retenção mínima de 90 dias com aviso e apagar sob comando; cliente = empresa | usuário |
 | D17 | Funil: Contato iniciado → 1ª Reunião Agendada → 2ª Reunião Agendada → Fechamento/Ganho → Perdido/Arquivado (7 tentativas ou objeção irreversível); CRM do zero; Heimdall propõe e o usuário aprova (movimentos no relatório das 08:00) | usuário |
 | D18 | CRM: **Krayin** (funil de 5 etapas; propõe e usuário aprova) — peso medido no spike (E8) | usuário |
+| D19 | O usuário usará **Claude Code, Codex e Antigravity**; os três leem o mesmo `AGENTS.md` (verificado na documentação) | usuário + verificação |
+| D20 | Sincronização e extração do **histórico completo obrigatórias** na primeira vez; processamento com estratégias de carga (`fase-1-carga-inicial.md`) | usuário |
+| D21 | Interface em **português do Brasil** | usuário |
+| D22 | Instalação feita por **IA**; instalador próprio fica para depois | usuário |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
 ## Biblioteca de documentação (no repo, para contexto)
-`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio) · `docs/faster-whisper/` (README, código, benchmarks) · `docs/markitdown/` (README, pacotes, conversor de PDF) · `docs/krayin/` · `docs/docker/` (693 págs, subconjunto). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
+`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio) · `docs/faster-whisper/` (README, código, benchmarks) · `docs/markitdown/` (README, pacotes, conversor de PDF) · `docs/krayin/` · `docs/docker/` (693 págs, subconjunto) · `docs/claude-code/` (48) · `docs/antigravity/` (71). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
 
 ## Análises feitas
 - `fase-1-planejamento.md`: o que o Hermes faz e o achado de que a escuta passiva não é nativa.
@@ -43,6 +47,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-2-crm.md`: Krayin, funil, autonomia.
 - `fase-1-spike.md`: 13 experimentos de viabilidade antes de construir.
 - `fase-1-operacao-da-ia.md`: regras para a IA instaladora (`AGENTS.md`), memória, testes de regressão.
+- `fase-1-carga-inicial.md`: 14 estratégias para a primeira carga de dados.
 - `fase-1-onboarding-visual.md`: tela de configuração em 9 passos, só na primeira vez.
 - `fase-1-requisitos-e-preflight.md`: requisitos por sistema e verificador automático (`spike/preflight/`).
 

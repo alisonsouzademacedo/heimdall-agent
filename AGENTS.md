@@ -3,7 +3,7 @@
 Este arquivo vale para qualquer IA (Claude Code, Codex, Antigravity ou outra). Leia **inteiro** antes de agir. O dono do projeto **não é programador**: explique em português simples, diga o que fez, por que, e como ele confere.
 
 ## O projeto
-Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D18, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
+Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D22, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
 
 ## Regras inegociáveis
 1. **O Heimdall nunca envia mensagem a ninguém além do self-chat do dono.** Nenhuma ferramenta, nenhum código e nenhuma configuração pode criar outro caminho de envio. Se uma tarefa exigir isso, pare e pergunte.
@@ -31,6 +31,8 @@ A documentação das ferramentas está em `docs/` (cópias `.md` oficiais). **El
 | markitdown (PDF→.md) | `docs/markitdown/` | `repo/README.md`, `source/_pdf_converter.py` |
 | Krayin (CRM) | `docs/krayin/` | `INDEX.md` (API, funil, webhooks) |
 | Docker | `docs/docker/` | `desktop/setup/`, `engine/install/`, `compose/`, `desktop/troubleshoot-and-support/` |
+| Claude Code | `docs/claude-code/` | `memory`, `best-practices`, `permissions`, `hooks-guide`, `settings`, `security` |
+| Antigravity | `docs/antigravity/` | `rules`, `getting-started`, `permissions`, `sandbox`, `mcp`, `cli/best-practices` |
 
 ## Como trabalhar, passo a passo
 1. Leia `docs/plano/PROGRESS.md` (onde paramos) e a seção relevante de `docs/plano/`.
