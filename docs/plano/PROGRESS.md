@@ -58,3 +58,10 @@ Sem dependências de execução no núcleo (teste em `tests/core/check_core.sh`)
 
 ## Divergências entre documentação e realidade
 (nenhuma registrada ainda)
+
+## 2026-10-19 — Revisão final antes da primeira rodada no notebook
+- Adicionado `README.md` na raiz (como começar, mapa do repositório, testes, privacidade).
+- Removidos restos locais ignorados pelo git (`instalar-relatorio.txt`, `data/` de pesquisa).
+- `instalar/PROMPT-IA.txt`: a linha "Não use o Strix" agora diz que o Strix só roda pelo aplicativo do GitHub (teste de 7 dias, decisão do dono) e que a IA não envia código a serviços externos sem autorização.
+- Strix: token da API verificado (saldo de 5 créditos; scan de código padrão custa a partir de 60). Envio manual do código foi bloqueado pelas permissões do Claude Code; decisão do dono: usar a revisão automática do aplicativo do GitHub nos PRs. O token foi colado na conversa: revogar ao fim do teste.
+- Testes: `sh tests/run-all.sh` — 7 arquivos, 0 falhas.
