@@ -20,6 +20,10 @@ pass "o unico repositorio GitHub citado e o do projeto"
 grep -q 'Git.Git' "$PS1" && grep -q 'OpenJS.NodeJS.LTS' "$PS1" && grep -q 'Python.Python.3.14' "$PS1" && pass "IDs do winget iguais aos da documentacao (codex-manual.md)" || fail "IDs do winget diferem da documentacao"
 grep -qF 'instalar\instalar.ps1' iniciar.cmd && grep -q "ExecutionPolicy Bypass" iniciar.cmd && grep -q "pause" iniciar.cmd && pass "iniciar.cmd chama o instalador e pausa" || fail "iniciar.cmd incompleto"
 grep -qx 'instalar-relatorio.txt' .gitignore && pass ".gitignore cobre o relatorio do instalador" || fail ".gitignore sem instalar-relatorio.txt"
+# Os testes do nucleo (node --test) nao usam pacote nenhum: o instalador nao deve baixar dependencias (npm ci) antes deles (PROGRESS.md, pendencias 2026-10-19).
+if grep -q 'npm ci' "$PS1"; then fail "o instalador roda npm ci (os testes do nucleo nao precisam; so o tsc precisa)"; else pass "o instalador nao roda npm ci antes dos testes do nucleo"; fi
+# Saida do Node e UTF-8; o PowerShell 5.1 le o console em outra codificacao e estraga os acentos se nao for ajustado.
+if grep -q 'Console\]::OutputEncoding' "$PS1" && grep -q 'UTF8Encoding' "$PS1"; then pass "o instalador ajusta a saida do console para UTF-8"; else fail "o instalador nao ajusta [Console]::OutputEncoding para UTF-8 (acentos do Node saem quebrados)"; fi
 
 # ---- com PowerShell ----
 PW="${PWSH:-}"

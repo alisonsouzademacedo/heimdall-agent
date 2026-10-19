@@ -28,5 +28,11 @@ PY=""; for c in python3 python py; do if "$c" -c "import sys; sys.exit(0 if sys.
 [ -n "$PY" ] || { fail "Python 3 nao encontrado (o teste dos testes precisa dele)"; PY=false; }
 if "$PY" tests/core/mutacao.py >/tmp/heimdall-core-mut.txt 2>&1; then pass "teste dos testes ($(grep -c PEGOU /tmp/heimdall-core-mut.txt) mutacoes detectadas)"; else fail "teste dos testes"; grep -E "SOBREVIVEU|DESATUALIZADA" /tmp/heimdall-core-mut.txt; fi
 
+# O "teste dos testes" so vale se os testes PASSAM sem estrago: numa copia com um teste quebrado ele deve recusar (linha de base), nao dizer que pegou tudo.
+TMPC=$(mktemp -d); cp -r apps/core "$TMPC/core"; rm -rf "$TMPC/core/node_modules"
+printf "import test from 'node:test';\nimport assert from 'node:assert/strict';\ntest('quebrado de proposito', () => assert.equal(1, 2));\n" > "$TMPC/core/src/zz-quebrado.test.ts"
+if [ -n "$PY" ] && [ "$PY" != false ] && HEIMDALL_CORE_DIR="$TMPC/core" "$PY" tests/core/mutacao.py >/tmp/heimdall-core-mut-base.txt 2>&1; then fail "mutacao.py aceitou uma copia com teste quebrado (linha de base nao conferida)"; else grep -q "LINHA DE BASE" /tmp/heimdall-core-mut-base.txt && pass "mutacao.py recusa rodar quando os testes ja falham (linha de base)" || fail "mutacao.py nao explicou a falha da linha de base"; fi
+rm -rf "$TMPC"
+
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"
 [ "$FAIL" -eq 0 ]

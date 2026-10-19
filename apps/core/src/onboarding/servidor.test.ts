@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { request } from 'node:http';
+import { connect } from 'node:net';
+import { networkInterfaces } from 'node:os';
 import { mkdtempSync, rmSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -44,6 +46,40 @@ const POST = (cookie: string) => ({ Cookie: cookie, 'X-Heimdall': '1', 'Content-
 test('escuta SO em 127.0.0.1', async () => {
   const c = await subir();
   try { assert.match(c.s.url, /^http:\/\/127\.0\.0\.1:\d+$/); } finally { await c.fim(); }
+});
+
+// Por COMPORTAMENTO (nao so pelo texto da URL): outro endereco da mesma maquina nao conecta; 127.0.0.1 conecta (controle).
+function conecta(host: string, porta: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const k = connect({ host, port: porta, timeout: 2000 });
+    k.on('connect', () => { k.destroy(); resolve(true); });
+    k.on('error', () => resolve(false));
+    k.on('timeout', () => { k.destroy(); resolve(false); });
+  });
+}
+test('escuta SO em 127.0.0.1: o IP da rede e o IPv6 recusam a conexao, 127.0.0.1 aceita', async () => {
+  const c = await subir();
+  try {
+    assert.equal(await conecta('127.0.0.1', c.s.porta), true, 'controle: 127.0.0.1 deveria conectar');
+    const outros = Object.values(networkInterfaces()).flat().filter((i) => i && !i.internal && i.family === 'IPv4').map((i) => i!.address);
+    for (const ip of [...outros, '::1']) assert.equal(await conecta(ip, c.s.porta), false, `nao deveria conectar em ${ip}`);
+  } finally { await c.fim(); }
+});
+
+test('relatar problema pela tela grava o ambiente (sistema, arquitetura, Node) no relatorio', async () => {
+  const c = await subir();
+  try {
+    const cookie = await entrar(c);
+    const r = await req(c, 'POST', '/api/bug', { ...POST(cookie), Origin: `http://127.0.0.1:${c.s.porta}` }, JSON.stringify({ etapa: 'ambiente', descricao: 'a tela travou' }));
+    assert.equal(r.status, 200);
+    const arq = readdirSync(join(c.dir, 'bugs'))[0]!;
+    const txt = readFileSync(join(c.dir, 'bugs', arq), 'utf8');
+    const ambiente = txt.split('## Ambiente')[1]!.split('##')[0]!;
+    assert.match(ambiente, /- sistema: \S+/);
+    assert.match(ambiente, /- arquitetura: \S+/);
+    assert.match(ambiente, new RegExp(`- node: v${process.versions.node.split('.')[0]}`));
+    assert.doesNotMatch(ambiente, /nao informado/);
+  } finally { await c.fim(); }
 });
 
 test('sem sessao: tudo e recusado (pagina e API)', async () => {

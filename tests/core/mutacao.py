@@ -1,8 +1,22 @@
 """Teste dos testes: estraga o codigo de proposito (mutacao) e confirma que algum teste FALHA.
 Se uma mutacao passar despercebida, os testes nao protegem aquela regra. Uso: python3 tests/core/mutacao.py"""
-import shutil, subprocess, sys, tempfile, pathlib
+import os, shutil, subprocess, sys, tempfile, pathlib
 
-RAIZ = pathlib.Path(__file__).resolve().parents[2] / "apps" / "core"
+# HEIMDALL_CORE_DIR so existe para o teste do proprio teste (tests/core/check_core.sh)
+RAIZ = pathlib.Path(os.environ.get("HEIMDALL_CORE_DIR") or pathlib.Path(__file__).resolve().parents[2] / "apps" / "core")
+COMANDO = ["node", "--test", "src/**/*.test.ts"]
+
+def roda(cwd):
+    # utf-8 explicito: no Windows o padrao e cp1252 e quebra com acentos
+    return subprocess.run(COMANDO, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+# Linha de base: sem estrago nenhum os testes precisam PASSAR; senao toda mutacao pareceria "pega" por engano.
+base = roda(RAIZ)
+if base.returncode != 0:
+    print("[LINHA DE BASE] os testes ja falham SEM nenhuma mutacao; conserte isso antes. Primeiras falhas:")
+    print("\n".join([l for l in base.stdout.splitlines() if l.startswith("not ok")][:5]))
+    sys.exit(2)
+print("[LINHA DE BASE] os testes passam sem mutacao")
 
 # (arquivo, trecho original, trecho estragado, regra protegida)
 MUTACOES = [
@@ -40,6 +54,8 @@ MUTACOES = [
     ("src/onboarding/ambiente.ts", "memTotalBytes / GIB); // 7,8 GiB", "memTotalBytes / GIB) + 1; // 7,8 GiB", "ambiente: memoria arredondada como no verificador"),
     ("src/onboarding/ambiente.ts", "estado: m.virtualizacao ? 'ok' : 'falha'", "estado: 'ok'", "ambiente: virtualizacao desligada e falha"),
     ("src/onboarding/ambiente.ts", "estado: m.wsl ? 'ok' : 'falha'", "estado: 'ok'", "ambiente: WSL ausente e falha"),
+    ("src/onboarding/servidor.ts", "server.listen(porta, '127.0.0.1'", "server.listen(porta, '0.0.0.0'", "tela: escuta so em 127.0.0.1"),
+    ("src/onboarding/servidor.ts", "ambiente: { sistema: platform(), arquitetura: arch(), node: process.version }", "ambiente: {}", "tela: relatorio de bug leva o ambiente"),
     ("src/bugs.ts", "t = t.replace(/\\bBearer", "t = t; t.replace(/\\bBearer", "bugs: Bearer mascarado"),
     ("src/bugs.ts", "existentes.has(nome); n++", "false; n++", "bugs: repeticoes no mesmo segundo ganham numero"),
     ("src/mcp-contrato.ts", "escreve: true, escreveEm: ['feedback']", "escreve: true, escreveEm: ['feedback', 'mensagens']", "MCP so escreve em feedback"),
@@ -51,13 +67,13 @@ for arquivo, antes, depois, regra in MUTACOES:
         copia = pathlib.Path(tmp) / "core"
         shutil.copytree(RAIZ, copia, ignore=shutil.ignore_patterns("node_modules"))
         alvo = copia / arquivo
-        texto = alvo.read_text()
+        texto = alvo.read_text(encoding="utf-8")
         if texto.count(antes) != 1:
             print(f"[MUTACAO DESATUALIZADA] {arquivo}: trecho nao encontrado exatamente uma vez -> {antes[:60]}")
             falhas += 1
             continue
-        alvo.write_text(texto.replace(antes, depois))
-        r = subprocess.run(["node", "--test", "src/**/*.test.ts"], cwd=copia, capture_output=True, text=True)
+        alvo.write_text(texto.replace(antes, depois), encoding="utf-8")
+        r = roda(copia)
         if r.returncode == 0:
             print(f"[SOBREVIVEU] {regra}  ({arquivo}) -- nenhum teste percebeu a quebra")
             falhas += 1

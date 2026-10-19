@@ -3,6 +3,8 @@
 # Parametros: -SomenteMostrar (nao instala nada)  -Sim (responde S a tudo; so para testes)  -SemPausa  -SemTestes  -SemClipboard
 param([switch]$SomenteMostrar, [switch]$Sim, [switch]$SemPausa, [switch]$SemTestes, [switch]$SemClipboard)
 $ErrorActionPreference = 'Continue'
+# O Node escreve em UTF-8; o PowerShell 5.1 leria o console em outra codificacao e estragaria os acentos.
+try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch { }
 $raiz = Split-Path -Parent $PSScriptRoot
 $relatorio = Join-Path $raiz 'instalar-relatorio.txt'
 try { Start-Transcript -Path $relatorio -Force | Out-Null } catch { }
@@ -235,7 +237,7 @@ $nucleo = Join-Path $raiz 'apps\core'
 if (-not $SemTestes -and -not $SomenteMostrar -and (NodeOk) -and (Test-Path $nucleo)) {
   Titulo 'Testes do nucleo do Heimdall'
   Push-Location $nucleo
-  if (-not (Test-Path 'node_modules')) { Info 'Preparando (npm ci)...'; $o = & npm ci --no-audit --no-fund 2>&1 | Out-String; if ($LASTEXITCODE -ne 0) { RegistraBug 'npm-ci' 'npm ci falhou' 'npm ci' $o $LASTEXITCODE } }
+  # Sem instalar pacotes aqui: node --test nao usa nenhum (so o tsc usa; ver 'npm run typecheck').
   $saidaTestes = & npm test 2>&1 | Out-String
   $codigoTestes = $LASTEXITCODE
   ($saidaTestes -split "`n" | Select-Object -Last 12) -join "`n" | Write-Host
