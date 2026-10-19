@@ -20,6 +20,14 @@ done
 DUP=$(git ls-files | awk '{ k = tolower($0); c[k]++; n[k] = n[k] " " $0 } END { for (k in c) if (c[k] > 1) print n[k] }')
 if [ -z "$DUP" ]; then pass "nenhum nome de arquivo repetido so por maiuscula/minuscula"; else fail "nomes que colidem no Windows:$DUP"; fi
 
+# 2c. Fim de linha fixado (.gitattributes): .sh sempre LF (CRLF quebra o shell) e .cmd sempre CRLF; com core.autocrlf=true do Windows
+# o Git reescreveria os .sh como CRLF (LICOES.md, 2026-10-19). git check-attr le o .gitattributes de verdade.
+for par in 'tests/run-all.sh:lf' 'iniciar.cmd:crlf'; do
+  arq="${par%%:*}"; esperado="${par##*:}"
+  atual=$(git check-attr eol -- "$arq" | sed 's/.*: //')
+  if [ "$atual" = "$esperado" ]; then pass ".gitattributes fixa eol=$esperado em $arq"; else fail ".gitattributes nao fixa eol=$esperado em $arq (esta: $atual)"; fi
+done
+
 # 3. Padroes de chave nos arquivos versionados (fora de docs/, que sao copias de terceiros)
 PAT='sk-[A-Za-z0-9_-]{20,}|fc-[a-f0-9]{24,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(API_KEY|TOKEN|SECRET)=[A-Za-z0-9]{20,}'
 HITS=$(git ls-files | grep -v '^docs/' | grep -v '^tests/repo/' | xargs grep -lE "$PAT" 2>/dev/null)
