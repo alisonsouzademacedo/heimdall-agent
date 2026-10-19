@@ -32,3 +32,7 @@ Vem com o pacote `hindsight-api`: `pip install hindsight-api` coloca o executáv
 
 ## Não verificado
 Autenticação do MCP; comportamento do banco "sem LLM" por banco; se o `hindsight-admin` vem na imagem **slim** (a documentação diz que vem com o pacote `hindsight-api`).
+
+
+## Armadilha: idioma (descoberta em 2026-10-20 ao planejar a troca de provedor)
+Os padrões do Hindsight para embeddings, reranker e busca por palavras são **em inglês** (`docs/hindsight/developer/multilingual.md`). Todo o conteúdo do Heimdall é em português. **Antes da carga inicial** configurar modelos multilíngues e o dicionário `portuguese` (detalhes e opções em `docs/plano/fase-1-troca-de-provedor.md`). Trocar o modelo de embeddings depois exige migrar o banco.
