@@ -50,3 +50,44 @@ Adicionar tabelas `onboarding_etapas` (passo, estado, início, fim, erro) e `con
 
 ## Acréscimo (2026-10-20): destino do backup
 Na configuração inicial o onboarding pergunta **onde guardar o backup** (HD externo, segundo disco ou pen drive) e verifica se o local existe e tem espaço. O backup roda no primeiro uso do dia. Ver `fase-1-seguranca-operacional.md`.
+
+---
+
+# Versão 2 do onboarding (2026-10-19): incorpora as decisões posteriores
+
+Pergunta do dono: "a tela de onboarding, com barras de progresso, já está ajustada? Quero que a IA deixe todo o *background* pronto e eu faça tudo por essa página." **Resposta:** o desenho dos passos 0 a 9 acima existia, mas **não estava atualizado** com o que decidimos depois (escolha de provedor, idioma, calibração, backup, apagar, aprovações). Esta seção é a versão atual; em caso de conflito, **vale esta**. **Ainda não existe protótipo visual**: o que há é texto. Antes de programar, vale um desenho de tela para o dono aprovar.
+
+## O que a IA instaladora deixa pronto *antes* de o dono abrir a página (definição de pronto)
+1. Docker Desktop instalado e rodando; todos os serviços da fase 1 (`hermes`, `hindsight`, `postgres`, `core`, `media-worker`) **saudáveis**, com **versões fixadas** (`fase-1-manutencao-e-versoes.md`).
+2. Hindsight já configurado para **português** (embeddings, reranker e dicionário), sem o dono escolher (`fase-1-troca-de-provedor.md`); modelo do Whisper e demais modelos **já baixados**.
+3. Hermes com os toolsets restritos, chave da API gerada, `skills.write_approval` e `memory.write_approval` ligados; `SOUL.md` mínimo, skills e textos de `prompts/` instalados.
+4. A página no ar em `http://localhost:<porta>`, aberta **por um atalho** na área de trabalho do Windows (o dono não digita comando). Como o atalho é criado e se o dono prefere abrir pelo navegador: **a decidir com ele**.
+5. **Todos os testes** (`sh tests/run-all.sh`) e os **testes de fumaça que não dependem do dono** verdes; resultado gravado em `PROGRESS.md`.
+6. Nada que dependa do dono fica feito por trás: **QR do WhatsApp, logins do ChatGPT, aprovações**. A IA não os executa (regra 4).
+7. A IA **fecha** quando termina (o notebook tem 8 GB; `fase-1-requisitos-e-preflight.md`); a página mostra o **uso de memória** para o dono ver.
+
+## Fluxo atual na página (cada passo com "Testar", verde/vermelho e erro em português)
+| # | Passo | Mudança em relação à versão 1 |
+|---|---|---|
+| 0 | **Ambiente** | só leitura (a IA já instalou); mostra memória, disco, serviços. **Pergunta o destino do backup** (HD externo, segundo disco ou pen drive) e confere se existe e tem espaço |
+| 1 | **WhatsApp (QR)** | igual; o QR nunca vai para log e some ao conectar |
+| 1b | **Cadastro (formulário)** | igual, mas **pré-preenchido** com o que o dono já nos contou (contexto da Vtrês60 e objeções, hoje em `prompts/objecoes/catalogo.md`), para ele só conferir; equipe e telefones continuam a digitar |
+| 2 | **Sincronizar com o telefone** | igual (barra de `messaging-history.set`) |
+| 3 | **Extrair** | igual (mensagens e mídia originais; sem modelo) |
+| 4 | **Conectar o modelo** | mostra as **duas opções**: "Entrar com o ChatGPT" (assinatura, seu uso) ou "Chave de API" (cliente comercial); chamada de teste nas duas peças (Hermes e Hindsight) |
+| 5 | **Processar** | igual (transcrição, PDF, extração, Hindsight por dia fechado; barra da fila, tempo estimado, uso da cota; pausar e retomar) |
+| 5b | **Voz e personalidade (novo)** | primeira calibração: o Heimdall mostra o **perfil de voz** e a proposta de estilo; botões `aprovar`, `ajustar`, `recusar` (funcionam também no self-chat) |
+| 6 | **CRM** | **fase 2**: oculto na fase 1 |
+| 7 | **Self-chat** | teste de ida e volta **e** teste de ensino: o Heimdall envia um item de exemplo `A1`; o dono responde "A1 já resolvi" e vê o registro (`fase-1-aprendizado.md`) |
+| 8 | **Agenda e relatório de teste** | gera o diário e o semanal de teste; confere que cabem em uma tela |
+| 9 | **Backup e segurança (novo)** | faz o **primeiro backup agora** e mostra o resultado; opção "ensaio de restauração" em pasta de teste; explica como apagar (duas etapas) |
+| 10 | **Pronto: painel** | status dos serviços, fila, cota, **memória**, último backup, avisos de 90 dias (limpar só áudios e PDFs originais), versões e lembrete mensal de novidades |
+
+## Regras de comportamento (mantidas e reforçadas)
+Retomável e refazível por passo · um passo só libera quando o anterior estiver verde · cada erro diz o que aconteceu e o que fazer, sem jargão · logs em "Detalhes" · página acessível **só na própria máquina**, com código de uso único por sessão · segredos nunca aparecem na tela depois de digitados.
+
+## Testes de regressão previstos para a página
+Passo só libera com o anterior verde · retoma de onde parou depois de reiniciar · o QR nunca aparece em log nem em banco e é apagado ao conectar · a página só atende conexões locais e exige o código de uso único · chave de API digitada nunca é devolvida ao navegador nem gravada em log · refazer um passo não repete os anteriores · o passo 9 grava o backup no destino escolhido e falha com mensagem clara se o destino sumiu.
+
+## Pendências
+Desenho das telas (protótipo visual) para aprovação do dono · forma do atalho no Windows · porta da página · SSE ou WebSocket (decide-se na construção) · se o passo 5b também pode aprovar pela página (proposta: sim).
