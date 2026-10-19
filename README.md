@@ -15,7 +15,7 @@ Se algo falhar, um relatório sem segredos é gravado em `data\bugs\` e o texto 
 
 ## Estado atual
 
-Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (regras de acompanhamento, envio travado ao self-chat, banco, ingestão, apagar com confirmação, backup, relatórios, aprendizado, contrato MCP), o instalador e o passo "Ambiente" da tela estão prontos e testados em Linux. **Ainda não foram validados num Windows real**, e os demais passos da tela dependem da primeira rodada na máquina do dono.
+Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (regras de acompanhamento, envio travado ao self-chat, banco, ingestão, apagar com confirmação, backup, relatórios, aprendizado, contrato MCP), o instalador e o passo "Ambiente" da tela estão prontos e testados em Linux **e, desde 2026-10-19, num Windows 11 real** (primeira rodada: 3 erros corrigidos, ver `docs/plano/LICOES.md`). O **Docker ainda não roda nessa máquina** (virtualização desligada na BIOS e WSL ausente), e os demais passos da tela (2 a 12) ainda precisam ser construídos.
 
 ## Mapa do repositório
 
