@@ -46,6 +46,9 @@ Os testes novos foram **provados com mutação**: apagar a regra "Nunca enfraque
 - A máquina do GitHub já traz o **PowerShell 7.6.6** (`/usr/bin/pwsh`); por isso o fluxo agora usa `REQUIRE_PWSH=1`: se um dia o PowerShell sumir de lá, o teste do `.ps1` **falha** em vez de ser pulado.
 - Aviso do GitHub: a ação `actions/checkout@v4` usa Node 20, que está sendo descontinuado; ele a executou em Node 24 mesmo assim. Atualizar a versão da ação quando houver uma nova estável.
 
+## Atualização (2026-10-19, 1ª rodada no Windows): job `windows` no GitHub
+Três erros reais só apareceram no Windows (LICOES.md). O fluxo ganhou o job `windows` (`windows-latest`, Node **22 e 24**, `shell: bash`, `fail-fast: false`): roda `npm test` em `apps/core` e `tests/repo/check_higiene.sh`, com `core.autocrlf false` **antes** do checkout (o ZIP do dono vem em LF). O job do Ubuntu segue igual e roda tudo. Teste local: `tests/repo/check_ci.sh` (confere por leitura que o job existe; **não prova que o YAML roda**). **Ainda não executado no GitHub** (nada foi enviado); o primeiro envio dirá se o YAML e os passos funcionam (a documentação do Actions não está em `docs/`). Os conjuntos `check_instalar.sh`, `check_ps1.sh`, `check_ambiente_windows.sh` e `check_assinatura.sh` ainda não rodam no Windows do GitHub; candidatos a entrar depois que o primeiro job ficar verde.
+
 ## Não verificado
 - Como ligar a proteção da branch principal e se o plano do dono a permite em repositório privado.
 - Se `sh` (dash) e `bash` se comportam igual nos testes em todas as máquinas do dono (no Windows os testes `.sh` rodam no Linux do GitHub ou no WSL, não no PowerShell).

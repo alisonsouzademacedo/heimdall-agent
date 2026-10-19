@@ -19,3 +19,29 @@ jobs:
         run: command -v pwsh && pwsh --version || echo "pwsh nao encontrado"
       - name: Rodar todos os testes
         run: REQUIRE_PWSH=1 REQUIRE_NODE=1 sh tests/run-all.sh
+
+  # Windows e onde o dono usa o Heimdall: tres erros reais da 1a rodada so apareceram la (docs/plano/LICOES.md, 2026-10-19).
+  # Node 22 (minimo do projeto) e 24 (o que o winget instala hoje). Cobre o nucleo e a higiene do repositorio;
+  # os demais conjuntos de shell continuam so no Ubuntu.
+  windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # O ZIP que o dono baixa vem com fim de linha LF: o executor nao deve converter para CRLF antes do checkout.
+      - name: Manter fim de linha LF (como no ZIP do dono)
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Testes do nucleo
+        working-directory: apps/core
+        run: npm test
+      - name: Higiene do repositorio
+        run: sh tests/repo/check_higiene.sh
