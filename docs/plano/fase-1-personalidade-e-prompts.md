@@ -27,8 +27,11 @@ Formato e ordem aprovados; limite de ~350/450 palavras aprovado, com a condiçã
 ## Escrito: extração
 `prompts/extracao/compromissos-e-sinais.md` (aguarda revisão do dono; saída JSON alinhada às tabelas `compromissos` e `sinais_potencial` de `fase-1-modelo-de-dados.md`).
 
+## Escrito: objeções
+`prompts/objecoes/catalogo.md`: 5 contornáveis e **4** irreversíveis (o dono acrescentou "empresário que não quer crescer" às três já citadas). Os ângulos de contorno são hipóteses a validar.
+
 ## Ainda a escrever
-Catálogo de objeções (contornáveis x irreversíveis, com os exemplos do usuário: doença grave na família, falência da fábrica, total satisfação com o marketing atual); skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
+Skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
 
 ## Decisão (antes pergunta em aberto)
 O Heimdall pode usar o perfil de voz também para **sugerir rascunhos de resposta** ao usuário nos relatórios (sem nunca enviar)? **Resposta do usuário: sim, pode.** Os rascunhos aparecem só nos relatórios, como sugestão para ele copiar; o Heimdall nunca envia (regra 1).
