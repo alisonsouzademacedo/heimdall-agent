@@ -66,6 +66,9 @@ Nenhum erro é "só corrigido". Para **cada erro**, faça os seis passos, nesta 
 5. **Corrija a documentação do projeto** em `docs/plano/` quando o erro vier de uma suposição errada.
 6. **Só então faça o commit**, citando o teste e o registro. Erro sem teste, sem atualização de instruções ou sem registro **não está resolvido**.
 
+## Bugs de instalação (relatórios em `data/bugs/`)
+Ao começar, e sempre que o dono disser que algo falhou, liste `data\bugs\*.md` com `estado: aberto`. Cada arquivo é um erro real da máquina do dono (o instalador e a tela os criam, **já sem segredos**). Trate cada um pelos seis passos da seção anterior: **teste que falha primeiro** (em `tests/` ou `apps/core/src`; se depender de hardware, login ou WhatsApp real, escreva o passo em `runbooks/08-testes-de-fumaca.md`), correção, instruções, `LICOES.md`; depois troque `estado: aberto` por `estado: resolvido` no arquivo (anote o teste e o commit) e faça o commit. Os relatórios ficam fora do git (`data/`); o teste e a lição vão. Para enviar ao GitHub confira `git remote -v` (o instalador liga a pasta ao repositório); o primeiro envio pede o login do dono (regra 4): pare e peça. Nunca copie conteúdo de conversa para relatório, teste ou commit.
+
 ## Contexto longo e sessão compactada (prevenção de alucinação)
 Depois de uma compactação, ou ao retomar o trabalho: **releia `AGENTS.md` e `docs/plano/PROGRESS.md`** antes de agir. Resumos perdem detalhes; só vale o que está em arquivo do repositório ou no que você executou. Qualquer fato sobre ferramenta que você só "lembra" deve ser relido na página de `docs/` (inteira) ou marcado "não verificado". Registre decisões do dono em `docs/plano/` na mesma hora, para não dependerem da memória da conversa.
 
