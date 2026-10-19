@@ -1,6 +1,8 @@
 # Testes de segurança com o Strix
 
-Status: **preparado, ainda não executado** (sem Docker em funcionamento e sem chave de modelo nesta sessão em nuvem). Documentação do Strix: `docs/strix/` (lida: `index`, `quickstart`, `usage/{cli,scan-modes,instructions}`, `advanced/configuration`, `llm-providers/{overview,openai,local}`, `tools/sandbox`, `integrations/{ci-cd,github-actions,coding-agents,mcp}`, `cloud/overview`; as demais páginas estão na biblioteca e não foram necessárias).
+**DESCARTADO POR ORA (decisão do dono, 2026-10-19): o Strix cobra por uso (chave de API) e o dono não quer esse custo.** Nada aqui será executado nem ligado ao GitHub. Os arquivos ficam guardados, inofensivos (o script recusa rodar sem confirmação de custo), caso a decisão mude; a segurança segue coberta pelos testes próprios (`apps/core/src/arquitetura.test.ts`, `tests/core/mutacao.py` e os demais).
+
+Status anterior: **preparado, ainda não executado** (sem Docker em funcionamento e sem chave de modelo nesta sessão em nuvem). Documentação do Strix: `docs/strix/` (lida: `index`, `quickstart`, `usage/{cli,scan-modes,instructions}`, `advanced/configuration`, `llm-providers/{overview,openai,local}`, `tools/sandbox`, `integrations/{ci-cd,github-actions,coding-agents,mcp}`, `cloud/overview`; as demais páginas estão na biblioteca e não foram necessárias).
 
 ## O que o Strix é e o que ele pede
 Ver `docs/strix/INDEX.md`. Em resumo: agentes que tentam explorar falhas de verdade dentro de um contêiner Docker e **só reportam o que conseguem provar**. Exige Docker rodando e **chave de API de modelo (pago por uso)**; não há login por assinatura nas páginas lidas.

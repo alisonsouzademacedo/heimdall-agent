@@ -33,7 +33,7 @@ A documentação das ferramentas está em `docs/` (cópias `.md` oficiais). **El
 | Docker | `docs/docker/` | `desktop/setup/`, `engine/install/`, `compose/`, `desktop/troubleshoot-and-support/` |
 | Claude Code | `docs/claude-code/` | `memory`, `best-practices`, `permissions`, `hooks-guide`, `settings`, `security` |
 | Antigravity | `docs/antigravity/` | `rules`, `getting-started`, `permissions`, `sandbox`, `mcp`, `cli/best-practices` |
-| Strix (testes de segurança) | `docs/strix/` | `INDEX.md`, `usage/cli`, `advanced/configuration`, `usage/scan-modes` |
+| Strix (testes de segurança; **não adotado por ora**, custa por uso) | `docs/strix/` | `INDEX.md`, `usage/cli`, `advanced/configuration`, `usage/scan-modes` |
 
 **Ferramenta ou repositório novo:** antes de usar, traga a documentação para `docs/<ferramenta>/` (Firecrawl), **prefira o Markdown original do site** (muitos servem a página com `.md` no fim do endereço) e **confira o resultado**: a raspagem "só conteúdo principal" já perdeu nomes de opções. Crie o `INDEX.md` da pasta, acrescente a linha na tabela acima e rode `tests/docs/check_docs.sh`. Registre o que foi lido em `docs/plano/PROGRESS.md`.
 

@@ -1,5 +1,7 @@
 # Strix (documentação)
 
+> **Não adotado por ora** (cobra por uso, decisão do dono em 2026-10-19). A biblioteca fica como referência.
+
 Fonte: https://docs.strix.ai/ e https://github.com/usestrix/strix. Páginas obtidas em 2026-10-19 a partir de `https://docs.strix.ai/llms.txt` (30 páginas); lista em `_lista.txt`.
 
 ## Como foram obtidas (e uma lição)
