@@ -1,0 +1,174 @@
+<!-- source: https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html -->
+This is the documentation for the current version 2.2 of Krayin. Stay informed and make the most of Krayin's capabilities.
+
+# [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#admin-menu) Admin Menu
+
+The admin sidebar is config-driven. To make your package show up there, you write a small PHP config file listing the menu entries and merge it into the core `menu.admin` config from your service provider. This page picks up from [Routes](https://devdocs.krayincrm.com/2.2/packages/routes.html) — the named route you created (`admin.examples.index`) is what each menu entry will point at.
+
+## [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#create-the-menu-config-file) 📁 Create the menu config file
+
+Inside your package, add a `Config/` folder with `menu.php`:
+
+```text
+packages
+└── Webkul
+    └── Example
+        └── src
+            ├── ...
+            └── Config
+                └── menu.php
+```
+
+### [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#menu-item-schema) Menu item schema
+
+Each entry in the array describes one menu item:
+
+| Key | Required | Purpose |
+| --- | --- | --- |
+| `key` | yes | Unique identifier for the item. Use dot-notation to nest (`examples.list`). |
+| `name` | yes | Translation key for the visible label. |
+| `route` | yes | Named Laravel route this item links to. |
+| `sort` | no | Display order (lower = earlier). Defaults to position in the file. |
+| `icon` | no | CSS class for the icon to show next to the label. |
+
+### [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#example-top-level-item) Example: top-level item
+
+```php
+<?php
+
+return [\
+    [\
+        'key' => 'examples',\
+        'name' => 'example::app.examples.menu.title',\
+        'route' => 'admin.examples.index',\
+        'sort' => 2,\
+        'icon' => 'icon-example',\
+    ],\
+];
+```
+
+## [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#add-a-menu-icon) 🎨 Add a menu icon
+
+Krayin's icons are sprite-driven — you give the class an absolute position into a shared SVG sprite. Add the CSS rule to your package's stylesheet:
+
+```text
+packages
+└── Webkul
+    └── Example
+        └── src
+            └── Resources
+                └── assets
+                    ├── css
+                    │   └── app.css
+                    ├── js
+                    │   └── app.js
+                    └── images
+```
+
+```scss
+.icon-example {
+    background-position: -371px -2px;
+    background-image: url("../images/sprite-main.svg");
+}
+```
+
+See [Assets](https://devdocs.krayincrm.com/2.2/packages/assets.html) for bundling the CSS into the admin build.
+
+## [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#merge-the-config-into-the-service-provider) ⚙️ Merge the config into the service provider
+
+`mergeConfigFrom()` blends your `menu.php` into the global `menu.admin` config so Krayin's sidebar picks it up. Add the call inside `register()`:
+
+```php
+<?php
+
+namespace Webkul\Example\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class ExampleServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->mergeConfigFrom(
+            dirname(__DIR__) . '/Config/menu.php',
+            'menu.admin',
+        );
+    }
+}
+```
+
+Use \`register()\`, not \`boot()\`
+
+Menu config has to be merged before Laravel resolves the sidebar component. `register()` runs earlier in the lifecycle and is the safe place for `mergeConfigFrom()`.
+
+## [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#clear-cached-config) ⌨️ Clear cached config
+
+After editing menu config you have to clear Laravel's cached config so the new entries show up:
+
+```bash
+php artisan optimize:clear
+```
+
+## [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#menu-levels) 🧱 Menu levels
+
+The Krayin sidebar has two levels:
+
+| Level | When it appears | Used for |
+| --- | --- | --- |
+| **First level** — sidebar | Always visible | The top-level sections (Leads, Contacts, Settings, …) |
+| **Second level** — hover menu | Appears on hover over a first-level item | Sub-items grouped under that section |
+
+To create a nested entry, give it a dotted `key` that starts with the parent's key:
+
+```php
+return [\
+    [\
+        'key' => 'catalogue',\
+        'name' => 'catalogue::app.menu.title',\
+        'route' => 'admin.catalogue.index',\
+        'sort' => 5,\
+        'icon' => 'icon-catalogue',\
+    ],\
+    [\
+        'key' => 'catalogue.examples',\
+        'name' => 'example::app.menu.examples',\
+        'route' => 'admin.examples.index',\
+        'sort' => 1,\
+    ],\
+    [\
+        'key' => 'catalogue.products',\
+        'name' => 'product::app.menu.products',\
+        'route' => 'admin.products.index',\
+        'sort' => 2,\
+    ],\
+];
+```
+
+`catalogue` becomes the parent (first level); `catalogue.examples` and `catalogue.products` appear on hover.
+
+## [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#verify) 🧪 Verify
+
+Reload your admin and look at the sidebar — the new entry should be there with its icon. If it's missing, check in order:
+
+1. `php artisan optimize:clear` was run after the last config change.
+2. The route name in `menu.php` matches a real route — `php artisan route:list | grep examples` should show it.
+3. `mergeConfigFrom()` is inside `register()`, not `boot()`.
+4. The translation key in `name` resolves — otherwise the label is empty and the entry can look invisible.
+
+## [\#](https://devdocs.krayincrm.com/2.2/packages/add-menu-in-admin.html\#next-steps) 📝 Next steps
+
+- [Access Control List](https://devdocs.krayincrm.com/2.2/packages/create-acl.html) — once the menu links to your routes, gate them by permission so non-admins don't see entries they can't open.
+- [Localization](https://devdocs.krayincrm.com/2.2/packages/localization.html) — add the translation key your `name` references.
+
+←
+[Getting Started](https://devdocs.krayincrm.com/2.2/packages/create-package.html)[Assets](https://devdocs.krayincrm.com/2.2/packages/assets.html)
+→
+
+
+![](https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg)
+
+Original text
+
+Rate this translation
+
+Your feedback will be used to help improve Google Translate
