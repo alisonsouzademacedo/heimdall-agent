@@ -48,6 +48,38 @@ test('sistema desconhecido falha', () => {
   assert.equal(estado(avaliar({ ...bom, plataforma: 'sunos' }), 'sistema'), 'falha');
 });
 
+// Docker Desktop no Windows precisa de virtualizacao ligada na BIOS e de WSL 2 (docs/docker/desktop/setup/install/windows-install.md).
+// Medidas ausentes (undefined) = nao se aplica ou nao foi medido: a verificacao nem aparece (outros sistemas).
+test('virtualizacao desligada e uma falha, explica a BIOS e entra no resumo de falhas', () => {
+  const v = avaliar({ ...bom, virtualizacao: false, wsl: true });
+  assert.equal(estado(v, 'virtualizacao'), 'falha');
+  assert.match(v.find((x) => x.id === 'virtualizacao')!.detalhe, /BIOS/);
+  assert.match(resumoDeFalhas(v), /irtualiza/);
+});
+
+test('virtualizacao ligada mas WSL ausente: so o WSL falha, e diz como instalar', () => {
+  const v = avaliar({ ...bom, virtualizacao: true, wsl: false });
+  assert.equal(estado(v, 'virtualizacao'), 'ok');
+  assert.equal(estado(v, 'wsl'), 'falha');
+  assert.match(v.find((x) => x.id === 'wsl')!.detalhe, /wsl --install/);
+});
+
+test('virtualizacao e WSL presentes: ambas ok e a maquina boa segue sem falhas', () => {
+  const v = avaliar({ ...bom, virtualizacao: true, wsl: true });
+  assert.deepEqual([estado(v, 'virtualizacao'), estado(v, 'wsl')], ['ok', 'ok']);
+  assert.equal(resumoDeFalhas(v), '');
+});
+
+test('sem medida (outro sistema): as verificacoes de virtualizacao e WSL nao aparecem', () => {
+  assert.deepEqual(avaliar(bom).filter((x) => x.id === 'virtualizacao' || x.id === 'wsl'), []);
+});
+
+test('no Windows, medirSistema mede virtualizacao e WSL (booleanos); fora dele, deixa vazio', () => {
+  const m = medirSistema(process.cwd());
+  if (m.plataforma === 'win32') { assert.equal(typeof m.virtualizacao, 'boolean'); assert.equal(typeof m.wsl, 'boolean'); }
+  else { assert.equal(m.virtualizacao, undefined); assert.equal(m.wsl, undefined); }
+});
+
 test('abrirNavegador so aceita enderecos locais do proprio Heimdall', () => {
   for (const ruim of ['https://127.0.0.1:8765/', 'http://evil.com/', 'http://127.0.0.1.evil.com:8765/', 'file:///etc/passwd', 'http://127.0.0.1:8765/?x=1&calc', 'http://127.0.0.1:8765/ ; calc', 'javascript:alert(1)', '']) {
     assert.equal(abrirNavegador(ruim), false, ruim);

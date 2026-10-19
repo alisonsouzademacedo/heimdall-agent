@@ -28,6 +28,8 @@ Fontes: `docs/docker/desktop/setup/install/{windows-install,mac-install}.md`, `d
 - Linux: portas publicadas passam por cima do ufw/firewalld; usar R1.
 - Desktop (Windows/Mac): pastas do computador montadas em contêineres têm o problema do WAL (R2).
 - Docker só é compatível com `iptables-nft` e `iptables-legacy` (`ubuntu.md`).
+- **Windows: antes de instalar o Docker Desktop**, conferir `systeminfo` ("Virtualização Habilitada no Firmware" ou "Um hipervisor foi detectado") e `wsl --version` (código 0). Sem virtualização ligada na BIOS/UEFI e sem WSL 2 o Docker instala mas não abre; `wsl --install` exige administrador e reinício (`windows-install.md`, "WSL: Verification and setup" e "Administrator privileges"). O instalador (`instalar.ps1`) e o passo "Ambiente" da tela já verificam isso (LICOES.md, 2026-10-19).
+- **Windows: o instalador do Docker só é executado com assinatura digital válida de "Docker Inc"** (`instalar/assinatura.ps1`). Se recusar, ver o `data\bugs\*assinatura-docker*.md` (mostra quem assinou) antes de qualquer decisão; nunca contornar.
 
 ## Desfazer
 Desinstalar pelo painel do sistema (Windows/Mac) ou pelos pacotes `apt` (Linux); volumes do Docker não são apagados sozinhos.
