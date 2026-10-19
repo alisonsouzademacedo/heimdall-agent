@@ -91,3 +91,7 @@ Passo só libera com o anterior verde · retoma de onde parou depois de reinicia
 
 ## Pendências
 Desenho das telas (protótipo visual) para aprovação do dono · forma do atalho no Windows · porta da página · SSE ou WebSocket (decide-se na construção) · se o passo 5b também pode aprovar pela página (proposta: sim).
+
+
+## Protótipo visual (2026-10-19)
+Primeira versão do desenho das telas em `docs/plano/prototipo-onboarding/` (base de design: skill UI UX Pro Max; tema de mitologia nórdica). **Aguarda avaliação do dono.** A pendência "desenho das telas" fica em aberto até ele aprovar ou pedir mudanças.

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Heimdall — self-chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@600;700&family=Fira+Code:wght@400;500&family=Fira+Sans:wght@400;500;600&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:#0F172A;color:#F8FAFC;font-family:'Fira Sans',system-ui,sans-serif;font-size:15px;line-height:1.45;">
+  <div style="display:flex;align-items:center;gap:12px;padding:16px 16px 12px 16px;background:#1B2336;border-bottom:1px solid rgba(148,163,184,.25);">
+    <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><path d="M3 30 C15 10 49 10 61 30 C49 50 15 50 3 30 Z" fill="rgba(251,191,36,.1)" stroke="#D4A84B" stroke-width="3"/><circle cx="32" cy="30" r="11" fill="#D4A84B"/><circle cx="32" cy="30" r="5" fill="#0F172A"/></svg>
+    <div><div style="font-family:'Cormorant',serif;font-weight:700;font-size:22px;letter-spacing:.12em;line-height:1;">HEIMDALL</div><div style="font-size:12.5px;color:#94A3B8;">self-chat · só você e ele</div></div>
+  </div>
+  <div style="flex:1;overflow:hidden;padding:16px 14px;display:grid;gap:10px;align-content:start;background:radial-gradient(500px 240px at 80% 0%,rgba(96,165,250,.12),transparent 60%),#0F172A;">
+    <div style="justify-self:center;font-size:12px;color:#94A3B8;border:1px solid rgba(148,163,184,.25);border-radius:999px;padding:2px 12px;">quarta-feira, 21/10 · exemplo</div>
+    <div style="justify-self:start;max-width:92%;background:#272F42;border-radius:16px 16px 16px 4px;padding:10px 12px;">
+      <div style="color:#D4A84B;font-weight:600;font-size:13px;">Heimdall · 08:00</div>
+      <div>Bom dia. Comece pela <b>Alfa</b>: o Carlos espera você há 2 dias e perguntou o prazo. Hoje vence o retorno com a Beta.</div>
+      <div style="margin-top:8px;display:flex;gap:10px;align-items:center;background:#0F172A;border:1px solid rgba(148,163,184,.3);border-radius:12px;padding:8px 10px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/></svg>
+        <div><div style="font-family:'Fira Code',monospace;font-size:13px;">2026-10-21-diario.md</div><div style="font-size:12px;color:#94A3B8;">relatório completo · 1 tela</div></div>
+      </div>
+    </div>
+    <div style="justify-self:start;max-width:92%;background:#272F42;border-radius:16px 16px 16px 4px;padding:10px 12px;">
+      <div style="font-family:'Fira Code',monospace;font-size:13.5px;"><b>A1</b> Alfa (Carlos) · espera 2 dias<br><b>F1</b> Beta (Marina) · retorno hoje<br><b>P1</b> Gama (Rui) · pediu proposta</div>
+      <div style="margin-top:6px;color:#C9B27A;font-size:13px;">Rascunho para A1 (você copia): “Carlos, o prazo gira em torno de 30 dias; te mando o cronograma ainda hoje.”</div>
+    </div>
+    <div style="justify-self:end;max-width:86%;background:#14532D;border-radius:16px 16px 4px 16px;padding:10px 12px;">
+      <span style="font-family:'Fira Code',monospace;font-size:14px;">A1 já respondi · P1 não é potencial: só pediu catálogo</span>
+    </div>
+    <div style="justify-self:start;max-width:92%;background:#272F42;border-radius:16px 16px 16px 4px;padding:10px 12px;">
+      <div style="color:#D4A84B;font-weight:600;font-size:13px;">Heimdall</div>
+      <div>Registrado. A1 sai de “aguardando” até nova mensagem. P1 não conta como potencial; se isso se repetir, eu te proponho ajustar o critério e você decide.</div>
+    </div>
+  </div>
+  <div style="padding:10px 14px 18px 14px;background:#1B2336;border-top:1px solid rgba(148,163,184,.25);display:flex;gap:10px;align-items:center;">
+    <div style="flex:1;min-height:44px;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:#0F172A;color:#94A3B8;display:flex;align-items:center;padding:0 16px;font-size:14.5px;">Mensagem para você mesmo…</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

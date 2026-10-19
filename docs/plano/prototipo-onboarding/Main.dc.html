@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Heimdall — configuração inicial</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Fira+Code:wght@400;500&family=Fira+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #FBBF24;outline-offset:2px}
+@keyframes hmGlow{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.55)}50%{box-shadow:0 0 0 7px rgba(251,191,36,0)}}
+@keyframes hmBlink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.hm-now{animation:hmGlow 2.4s ease-in-out infinite}
+.hm-eye{transform-origin:50% 50%;animation:hmBlink 7s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.hm-now,.hm-eye{animation:none}}
+</style>
+</helmet>
+
+<div style="--bg:#0F172A;--card:#1B2336;--muted:#272F42;--mfg:#94A3B8;--fg:#F8FAFC;--line:rgba(148,163,184,.28);--ok:#22C55E;--warn:#FBBF24;--bad:#EF4444;
+min-height:1280px;box-sizing:border-box;color:#F8FAFC;font-family:'Fira Sans',system-ui,sans-serif;font-size:16px;line-height:1.5;
+background:radial-gradient(1px 1px at 8% 12%,rgba(248,250,252,.8),transparent),radial-gradient(1px 1px at 22% 6%,rgba(248,250,252,.55),transparent),radial-gradient(1.5px 1.5px at 41% 14%,rgba(248,250,252,.7),transparent),radial-gradient(1px 1px at 63% 9%,rgba(248,250,252,.6),transparent),radial-gradient(1px 1px at 78% 18%,rgba(248,250,252,.8),transparent),radial-gradient(1.5px 1.5px at 91% 7%,rgba(248,250,252,.6),transparent),radial-gradient(1000px 420px at 75% -8%,rgba(96,165,250,.18),transparent 62%),radial-gradient(800px 380px at 0% 100%,rgba(167,139,250,.12),transparent 60%),#0F172A;">
+
+<!-- Cabeçalho: o olho de Heimdall e a ponte Bifröst -->
+<header style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding:24px 32px 18px 32px;">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <svg class="hm-eye" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="bf" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#2DD4BF"/><stop offset=".25" stop-color="#60A5FA"/><stop offset=".5" stop-color="#A78BFA"/><stop offset=".75" stop-color="#F472B6"/><stop offset="1" stop-color="#FBBF24"/>
+        </linearGradient>
+      </defs>
+      <path d="M3 30 C15 10 49 10 61 30 C49 50 15 50 3 30 Z" fill="rgba(251,191,36,.08)" stroke="#D4A84B" stroke-width="2.4"/>
+      <circle cx="32" cy="30" r="11" fill="#D4A84B"/>
+      <circle cx="32" cy="30" r="5" fill="#0F172A"/>
+      <circle cx="35" cy="27" r="1.6" fill="#F8FAFC"/>
+      <path d="M8 56 C20 42 44 42 56 56" fill="none" stroke="url(#bf)" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div style="font-family:'Cormorant',serif;font-weight:700;font-size:40px;line-height:1;letter-spacing:.18em;">HEIMDALL</div>
+      <div style="color:#94A3B8;font-size:14px;margin-top:4px;">Sentinela de Bifröst · configuração inicial, uma vez só</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+    <span style="display:inline-flex;gap:8px;align-items:center;border:1px solid rgba(148,163,184,.28);border-radius:999px;padding:6px 14px;font-family:'Fira Code',monospace;font-size:13px;color:#94A3B8;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      só nesta máquina · 127.0.0.1
+    </span>
+    <span style="display:inline-flex;gap:8px;align-items:center;border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:6px 14px;font-family:'Fira Code',monospace;font-size:13px;color:#FBBF24;">memória 5,1 de 8 GB</span>
+    <button type="button" onClick="{{toggleReview}}" aria-pressed="{{review}}" style="min-height:44px;border-radius:999px;border:1px solid rgba(148,163,184,.4);background:rgba(39,47,66,.8);color:#F8FAFC;padding:0 16px;">{{reviewLabel}}</button>
+  </div>
+</header>
+<div style="height:3px;margin:0 32px;border-radius:3px;background:linear-gradient(90deg,#2DD4BF,#60A5FA,#A78BFA,#F472B6,#FBBF24);opacity:.85;"></div>
+<div style="margin:10px 32px 0 32px;color:#94A3B8;font-size:13px;">Protótipo para avaliação. Todos os números e nomes abaixo são de exemplo. Nada aqui se conecta ao WhatsApp de verdade.</div>
+
+<main style="display:flex;flex-wrap:wrap;gap:24px;padding:20px 32px 40px 32px;align-items:flex-start;">
+
+  <!-- A Ponte: lista de passos -->
+  <nav aria-label="Passos da configuração" style="flex:1 1 300px;max-width:380px;min-width:0;background:rgba(27,35,54,.72);backdrop-filter:blur(14px);border:1px solid rgba(148,163,184,.22);border-radius:20px;padding:20px 18px;">
+    <div style="font-family:'Cormorant',serif;font-weight:600;font-size:24px;margin:0 0 4px 6px;">A Ponte</div>
+    <div style="color:#94A3B8;font-size:13px;margin:0 0 14px 6px;">{{doneCount}} de 12 passos prontos</div>
+    <sc-for list="{{steps}}" as="s" hint-placeholder-count="12">
+      <div style="display:flex;gap:12px;">
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="{{s.nodeClass}}" style="{{s.nodeStyle}}">
+            <sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            </sc-if>
+            <sc-if value="{{ s.notDone }}" hint-placeholder-val="{{ true }}">
+              <span style="font-family:'Fira Code',monospace;font-size:12px;">{{s.num}}</span>
+            </sc-if>
+          </div>
+          <div style="{{s.lineStyle}}"></div>
+        </div>
+        <button type="button" onClick="{{s.open}}" disabled="{{s.locked}}" aria-current="{{s.current}}" style="{{s.btnStyle}}">
+          <span style="display:block;font-weight:600;font-size:15px;">{{s.title}}</span>
+          <span style="display:block;font-size:12.5px;color:#C9B27A;">{{s.myth}}</span>
+        </button>
+      </div>
+    </sc-for>
+  </nav>
+
+  <!-- Painel do passo atual -->
+  <section style="flex:999 1 560px;min-width:0;background:rgba(27,35,54,.72);backdrop-filter:blur(14px);border:1px solid rgba(148,163,184,.22);border-radius:20px;padding:28px 32px 24px 32px;">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-start;">
+      <div style="min-width:0;">
+        <div style="font-family:'Fira Code',monospace;font-size:13px;color:#C9B27A;letter-spacing:.08em;">PASSO {{cur.num}} DE 12</div>
+        <h1 style="margin:2px 0 2px 0;font-family:'Cormorant',serif;font-weight:700;font-size:42px;line-height:1.1;text-wrap:balance;">{{cur.title}}</h1>
+        <div style="color:#C9B27A;font-size:15px;">{{cur.myth}}</div>
+      </div>
+      <span style="{{cur.chipStyle}}">{{cur.chipText}}</span>
+    </div>
+    <p style="margin:14px 0 20px 0;color:#CBD5E1;max-width:70ch;">{{cur.lead}}</p>
+
+    <!-- 0 Ambiente -->
+    <sc-if value="{{ is0 }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+          <sc-for list="{{checks}}" as="c" hint-placeholder-count="6">
+            <div style="display:flex;gap:12px;align-items:flex-start;background:#272F42;border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:12px 14px;">
+              <span style="{{c.dot}}" aria-hidden="true"></span>
+              <div style="min-width:0;"><div style="font-weight:600;">{{c.label}}</div><div style="color:#94A3B8;font-size:13.5px;">{{c.detail}}</div></div>
+            </div>
+          </sc-for>
+        </div>
+        <h2 style="font-family:'Cormorant',serif;font-size:26px;margin:24px 0 6px 0;">Onde guardar o backup?</h2>
+        <p style="margin:0 0 10px 0;color:#94A3B8;font-size:14px;">O backup roda no primeiro uso do dia e fica nessa pasta, sempre criptografado.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <sc-for list="{{destinos}}" as="d" hint-placeholder-count="3">
+            <button type="button" onClick="{{d.pick}}" aria-pressed="{{d.on}}" style="{{d.style}}">{{d.label}}</button>
+          </sc-for>
+        </div>
+        <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:end;">
+          <div style="flex:1 1 280px;">
+            <label for="pasta" style="display:block;font-size:13px;color:#94A3B8;margin-bottom:4px;">Pasta de destino</label>
+            <input id="pasta" type="text" value="{{pasta}}" onChange="{{setPasta}}" style="width:100%;box-sizing:border-box;min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.4);background:#0F172A;color:#F8FAFC;padding:0 14px;font-family:'Fira Code',monospace;font-size:14px;">
+          </div>
+          <button type="button" onClick="{{verifyAmb}}" style="min-height:44px;border-radius:12px;border:0;background:#22C55E;color:#0F172A;font-weight:600;padding:0 20px;">Testar ambiente e destino</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 1 WhatsApp -->
+    <sc-if value="{{ is1 }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:center;">
+        <div style="width:264px;height:264px;border-radius:18px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;flex:0 0 auto;">
+          <sc-if value="{{ qrIdle }}" hint-placeholder-val="{{ true }}"><span style="color:#334155;font-size:14px;text-align:center;padding:0 24px;">O QR Code aparece aqui depois que você clicar em “Gerar QR Code”.</span></sc-if>
+          <sc-if value="{{ qrShown }}" hint-placeholder-val="{{ false }}">
+            <svg width="232" height="232" viewBox="0 0 29 29" role="img" aria-label="QR Code de exemplo, não funcional" shape-rendering="crispEdges">
+              <rect width="29" height="29" fill="#F8FAFC"/>
+              <g fill="#0F172A">
+                <path d="M2 2h7v7H2zM20 2h7v7h-7zM2 20h7v7H2z"/>
+              </g>
+              <g fill="#F8FAFC"><path d="M3 3h5v5H3zM21 3h5v5h-5zM3 21h5v5H3z"/></g>
+              <g fill="#0F172A"><path d="M4 4h3v3H4zM22 4h3v3h-3zM4 22h3v3H4z"/></g>
+              <g fill="#0F172A">
+                <sc-for list="{{qrCells}}" as="q" hint-placeholder-count="10"><rect x="{{q.x}}" y="{{q.y}}" width="1" height="1"/></sc-for>
+              </g>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ qrOk }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:center;color:#0F172A;">
+              <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+              <div style="font-weight:600;font-size:18px;">Conectado</div><div style="font-size:13px;color:#475569;">O QR foi apagado.</div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="flex:1 1 300px;min-width:0;">
+          <ol style="margin:0 0 16px 18px;padding:0;color:#CBD5E1;display:grid;gap:6px;">
+            <li>Clique em <b>Gerar QR Code</b>.</li>
+            <li>No celular: WhatsApp → <b>Aparelhos conectados</b> → <b>Conectar um aparelho</b>.</li>
+            <li>Aponte a câmera para o QR. Ele renova sozinho a cada ~20 segundos.</li>
+          </ol>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <button type="button" onClick="{{genQr}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 20px;">Gerar QR Code</button>
+            <button type="button" onClick="{{scanQr}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 20px;">Simular leitura (só no protótipo)</button>
+          </div>
+          <p style="margin:16px 0 0 0;color:#94A3B8;font-size:13.5px;max-width:52ch;">O QR dá acesso à sua conta do WhatsApp: ele só existe nesta tela, nunca vai para log e some ao conectar. O Heimdall <b style="color:#F8FAFC;">só escuta</b>; nunca envia mensagem a ninguém além de você.</p>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 2 Cadastro -->
+    <sc-if value="{{ is2 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+          <sc-for list="{{fields}}" as="f" hint-placeholder-count="5">
+            <div>
+              <label for="{{f.id}}" style="display:block;font-size:13px;color:#94A3B8;margin-bottom:4px;">{{f.label}}</label>
+              <input id="{{f.id}}" type="text" value="{{f.value}}" onChange="{{f.set}}" placeholder="{{f.ph}}" style="width:100%;box-sizing:border-box;min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.4);background:#0F172A;color:#F8FAFC;padding:0 14px;font-size:15px;">
+            </div>
+          </sc-for>
+        </div>
+        <h2 style="font-family:'Cormorant',serif;font-size:26px;margin:22px 0 8px 0;">Equipe interna</h2>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;min-width:520px;border-collapse:collapse;font-size:14.5px;">
+            <thead><tr style="text-align:left;color:#94A3B8;font-size:12.5px;"><th style="padding:6px 8px;">Nome</th><th style="padding:6px 8px;">Função</th><th style="padding:6px 8px;">Telefone</th><th style="padding:6px 8px;">No WhatsApp?</th></tr></thead>
+            <tbody>
+              <sc-for list="{{equipe}}" as="p" hint-placeholder-count="2">
+                <tr style="border-top:1px solid rgba(148,163,184,.2);"><td style="padding:10px 8px;">{{p.nome}}</td><td style="padding:10px 8px;">{{p.funcao}}</td><td style="padding:10px 8px;font-family:'Fira Code',monospace;">{{p.tel}}</td><td style="padding:10px 8px;"><span style="{{p.chip}}">{{p.status}}</span></td></tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;">
+          <button type="button" style="min-height:44px;border-radius:12px;border:1px dashed rgba(148,163,184,.6);background:transparent;color:#F8FAFC;padding:0 18px;">+ Adicionar pessoa</button>
+          <button type="button" onClick="{{saveCad}}" style="min-height:44px;border-radius:12px;border:0;background:#22C55E;color:#0F172A;font-weight:600;padding:0 20px;">Salvar e verificar telefones</button>
+        </div>
+        <p style="margin:14px 0 0 0;color:#94A3B8;font-size:13.5px;max-width:70ch;">Já vem preenchido com o que você nos contou; confira e corrija. A verificação dos telefones usa a conexão do passo anterior.</p>
+      </div>
+    </sc-if>
+
+    <!-- 3 Sincronizar -->
+    <sc-if value="{{ is3 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div role="progressbar" aria-label="Progresso da sincronização" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{sync.pct}}" style="height:18px;border-radius:999px;background:#272F42;overflow:hidden;border:1px solid rgba(148,163,184,.28);">
+          <div style="height:100%;width:{{sync.pct}}%;background:linear-gradient(90deg,#2DD4BF,#60A5FA,#A78BFA,#F472B6,#FBBF24);transition:width .3s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'Fira Code',monospace;font-size:13px;color:#94A3B8;"><span>{{sync.pct}}%</span><span>valores de exemplo</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:14px;">
+          <div style="background:#272F42;border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:13px;">Conversas</div><div style="font-family:'Fira Code',monospace;font-size:26px;">{{sync.c1}}</div></div>
+          <div style="background:#272F42;border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:13px;">Contatos</div><div style="font-family:'Fira Code',monospace;font-size:26px;">{{sync.c2}}</div></div>
+          <div style="background:#272F42;border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:13px;">Mensagens</div><div style="font-family:'Fira Code',monospace;font-size:26px;">{{sync.c3}}</div></div>
+        </div>
+        <div style="margin-top:16px;"><button type="button" onClick="{{startSync}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 22px;">Sincronizar com o telefone</button></div>
+        <p style="margin:14px 0 0 0;color:#94A3B8;font-size:13.5px;max-width:70ch;">Mantenha o celular ligado e conectado. O Heimdall recebe tudo o que o WhatsApp entregar, sem limitar o histórico.</p>
+      </div>
+    </sc-if>
+
+    <!-- 4 Extrair -->
+    <sc-if value="{{ is4 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="background:#272F42;border:1px solid rgba(251,191,36,.35);border-radius:14px;padding:14px 16px;margin-bottom:16px;">
+          <div style="font-weight:600;">Antes de começar: o orçamento</div>
+          <div style="color:#CBD5E1;font-size:14px;margin-top:2px;">Mostra quantas mensagens, áudios e PDFs serão processados e quanto da cota do plano isso consome. Começa pelos últimos 60 dias e pelos clientes ativos; o resto segue em segundo plano.</div>
+        </div>
+        <div role="progressbar" aria-label="Progresso da extração" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ext.pct}}" style="height:18px;border-radius:999px;background:#272F42;overflow:hidden;border:1px solid rgba(148,163,184,.28);">
+          <div style="height:100%;width:{{ext.pct}}%;background:linear-gradient(90deg,#2DD4BF,#60A5FA,#A78BFA,#F472B6,#FBBF24);transition:width .3s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'Fira Code',monospace;font-size:13px;color:#94A3B8;"><span>{{ext.pct}}%</span><span>valores de exemplo</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:14px;">
+          <div style="background:#272F42;border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:13px;">Textos gravados</div><div style="font-family:'Fira Code',monospace;font-size:26px;">{{ext.t}}</div></div>
+          <div style="background:#272F42;border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:13px;">Áudios baixados</div><div style="font-family:'Fira Code',monospace;font-size:26px;">{{ext.a}}</div></div>
+          <div style="background:#272F42;border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:13px;">PDFs baixados</div><div style="font-family:'Fira Code',monospace;font-size:26px;">{{ext.p}}</div></div>
+        </div>
+        <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;">
+          <button type="button" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 20px;">Teste rápido (7 dias)</button>
+          <button type="button" onClick="{{startExt}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 22px;">Começar extração</button>
+        </div>
+        <p style="margin:14px 0 0 0;color:#94A3B8;font-size:13.5px;max-width:70ch;">Nesta etapa não se usa modelo de linguagem: só guardar o texto e baixar áudios e PDFs originais, que expiram nos servidores do WhatsApp.</p>
+      </div>
+    </sc-if>
+
+    <!-- 5 Modelo -->
+    <sc-if value="{{ is5 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <button type="button" onClick="{{pickAss}}" aria-pressed="{{isAss}}" style="{{assStyle}}"><span style="display:block;font-weight:600;font-size:17px;">Assinatura do ChatGPT</span><span style="display:block;color:#94A3B8;font-size:13.5px;">Uso pessoal. Sem custo por token.</span></button>
+          <button type="button" onClick="{{pickApi}}" aria-pressed="{{isApi}}" style="{{apiStyle}}"><span style="display:block;font-weight:600;font-size:17px;">Chave de API</span><span style="display:block;color:#94A3B8;font-size:13.5px;">Versão comercial. Custo por token, pago pelo cliente.</span></button>
+        </div>
+        <sc-if value="{{ isAss }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:16px;display:grid;gap:10px;">
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:#272F42;border-radius:14px;padding:12px 16px;">
+              <div><div style="font-weight:600;">Hermes (conversa e relatórios)</div><div style="color:#94A3B8;font-size:13.5px;">Login por código de dispositivo</div></div>
+              <div style="display:flex;gap:10px;align-items:center;"><span style="{{loginH.chip}}">{{loginH.text}}</span><button type="button" onClick="{{doLoginH}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 16px;">Entrar com o ChatGPT</button></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:#272F42;border-radius:14px;padding:12px 16px;">
+              <div><div style="font-weight:600;">Hindsight (memória)</div><div style="color:#94A3B8;font-size:13.5px;">Login no navegador desta máquina</div></div>
+              <div style="display:flex;gap:10px;align-items:center;"><span style="{{loginI.chip}}">{{loginI.text}}</span><button type="button" onClick="{{doLoginI}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 16px;">Entrar com o ChatGPT</button></div>
+            </div>
+            <p style="margin:0;color:#94A3B8;font-size:13.5px;max-width:72ch;">No plano Plus a janela de 5 horas é compartilhada com os outros apps. Em Configurações → Uso do ChatGPT você pode reservar uma fatia semanal para o Heimdall.</p>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isApi }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;align-items:end;">
+            <div>
+              <label for="prov" style="display:block;font-size:13px;color:#94A3B8;margin-bottom:4px;">Fornecedor</label>
+              <select id="prov" style="width:100%;min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.4);background:#0F172A;color:#F8FAFC;padding:0 12px;font-size:15px;"><option>OpenAI</option><option>Anthropic</option><option>Google (Gemini)</option></select>
+            </div>
+            <div>
+              <label for="chave" style="display:block;font-size:13px;color:#94A3B8;margin-bottom:4px;">Chave de API (não é mostrada de novo)</label>
+              <input id="chave" type="password" value="{{apiKey}}" onChange="{{setKey}}" autocomplete="off" style="width:100%;box-sizing:border-box;min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.4);background:#0F172A;color:#F8FAFC;padding:0 14px;font-family:'Fira Code',monospace;">
+            </div>
+            <div><button type="button" onClick="{{testKey}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 20px;">Testar (custa centavos)</button></div>
+          </div>
+        </sc-if>
+        <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+          <span style="color:#94A3B8;font-size:14px;">Chamada de teste:</span>
+          <span style="{{modelChip.h}}">Hermes {{modelChip.ht}}</span>
+          <span style="{{modelChip.i}}">Hindsight {{modelChip.it}}</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 6 Processar -->
+    <sc-if value="{{ is6 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div role="progressbar" aria-label="Progresso do processamento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{proc.pct}}" style="height:18px;border-radius:999px;background:#272F42;overflow:hidden;border:1px solid rgba(148,163,184,.28);">
+          <div style="height:100%;width:{{proc.pct}}%;background:linear-gradient(90deg,#2DD4BF,#60A5FA,#A78BFA,#F472B6,#FBBF24);transition:width .3s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'Fira Code',monospace;font-size:13px;color:#94A3B8;"><span>{{proc.pct}}% · faltam cerca de {{proc.eta}} (exemplo)</span><span>cota da janela de 5 h: {{proc.cota}}%</span></div>
+        <div style="display:grid;gap:10px;margin-top:16px;">
+          <sc-for list="{{proc.subs}}" as="u" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:minmax(170px,240px) 1fr 52px;gap:12px;align-items:center;">
+              <span style="font-size:14.5px;">{{u.label}}</span>
+              <div style="height:8px;border-radius:999px;background:#272F42;overflow:hidden;"><div style="height:100%;width:{{u.pct}}%;background:#60A5FA;transition:width .3s ease;"></div></div>
+              <span style="font-family:'Fira Code',monospace;font-size:13px;color:#94A3B8;text-align:right;">{{u.pct}}%</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;">
+          <button type="button" onClick="{{startProc}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 22px;">Processar</button>
+          <button type="button" onClick="{{pauseProc}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 20px;">Pausar</button>
+        </div>
+        <p style="margin:14px 0 0 0;color:#94A3B8;font-size:13.5px;max-width:72ch;">Pode fechar a janela: o progresso fica guardado e o processamento retoma de onde parou. Se a cota do plano acabar, o Heimdall espera e tenta de novo sozinho.</p>
+      </div>
+    </sc-if>
+
+    <!-- 7 Voz -->
+    <sc-if value="{{ is7 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="background:#272F42;border-radius:14px;padding:16px 18px;">
+          <div style="font-weight:600;margin-bottom:8px;">Como o Heimdall entendeu o seu jeito (exemplo)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <span style="border:1px solid rgba(212,168,75,.6);color:#E8D29A;border-radius:999px;padding:4px 12px;font-size:14px;">direto e cordial</span>
+            <span style="border:1px solid rgba(212,168,75,.6);color:#E8D29A;border-radius:999px;padding:4px 12px;font-size:14px;">mensagens curtas</span>
+            <span style="border:1px solid rgba(212,168,75,.6);color:#E8D29A;border-radius:999px;padding:4px 12px;font-size:14px;">trata cliente por “você”</span>
+            <span style="border:1px solid rgba(212,168,75,.6);color:#E8D29A;border-radius:999px;padding:4px 12px;font-size:14px;">mais informal com o gestor</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px;">
+          <div style="background:#0F172A;border:1px solid rgba(148,163,184,.25);border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:12.5px;">Relatório · antes</div><div style="font-size:14.5px;">Há 1 cliente aguardando resposta.</div><div style="color:#C9B27A;font-size:12.5px;margin-top:8px;">Relatório · depois</div><div style="font-size:14.5px;">Carlos, da Alfa, espera você há 2 dias. Vale responder hoje.</div></div>
+          <div style="background:#0F172A;border:1px solid rgba(148,163,184,.25);border-radius:14px;padding:12px 14px;"><div style="color:#94A3B8;font-size:12.5px;">Rascunho de resposta (você copia; ele nunca envia)</div><div style="font-size:14.5px;">“Carlos, o prazo gira em torno de 30 dias; te mando o cronograma ainda hoje.”</div></div>
+        </div>
+        <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+          <button type="button" onClick="{{aprovarVoz}}" style="min-height:44px;border-radius:12px;border:0;background:#22C55E;color:#0F172A;font-weight:600;padding:0 22px;">Aprovar</button>
+          <button type="button" onClick="{{ajustarVoz}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 20px;">Ajustar</button>
+          <button type="button" onClick="{{recusarVoz}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 20px;">Recusar</button>
+          <span style="color:#94A3B8;font-size:14px;">{{vozMsg}}</span>
+        </div>
+        <p style="margin:14px 0 0 0;color:#94A3B8;font-size:13.5px;max-width:72ch;">Nada muda sem o seu “aprovar”. Cada versão fica guardada e dá para voltar. Você também pode aprovar pelo self-chat.</p>
+      </div>
+    </sc-if>
+
+    <!-- 8 Self-chat -->
+    <sc-if value="{{ is8 }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;">
+        <div style="flex:1 1 300px;min-width:0;max-width:420px;background:#0F172A;border:1px solid rgba(148,163,184,.25);border-radius:18px;padding:16px;display:grid;gap:10px;">
+          <div style="justify-self:start;max-width:88%;background:#272F42;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:14.5px;"><b style="color:#D4A84B;">Heimdall</b><br>Teste de ida e volta. Item de exemplo:<br><span style="font-family:'Fira Code',monospace;">A1</span> · Alfa aguarda você há 2 dias.</div>
+          <sc-if value="{{ chatSent }}" hint-placeholder-val="{{ false }}">
+            <div style="justify-self:end;max-width:88%;background:#14532D;border-radius:14px 14px 4px 14px;padding:10px 12px;font-size:14.5px;"><span style="font-family:'Fira Code',monospace;">A1 já resolvi</span></div>
+            <div style="justify-self:start;max-width:88%;background:#272F42;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:14.5px;"><b style="color:#D4A84B;">Heimdall</b><br>Registrado: Alfa fora de “aguardando” até nova mensagem.</div>
+          </sc-if>
+        </div>
+        <div style="flex:1 1 280px;min-width:0;">
+          <p style="margin:0 0 14px 0;color:#CBD5E1;max-width:52ch;">O Heimdall manda uma mensagem e um arquivo <span style="font-family:'Fira Code',monospace;">.md</span> para o seu self-chat. Você responde e vê que ele entendeu. É assim que ele aprende com as suas correções.</p>
+          <button type="button" onClick="{{sendChat}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 22px;">Enviar mensagem de teste ao meu self-chat</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 9 Agenda -->
+    <sc-if value="{{ is9 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+          <div style="background:#272F42;border-radius:14px;padding:14px 16px;"><div style="color:#94A3B8;font-size:13px;">Relatório diário</div><div style="font-family:'Fira Code',monospace;font-size:20px;">ter a sex · 08:00</div><div style="color:#94A3B8;font-size:13px;">cobre o dia anterior</div></div>
+          <div style="background:#272F42;border-radius:14px;padding:14px 16px;"><div style="color:#94A3B8;font-size:13px;">Relatório semanal</div><div style="font-family:'Fira Code',monospace;font-size:20px;">segunda · 08:00</div><div style="color:#94A3B8;font-size:13px;">cobre a semana anterior</div></div>
+          <div style="background:#272F42;border-radius:14px;padding:14px 16px;"><div style="color:#94A3B8;font-size:13px;">Fuso</div><div style="font-family:'Fira Code',monospace;font-size:20px;">America/Sao_Paulo</div><div style="color:#94A3B8;font-size:13px;">Santa Maria, RS</div></div>
+        </div>
+        <div style="margin-top:16px;"><button type="button" onClick="{{genReport}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 22px;">Gerar relatório de teste agora</button></div>
+        <sc-if value="{{ reportShown }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:16px;background:#F8FAFC;color:#0F172A;border-radius:14px;padding:18px 22px;max-width:640px;">
+            <div style="font-family:'Cormorant',serif;font-weight:700;font-size:26px;">Diário — quarta-feira, 21/10</div>
+            <div style="margin-top:6px;"><b>Resumo:</b> Metalúrgica Alfa espera resposta sua há 2 dias e pediu prazo. Hoje vence o retorno com a Gráfica Beta. Comece pela Alfa.</div>
+            <div style="margin-top:10px;font-weight:600;">Aguardando você</div>
+            <div style="font-size:14.5px;">A1 · Metalúrgica Alfa (Carlos) — espera há 2 dias. Perguntou o prazo. Rascunho: “Carlos, o prazo gira em torno de 30 dias; te mando o cronograma ainda hoje.”</div>
+            <div style="margin-top:8px;font-weight:600;">Hoje</div>
+            <div style="font-size:14.5px;">F1 · Gráfica Beta (Marina) — retorno combinado para hoje.</div>
+            <div style="margin-top:10px;font-size:12.5px;color:#475569;">Exemplo com dados inventados. Cabe em uma tela: 179 palavras (limite 350).</div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- 10 Backup -->
+    <sc-if value="{{ is10 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="background:#272F42;border-radius:14px;padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;">
+          <div><div style="color:#94A3B8;font-size:13px;">Destino escolhido</div><div style="font-family:'Fira Code',monospace;font-size:15px;">{{pasta}}</div></div>
+          <span style="color:#94A3B8;font-size:13.5px;">Criptografado · roda no primeiro uso do dia</span>
+        </div>
+        <div role="progressbar" aria-label="Progresso do backup" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{bkp.pct}}" style="height:18px;border-radius:999px;background:#272F42;overflow:hidden;border:1px solid rgba(148,163,184,.28);margin-top:16px;">
+          <div style="height:100%;width:{{bkp.pct}}%;background:linear-gradient(90deg,#2DD4BF,#60A5FA,#A78BFA,#F472B6,#FBBF24);transition:width .3s ease;"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+          <button type="button" onClick="{{startBkp}}" style="min-height:44px;border-radius:12px;border:0;background:#D4A84B;color:#0F172A;font-weight:600;padding:0 22px;">Fazer o primeiro backup agora</button>
+          <button type="button" onClick="{{restoreTest}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 20px;">Ensaio de restauração</button>
+          <span style="color:#94A3B8;font-size:14px;">{{restoreMsg}}</span>
+        </div>
+        <div style="margin-top:18px;background:#0F172A;border:1px solid rgba(239,68,68,.45);border-radius:14px;padding:12px 16px;max-width:72ch;">
+          <div style="font-weight:600;">Apagar dados é sempre em duas etapas</div>
+          <div style="color:#CBD5E1;font-size:14px;">Você pede (“apagar tudo da Metalúrgica Alfa”), o Heimdall mostra exatamente o que seria apagado e um código, e só executa quando você digita o código. Nenhuma mensagem de cliente consegue disparar isso.</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 11 Pronto -->
+    <sc-if value="{{ is11 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+          <sc-for list="{{tiles}}" as="t" hint-placeholder-count="6">
+            <div style="background:#272F42;border-radius:14px;padding:14px 16px;">
+              <div style="color:#94A3B8;font-size:13px;">{{t.label}}</div>
+              <div style="font-family:'Fira Code',monospace;font-size:24px;margin:2px 0;">{{t.value}}</div>
+              <div style="font-size:13px;{{t.tone}}">{{t.note}}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:14px;align-items:center;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#22C55E;box-shadow:0 0 12px #22C55E;" aria-hidden="true"></span>
+          <span style="font-family:'Cormorant',serif;font-size:26px;">Heimdall está de vigia.</span>
+        </div>
+        <p style="margin:8px 0 0 0;color:#94A3B8;font-size:13.5px;max-width:72ch;">A partir de agora tudo é automático: escuta, relatórios às 08:00 e conversa no self-chat. Esta tela vira um painel de status.</p>
+      </div>
+    </sc-if>
+
+    <!-- Rodapé de navegação -->
+    <div style="margin-top:26px;padding-top:16px;border-top:1px solid rgba(148,163,184,.22);display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;">
+      <button type="button" onClick="{{goBack}}" disabled="{{backOff}}" style="min-height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.5);background:transparent;color:#F8FAFC;padding:0 20px;opacity:{{backOpacity}};">Voltar</button>
+      <span style="color:#94A3B8;font-size:13.5px;">{{lockHint}}</span>
+      <button type="button" onClick="{{goNext}}" disabled="{{nextOff}}" style="min-height:44px;border-radius:12px;border:0;background:#F8FAFC;color:#0F172A;font-weight:600;padding:0 24px;opacity:{{nextOpacity}};">Continuar</button>
+    </div>
+  </section>
+</main>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D4A84B","options":["#D4A84B","#60A5FA","#2DD4BF"]},"$preview":{"width":1360,"height":1280}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      step: 0, review: true, done: {},
+      destino: 'hd', pasta: 'E:\\Backups\\Heimdall',
+      qr: 'idle',
+      sync: 0, ext: 0, proc: 0, bkp: 0, procRun: false,
+      provider: 'ass', loginH: false, loginI: false, apiKey: '', apiOk: false,
+      vozMsg: '', chatSent: false, reportShown: false, restoreMsg: '',
+      nome: '', chamado: '', funcao: '', empresa: 'Vtrês60', faz: 'Assessoria de marketing industrial para indústrias e fábricas',
+      cadOk: false
+    };
+    this._t = {};
+  }
+
+  componentWillUnmount() {
+    Object.keys(this._t || {}).forEach((k) => clearInterval(this._t[k]));
+  }
+
+  markDone(i) {
+    const done = Object.assign({}, this.state.done);
+    done[i] = true;
+    this.setState({ done });
+  }
+
+  run(key, speed, idx) {
+    clearInterval(this._t[key]);
+    this.setState({ [key]: Math.max(this.state[key] || 0, 1) });
+    this._t[key] = setInterval(() => {
+      const cur = this.state[key] || 0;
+      const next = Math.min(100, cur + speed + Math.random() * speed);
+      if (next >= 100) {
+        clearInterval(this._t[key]);
+        const done = Object.assign({}, this.state.done);
+        done[idx] = true;
+        this.setState({ [key]: 100, done, procRun: false });
+      } else {
+        this.setState({ [key]: next });
+      }
+    }, 320);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const accent = this.props.accent ?? '#D4A84B';
+    const defs = [
+      { t: 'Ambiente', m: 'Himinbjörg · o posto de vigia', lead: 'A IA instaladora já deixou tudo pronto. Aqui você só confere o estado da máquina e escolhe onde guardar o backup.' },
+      { t: 'Conectar o WhatsApp', m: 'Bifröst · a ponte', lead: 'Gere o QR Code e leia com o celular. É assim que o Heimdall passa a escutar o seu WhatsApp comercial, sem nunca enviar nada.' },
+      { t: 'Cadastro', m: 'Os Nove Mundos · quem é quem', lead: 'Quem é você, o que a empresa vende e quem é da equipe. Isso ensina o Heimdall a distinguir cliente de colega.' },
+      { t: 'Sincronizar com o telefone', m: 'O ouvido que escuta a relva crescer', lead: 'O Heimdall puxa todo o histórico que o WhatsApp entregar. A barra mostra o progresso real.' },
+      { t: 'Extrair', m: 'Runas · gravar o que foi dito', lead: 'Guarda as mensagens e baixa os áudios e PDFs originais antes que expirem.' },
+      { t: 'Conectar o modelo', m: 'Mímisbrunnr · a fonte da sabedoria', lead: 'Escolha de onde vem a inteligência: a sua assinatura do ChatGPT ou uma chave de API.' },
+      { t: 'Processar', m: 'Yggdrasil · as raízes da memória', lead: 'Transcreve áudios, converte PDFs, extrai compromissos e planta tudo na memória. Pode pausar e retomar.' },
+      { t: 'Voz e personalidade', m: 'Gjallarhorn · a voz', lead: 'O Heimdall mostra como entendeu o seu jeito de falar e pede a sua aprovação antes de adotá-lo.' },
+      { t: 'Self-chat', m: 'Huginn e Muninn · pensamento e memória', lead: 'Teste de ida e volta com o seu próprio chat, e do jeito de corrigi-lo: A1, F2, P1.' },
+      { t: 'Agenda e relatório de teste', m: 'A vigília · cada manhã às 08:00', lead: 'Confira os horários e veja um relatório de teste que cabe em uma tela.' },
+      { t: 'Backup e segurança', m: 'O cofre de Asgard', lead: 'Faz o primeiro backup agora e mostra como apagar dados com segurança.' },
+      { t: 'Pronto', m: 'Heimdall vigia', lead: 'Tudo no ar. Daqui em diante é automático, e esta tela vira um painel.' }
+    ];
+    const n = defs.length;
+    const unlocked = (i) => s.review || i === 0 || !!s.done[i - 1];
+    const doneCount = Object.keys(s.done).filter((k) => s.done[k]).length;
+
+    const steps = defs.map((d, i) => {
+      const done = !!s.done[i];
+      const current = i === s.step;
+      const locked = !unlocked(i);
+      const nodeBg = done ? '#22C55E' : (current ? accent : '#272F42');
+      const nodeFg = done || current ? '#0F172A' : '#94A3B8';
+      return {
+        num: i + 1, title: d.t, myth: d.m, done, notDone: !done, current: current ? 'step' : 'false', locked,
+        open: () => this.setState({ step: i }),
+        nodeClass: current ? 'hm-now' : '',
+        nodeStyle: 'width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:1px solid rgba(148,163,184,.4);background:' + nodeBg + ';color:' + nodeFg + ';',
+        lineStyle: i === n - 1 ? 'width:0;height:0;' : 'width:3px;flex:1;min-height:22px;border-radius:2px;background:' + (done ? 'linear-gradient(180deg,#2DD4BF,#60A5FA,#A78BFA)' : 'rgba(148,163,184,.25)') + ';',
+        btnStyle: 'text-align:left;min-height:44px;margin-bottom:8px;width:100%;border-radius:12px;padding:6px 12px;color:' + (locked ? '#64748B' : '#F8FAFC') + ';background:' + (current ? 'rgba(212,168,75,.14)' : 'transparent') + ';border:1px solid ' + (current ? 'rgba(212,168,75,.55)' : 'transparent') + ';'
+      };
+    });
+
+    const curDone = !!s.done[s.step];
+    const cur = {
+      num: s.step + 1, title: defs[s.step].t, myth: defs[s.step].m, lead: defs[s.step].lead,
+      chipText: curDone ? 'Verde · pronto' : 'Aguardando teste',
+      chipStyle: 'display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600;border:1px solid ' + (curDone ? '#22C55E' : '#FBBF24') + ';color:' + (curDone ? '#22C55E' : '#FBBF24') + ';'
+    };
+
+    const dot = (c) => 'width:12px;height:12px;border-radius:50%;margin-top:6px;flex:0 0 auto;background:' + c + ';';
+    const checks = [
+      { label: 'Windows 11 Pro', detail: 'Sistema suportado', dot: dot('#22C55E') },
+      { label: 'Memória: 8 GB', detail: 'No limite. Deixe aberto só o que for preciso.', dot: dot('#FBBF24') },
+      { label: 'Disco: 84 GB livres', detail: 'Acima do mínimo de 30 GB', dot: dot('#22C55E') },
+      { label: 'Docker rodando', detail: 'Pronto', dot: dot('#22C55E') },
+      { label: 'Serviços do Heimdall', detail: 'Hermes, Hindsight, banco, núcleo e transcritor: saudáveis (exemplo)', dot: dot('#22C55E') },
+      { label: 'Rede', detail: 'WhatsApp, ChatGPT e GitHub acessíveis', dot: dot('#22C55E') }
+    ];
+    const dest = [['hd', 'HD externo'], ['disco2', 'Segundo disco'], ['pen', 'Pen drive']];
+    const destinos = dest.map((p) => ({
+      label: p[1], on: s.destino === p[0], pick: () => this.setState({ destino: p[0] }),
+      style: 'min-height:44px;border-radius:12px;padding:0 18px;color:#F8FAFC;background:' + (s.destino === p[0] ? 'rgba(212,168,75,.18)' : 'transparent') + ';border:1px solid ' + (s.destino === p[0] ? accent : 'rgba(148,163,184,.4)') + ';'
+    }));
+
+    // QR de exemplo: padrão pseudoaleatório, não funcional
+    const qrCells = [];
+    let seed = 7;
+    for (let y = 0; y < 29; y++) {
+      for (let x = 0; x < 29; x++) {
+        const inFinder = (x < 10 && y < 10) || (x > 18 && y < 10) || (x < 10 && y > 18);
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        if (!inFinder && (seed >> 8) % 2 === 0) qrCells.push({ x, y });
+      }
+    }
+
+    const mkField = (id, label, key, ph) => ({ id, label, value: s[key], ph, set: (e) => this.setState({ [key]: e.target.value }) });
+    const fields = [
+      mkField('f1', 'Seu nome completo', 'nome', '[seu nome]'),
+      mkField('f2', 'Como prefere ser chamado', 'chamado', '[apelido]'),
+      mkField('f3', 'Sua função', 'funcao', 'ex.: SDR'),
+      mkField('f4', 'Empresa', 'empresa', ''),
+      mkField('f5', 'O que a empresa faz e vende', 'faz', '')
+    ];
+    const chipOk = 'border-radius:999px;padding:2px 10px;font-size:12.5px;border:1px solid #22C55E;color:#22C55E;';
+    const chipWait = 'border-radius:999px;padding:2px 10px;font-size:12.5px;border:1px solid #94A3B8;color:#94A3B8;';
+    const equipe = [
+      { nome: 'Pedro', funcao: 'Gestor', tel: '+55 55 9XXXX-XXXX', status: s.cadOk ? 'encontrado' : 'a verificar', chip: s.cadOk ? chipOk : chipWait },
+      { nome: '[colega]', funcao: '[função]', tel: '+55 55 9XXXX-XXXX', status: s.cadOk ? 'encontrado' : 'a verificar', chip: s.cadOk ? chipOk : chipWait }
+    ];
+
+    const pct = (v) => Math.round(v);
+    const sync = { pct: pct(s.sync), c1: Math.round(s.sync * 3.1).toLocaleString('pt-BR'), c2: Math.round(s.sync * 5.4).toLocaleString('pt-BR'), c3: Math.round(s.sync * 482).toLocaleString('pt-BR') };
+    const ext = { pct: pct(s.ext), t: Math.round(s.ext * 482).toLocaleString('pt-BR'), a: Math.round(s.ext * 9.5).toLocaleString('pt-BR'), p: Math.round(s.ext * 0.8).toLocaleString('pt-BR') };
+    const sub = (label, k) => ({ label, pct: Math.max(0, Math.min(100, Math.round(s.proc * k))) });
+    const proc = {
+      pct: pct(s.proc), eta: Math.max(0, Math.round((100 - s.proc) * 0.4)) + ' min', cota: Math.round(s.proc * 0.38),
+      subs: [sub('Transcrevendo áudios (local)', 1.15), sub('Convertendo PDFs', 1.3), sub('Extraindo compromissos e sinais', 0.9), sub('Enviando à memória (dia fechado)', 0.75)]
+    };
+
+    const isAss = s.provider === 'ass';
+    const cardStyle = (on) => 'text-align:left;min-height:64px;border-radius:14px;padding:12px 18px;flex:1 1 260px;color:#F8FAFC;background:' + (on ? 'rgba(212,168,75,.14)' : 'transparent') + ';border:1px solid ' + (on ? accent : 'rgba(148,163,184,.4)') + ';';
+    const lg = (ok) => ({ text: ok ? 'conectado' : 'não conectado', chip: ok ? chipOk : chipWait });
+    const hOk = isAss ? s.loginH : s.apiOk;
+    const iOk = isAss ? s.loginI : s.apiOk;
+    const modelChip = {
+      h: hOk ? chipOk : chipWait, ht: hOk ? '✓ ok' : '—',
+      i: iOk ? chipOk : chipWait, it: iOk ? '✓ ok' : '—'
+    };
+
+    const tone = (c) => 'color:' + c + ';';
+    const tiles = [
+      { label: 'Serviços', value: '5 de 5', note: 'todos saudáveis', tone: tone('#22C55E') },
+      { label: 'Fila de processamento', value: '0', note: 'nada pendente', tone: tone('#94A3B8') },
+      { label: 'Memória do computador', value: '5,1 / 8 GB', note: 'atenção: perto do limite', tone: tone('#FBBF24') },
+      { label: 'Último backup', value: 'hoje', note: 'primeiro uso do dia', tone: tone('#22C55E') },
+      { label: 'Cota da janela de 5 h', value: '38%', note: 'dentro do esperado', tone: tone('#94A3B8') },
+      { label: 'Retenção (90 dias)', value: '142 áudios', note: 'oferecer limpeza de originais', tone: tone('#FBBF24') }
+    ];
+
+    const stepNow = s.step;
+    const canNext = stepNow < n - 1 && (s.review || !!s.done[stepNow]);
+    const nextOff = !canNext;
+    const backOff = stepNow === 0;
+
+    const restoreMsgFn = s.restoreMsg;
+    return {
+      accent, review: s.review ? 'true' : 'false',
+      reviewLabel: s.review ? 'Modo revisão: abrir qualquer passo' : 'Modo real: um passo por vez',
+      toggleReview: () => this.setState({ review: !s.review }),
+      doneCount, steps, cur,
+      is0: stepNow === 0, is1: stepNow === 1, is2: stepNow === 2, is3: stepNow === 3, is4: stepNow === 4, is5: stepNow === 5,
+      is6: stepNow === 6, is7: stepNow === 7, is8: stepNow === 8, is9: stepNow === 9, is10: stepNow === 10, is11: stepNow === 11,
+      checks, destinos, pasta: s.pasta, setPasta: (e) => this.setState({ pasta: e.target.value }),
+      verifyAmb: () => this.markDone(0),
+      qrIdle: s.qr === 'idle', qrShown: s.qr === 'shown', qrOk: s.qr === 'ok', qrCells,
+      genQr: () => this.setState({ qr: 'shown' }),
+      scanQr: () => { this.setState({ qr: 'ok' }); this.markDone(1); },
+      fields, equipe, saveCad: () => { this.setState({ cadOk: true }); this.markDone(2); },
+      sync, startSync: () => this.run('sync', 6, 3),
+      ext, startExt: () => this.run('ext', 5, 4),
+      isAss, isApi: !isAss, assStyle: cardStyle(isAss), apiStyle: cardStyle(!isAss),
+      pickAss: () => this.setState({ provider: 'ass' }), pickApi: () => this.setState({ provider: 'api' }),
+      loginH: lg(s.loginH), loginI: lg(s.loginI),
+      doLoginH: () => { this.setState({ loginH: true }); if (s.loginI) this.markDone(5); },
+      doLoginI: () => { this.setState({ loginI: true }); if (s.loginH) this.markDone(5); },
+      apiKey: s.apiKey, setKey: (e) => this.setState({ apiKey: e.target.value }),
+      testKey: () => { this.setState({ apiOk: true }); this.markDone(5); },
+      modelChip,
+      proc, startProc: () => this.run('proc', 3, 6),
+      pauseProc: () => clearInterval(this._t.proc),
+      vozMsg: s.vozMsg,
+      aprovarVoz: () => { this.setState({ vozMsg: 'Aprovada. Versão 1 guardada.' }); this.markDone(7); },
+      ajustarVoz: () => this.setState({ vozMsg: 'Diga o que mudar; ele gera outra proposta.' }),
+      recusarVoz: () => this.setState({ vozMsg: 'Recusada. Segue o estilo mínimo inicial.' }),
+      chatSent: s.chatSent, sendChat: () => { this.setState({ chatSent: true }); this.markDone(8); },
+      reportShown: s.reportShown, genReport: () => { this.setState({ reportShown: true }); this.markDone(9); },
+      bkp: { pct: pct(s.bkp) }, startBkp: () => this.run('bkp', 8, 10),
+      restoreMsg: restoreMsgFn, restoreTest: () => this.setState({ restoreMsg: 'Restaurado em pasta de teste: contagens conferem (exemplo).' }),
+      tiles,
+      goBack: () => this.setState({ step: Math.max(0, stepNow - 1) }),
+      goNext: () => this.setState({ step: Math.min(n - 1, stepNow + 1) }),
+      backOff, nextOff, backOpacity: backOff ? 0.45 : 1, nextOpacity: nextOff ? 0.45 : 1,
+      lockHint: nextOff && stepNow < n - 1 ? 'O próximo passo libera quando este ficar verde.' : ''
+    };
+  }
+}
+</script>
+</body>
+</html>
