@@ -30,6 +30,9 @@ Formato e ordem aprovados; limite de ~350/450 palavras aprovado, com a condiçã
 ## Escrito: objeções
 `prompts/objecoes/catalogo.md`: 5 contornáveis e **4** irreversíveis (o dono acrescentou "empresário que não quer crescer" às três já citadas). Os ângulos de contorno são hipóteses a validar.
 
+## Escrito: SOUL e calibração
+`prompts/SOUL.md` (bloco fixo de limites + estilo mínimo) e `docs/plano/fase-1-calibracao-da-personalidade.md` (quando roda, o que o dono vê, como aprova, como reverte). Aguarda revisão.
+
 ## Ainda a escrever
 Skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
 
