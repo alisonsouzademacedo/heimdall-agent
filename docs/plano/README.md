@@ -75,7 +75,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 2. ~~Roteiros de instalação~~: feitos em `runbooks/` (documentados; a execução é o spike).
 3. ~~**Prompts e personalidade**~~ (feito em 2026-10-20, `prompts/`; aguarda revisão): `SOUL.md` (assessor), modelos dos relatórios, extração de compromissos e sinais, catálogo de objeções, skills iniciais.
 4. ~~**Aprendizado**~~ (proposta em `fase-1-aprendizado.md`, aguarda aprovação): como as correções do usuário viram melhoria (`registrar_feedback`, critérios de "potencial" e "sem retorno").
-5. Segurança operacional: onde ficam os segredos, **backup e restauração** (sessão do WhatsApp e acervo), rotina dos 90 dias e "apagar tudo de um cliente".
+5. ~~Segurança operacional~~ (proposta em `fase-1-seguranca-operacional.md`, aguarda 3 respostas): onde ficam os segredos, **backup e restauração** (sessão do WhatsApp e acervo), rotina dos 90 dias e "apagar tudo de um cliente".
 6. Manutenção: atualização de versões (Baileys muda o protocolo; Hermes e Hindsight), versões fixadas.
 7. Testes: lista detalhada e integração contínua no GitHub.
 8. Versão comercial com chave de API do cliente: desenho da troca de provedor (Hermes e Hindsight).
