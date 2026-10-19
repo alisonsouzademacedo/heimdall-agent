@@ -4,6 +4,9 @@
 
 **Onde roda:** na máquina que o usuário escolher (local ou VPS), não nesta sessão em nuvem: o WhatsApp exige o usuário para ler o QR, e a sessão em nuvem é efêmera e sem GPU. A decisão local × VPS (D8) é tomada **com os números do spike**.
 
+## E0 — Verificação do ambiente (pronto)
+Antes de tudo: `spike/preflight/` detecta sistema, hardware e requisitos. Ver `docs/plano/fase-1-requisitos-e-preflight.md`.
+
 ## Suposições a provar
 | # | Pergunta | Como testar | Passa se | Se falhar |
 |---|---|---|---|---|
