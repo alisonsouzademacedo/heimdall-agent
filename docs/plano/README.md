@@ -85,7 +85,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 **Spike**
 - Usuário baixa o repositório no notebook e roda `spike/preflight/`; testar o `.ps1` no Windows real e o `.sh` no macOS.
 - E1 a E13 de `fase-1-spike.md` (WhatsApp, ponte Q, cron, Hindsight com ChatGPT, Whisper, markitdown com PDF do Meet, Krayin, regras, relatório, correlação, cota, segurança). Escrever e testar o Compose.
-- PDFs de exemplo do Meet e áudios de teste (o usuário fornece na configuração).
+- **Sem material de teste fornecido pelo dono (decisão de 2026-10-19):** o próprio Heimdall baixa os dados do WhatsApp e usa **PDFs e áudios reais já extraídos** para o teste de conversão e transcrição, dentro da tela de onboarding (passo "Processar"; teste rápido com os próprios arquivos).
 
 **Riscos técnicos abertos**
 Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13; consumo de memória do Hermes e do núcleo (desconhecido); **janela de 5 horas do ChatGPT Plus compartilhada** entre Hermes, Hindsight e a IA instaladora; números brasileiros e o nono dígito no WhatsApp (não documentado).

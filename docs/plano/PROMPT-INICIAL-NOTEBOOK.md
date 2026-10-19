@@ -1,35 +1,19 @@
-# Prompt inicial para a IA no notebook do dono (copiar e colar)
+# Como começar no notebook (versão com instalador)
 
-Como usar: (1) deixe fechados os programas pesados; (2) baixe o projeto; (3) abra a IA **dentro da pasta do projeto**; (4) cole o texto da caixa abaixo.
+Decisão do dono (2026-10-19): a **única** coisa que ele faz é baixar o código do GitHub; o instalador do projeto cuida do resto, perguntando antes de instalar cada programa. Não há material de teste a fornecer: o Heimdall usa PDFs e áudios reais já extraídos do WhatsApp dele (teste dentro da tela de onboarding).
 
-## 1. Baixar o projeto (sem Git)
-No navegador, logado no GitHub: abra `https://github.com/alisonsouzademacedo/heimdall-agent/tree/claude/affectionate-albattani-rtz8mu`, clique em **Code → Download ZIP**, extraia (ex.: `C:\Heimdall`). Com Git instalado, equivale a: `git clone -b claude/affectionate-albattani-rtz8mu https://github.com/alisonsouzademacedo/heimdall-agent.git C:\Heimdall`.
-(O repositório ainda não tem a branch `main`; por isso o nome da branch.)
+## Passo a passo
+1. **Feche programas pesados** (o notebook tem 8 GB).
+2. **Baixe o projeto** (branch `main`): `https://github.com/alisonsouzademacedo/heimdall-agent` → botão verde **Code → Download ZIP** → extraia (ex.: `C:\Heimdall`). Com Git instalado: `git clone https://github.com/alisonsouzademacedo/heimdall-agent.git C:\Heimdall`.
+3. **Dê duplo clique em `iniciar.cmd`.** Se o Windows avisar "protegeu o computador" (acontece com arquivos baixados), clique em **Mais informações → Executar assim mesmo**.
+4. O instalador (`instalar\instalar.ps1`) mostra o que já existe e o que falta (Git, Node.js 22.18+, Python 3, Docker Desktop). Para **cada item que falta ele pergunta** `[S/N]` e só então instala. Cada resposta é sua; ele nunca aceita termos de uso por você.
+5. Se instalar algo, **feche a janela e dê duplo clique em `iniciar.cmd` de novo** (o Windows só enxerga programa novo numa janela nova). O Docker Desktop pode pedir reinício e que você o abra uma vez e aceite os termos.
+6. Quando tudo estiver pronto, ele roda os testes do núcleo e **copia para a área de transferência o texto inicial para a IA** (`instalar\PROMPT-IA.txt`). Abra uma IA **dentro da pasta do projeto** (Claude Code: `winget install Anthropic.ClaudeCode`, comando da documentação oficial; depois `claude`) e cole com **CTRL+V**. A IA continua: Docker Compose, Hindsight, Hermes e a tela de onboarding, sempre parando antes de qualquer coisa que dependa de você (QR, logins).
 
-## 2. Abrir uma IA na pasta
-Segundo `docs/claude-code/setup.md`: no PowerShell, `irm https://claude.ai/install.ps1 | iex`; abra um terminal novo, entre na pasta (`cd C:\Heimdall`) e rode `claude`. O Git for Windows é recomendado (dá o `sh` que os testes usam). Codex ou Antigravity também servem: leem o `AGENTS.md` sozinhos.
+## O que o instalador faz e não faz (testado em `tests/instalar/`)
+- Faz: detecta, explica, pergunta, instala (Git, Node.js e Python por `winget`, com os IDs da documentação do Codex em `docs/openai-codex/docs/codex-manual.md`; Docker Desktop pelo instalador oficial e o comando `install --user` de `docs/docker/desktop/setup/install/windows-install.md`).
+- Não faz: aceitar termos por você, mexer na segurança do Windows, instalar sem perguntar, enviar dados a lugar nenhum, baixar nada além do instalador do Docker.
+- **Não verificado em um Windows de verdade** (testado com programas falsos no PowerShell 7): se o `winget` está presente e funcionando na sua máquina, e como o Docker Desktop se comporta com a virtualização. Se algo falhar, mande o arquivo `instalar-relatorio.txt` (fica na pasta do projeto, fora do git).
 
-## 3. Texto para colar
-```
-Você é a IA instaladora do projeto Heimdall, neste notebook (Windows 11 Pro, 8 GB de RAM, 84 GB livres, GTX 1650). Sou o dono; não sou programador: explique em português simples.
-
-ANTES DE QUALQUER AÇÃO, leia por inteiro, nesta ordem:
-1) AGENTS.md (regras; as 6 inegociáveis valem acima de tudo)
-2) docs/plano/PROGRESS.md (onde paramos) e docs/plano/README.md (decisões D1-D29)
-3) docs/plano/fase-1-spike.md (parte B), docs/plano/fase-1-requisitos-e-preflight.md, docs/plano/fase-1-arquitetura-e-compose.md
-4) docs/plano/runbooks/ (README e 01 a 08)
-Depois leia a documentação de cada componente ANTES de mexer nele (tabela do AGENTS.md; páginas inteiras, não trechos).
-
-OBJETIVO DESTA SESSÃO: deixar o "background" pronto para eu fazer o resto pela tela de onboarding (protótipo em docs/plano/prototipo-onboarding/). A definição de pronto está no fim de docs/plano/fase-1-onboarding-visual.md.
-
-PASSOS (um de cada vez; avise o que vai fazer e como eu confiro; PARE e peça minha confirmação antes de instalar programas, ativar WSL2/virtualização, abrir portas, fazer login, escanear QR ou apagar algo):
-0. Rode spike/preflight (powershell -ExecutionPolicy Bypass -File .\spike\preflight\preflight.ps1) e mostre o resultado.
-1. Rode a linha de base dos testes: em apps\core, "npm test" (precisa Node 22.18+). Se o Git Bash existir: "sh tests/run-all.sh". Mostre a saída real. Se algo falhar, o código está errado até se provar o contrário (regra 5): me explique e espere.
-2. Instale o que falta, um por vez, com minha confirmação: Docker Desktop (runbook 01), Node 22, Python 3, Git. Registre versões em docs/plano/PROGRESS.md.
-3. Siga os runbooks 02 (Hindsight; ATENÇÃO: configurar embeddings, reranker e busca em PORTUGUÊS antes de qualquer carga), 03 (Hermes; restringir ferramentas, chave da API, pasta de trabalho que NÃO seja a raiz do repositório), 06 (transcrição e PDF). Fixe versões; nada de "latest".
-4. Verifique as "só a prática" do runbooks/README.md (marcadas como não verificadas) e registre o que viu funcionar.
-5. Antes de cada etapa que me exija (QR do WhatsApp, login do ChatGPT em Hermes e Hindsight, escolha do destino do backup), pare e me diga EXATAMENTE o que fazer.
-
-REGRAS DE OURO: nunca envie mensagem a ninguém (só existirá o self-chat); nunca peça nem imprima chaves, tokens ou conversas no chat (eu digito segredos só aqui, na minha máquina); dados reais ficam em data\ (fora do git); todo erro resolvido vira teste que falhava + correção + registro em docs/plano/LICOES.md; mudanças pequenas; ao terminar cada passo, atualize docs/plano/PROGRESS.md e faça commit. Não use o Strix (decidi não adotar).
-Comece pelo passo 0.
-```
+## Texto inicial da IA
+Fica em `instalar/PROMPT-IA.txt` (fonte única). O instalador o copia sozinho; se preferir, abra o arquivo e copie.

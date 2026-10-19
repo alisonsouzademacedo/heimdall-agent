@@ -95,3 +95,7 @@ Desenho das telas (protótipo visual) para aprovação do dono · forma do atalh
 
 ## Protótipo visual (2026-10-19)
 Primeira versão do desenho das telas em `docs/plano/prototipo-onboarding/` (base de design: skill UI UX Pro Max; tema de mitologia nórdica). **Aguarda avaliação do dono.** A pendência "desenho das telas" fica em aberto até ele aprovar ou pedir mudanças.
+
+## Decisões de 2026-10-19 (sem material de teste; instalador)
+- **O dono não fornece material de teste.** No passo "Processar" a tela oferece **"Teste rápido com os seus próprios arquivos"**: escolhe, entre os PDFs e áudios reais já extraídos do WhatsApp, alguns poucos, converte/transcreve e mostra o resultado (só na tela, nunca no git) para o dono conferir a qualidade antes de processar tudo.
+- **A única ação manual do dono é baixar o código.** O `iniciar.cmd` + `instalar/instalar.ps1` detectam o que falta (Git, Node.js 22.18+, Python 3, Docker Desktop), perguntam e instalam. Ver `PROMPT-INICIAL-NOTEBOOK.md`. O que depende do dono de verdade (QR, logins) continua na tela de onboarding.

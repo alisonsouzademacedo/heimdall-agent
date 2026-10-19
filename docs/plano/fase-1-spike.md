@@ -19,7 +19,7 @@ Feitos na nuvem, com dados sintéticos e testes (código em `apps/core/`): **E9*
 | E4 | O **cron do Hermes** gera o relatório às 08:00 de Santa Maria e grava o `.md`? | Configurar `timezone: America/Sao_Paulo`; tarefa de teste `0 8 * * 2-5` e `0 8 * * 1`; entrega `local` | Arquivo gerado no horário certo | Agendar fora do Hermes e só chamar o agente |
 | E5 | O **Hindsight** roda auto-hospedado com o login do ChatGPT (`chatgpt`) e recupera bem? | Docker; reter um dia de conversa sintético e uma transcrição; `recall` e `reflect`; medir a **cota do Plus por documento** | Respostas corretas e consumo × volume previsto cabe no Plus | Modelo local para extração em lote ou outra memória (Mem0) |
 | E6 | O **Whisper** (faster-whisper) atende na máquina escolhida? | Teste de capacidade; áudio de 3 min em português; tempo real, RAM, erros em nomes | Cabe com folga; qualidade aceitável | Modelo menor ou GPU |
-| E7 | O **markitdown** extrai bem a transcrição do **Meet**? | PDFs de exemplo: rótulos de quem fala, horários, tabelas; limites e processo isolado | Falas e participantes preservados | Outra conversão ou texto bruto |
+| E7 | O **markitdown** extrai bem a transcrição do **Meet**? | PDFs reais já extraídos do WhatsApp do dono (sem material fornecido): rótulos de quem fala, horários, tabelas; limites e processo isolado | Falas e participantes preservados | Outra conversão ou texto bruto |
 | E8 | O **Krayin** instala, o funil de 5 etapas existe e a API cobre o necessário? | Docker; instalar `krayin/rest-api`; criar pipeline; criar organização, pessoa e lead; **mover etapa**; Ganho; Perdido (com motivo); **medir RAM** parado e em uso | Todas as operações via token; consumo aceitável | Funil próprio |
 | E9 | O **motor de regras** acerta (7 tentativas, 2 dias úteis, zera ao responder, aguardando usuário)? | Testes automatizados com dados sintéticos e calendário de dias úteis em `America/Sao_Paulo` | Todos os casos esperados passam | Corrigir antes de ligar ao modelo |
 | E10 | O **relatório** cabe em uma página e usa os dados certos? | Dados sintéticos → MCP/stub → relatório diário e semanal | ≤ 1 página, seções na ordem acordada | Ajustar prompt e priorização |
@@ -33,7 +33,7 @@ E1 e E2 (WhatsApp) → E9 (regras, sem dependências) → E6 e E7 (áudio e PDF)
 ## O que o usuário precisa fornecer
 - A máquina de teste (local ou VPS) com Docker; especificações.
 - Estar presente para **ler o QR** e autorizar o login do ChatGPT.
-- **PDFs de exemplo** de transcrição do Meet (anonimizados) e alguns áudios de teste.
+- **Nenhum material de teste** (decisão de 2026-10-19): o Heimdall baixa os dados do WhatsApp e escolhe, entre os PDFs e áudios reais extraídos, alguns para o teste de conversão e transcrição. Esse teste fica na tela de onboarding. Os resultados do teste ficam só em `data/`.
 - O Heimdall nunca fala com terceiros durante o spike: só leitura e self-chat.
 
 ## Entregável do spike
