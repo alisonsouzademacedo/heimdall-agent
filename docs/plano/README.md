@@ -28,6 +28,10 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D20 | Sincronização e extração do **histórico completo obrigatórias** na primeira vez; processamento com estratégias de carga (`fase-1-carga-inicial.md`) | usuário |
 | D21 | Interface em **português do Brasil** | usuário |
 | D22 | Instalação feita por **IA**; instalador próprio fica para depois | usuário |
+| D23 | Acesso **só na máquina** por enquanto; domínio e acesso pela internet só depois da validação | usuário |
+| D24 | Cadastro inicial de **usuário, empresa e equipe interna** (função e telefone); cadastro tem prioridade sobre inferência; dias úteis ignoram feriados no início | usuário |
+| D25 | Linguagem: **TypeScript/Node** no núcleo; Python só onde a ferramenta exige | usuário (recomendação aceita) |
+| D26 | Comercial: primeiro para o próprio usuário com o plano do ChatGPT; **ideal que o cliente tenha a sua API** | usuário |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
@@ -47,6 +51,8 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-2-crm.md`: Krayin, funil, autonomia.
 - `fase-1-spike.md`: 13 experimentos de viabilidade antes de construir.
 - `fase-1-operacao-da-ia.md`: regras para a IA instaladora (`AGENTS.md`), memória, testes de regressão.
+- `fase-1-cadastro-inicial.md`: cadastro de usuário, empresa e equipe (modelos em `templates/cadastro/`).
+- `fase-1-arquitetura-e-compose.md`: estrutura do repositório, serviços, portas, rede e logins.
 - `fase-1-carga-inicial.md`: 14 estratégias para a primeira carga de dados.
 - `fase-1-onboarding-visual.md`: tela de configuração em 9 passos, só na primeira vez.
 - `fase-1-requisitos-e-preflight.md`: requisitos por sistema e verificador automático (`spike/preflight/`).
@@ -56,27 +62,25 @@ O usuário avaliou e decidiu seguir, com base em testes próprios: cota do ChatG
 
 Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13.
 
-## O que falta (2026-10-19)
+## O que falta (2026-10-19, atualizado)
 **Decisões do usuário**
-1. Acesso à tela de onboarding: só na máquina (assumido) ou também pela rede.
-2. **Lista inicial de pessoas internas** (Pedro e demais colegas): o cadastro explícito de papéis tem prioridade sobre o aprendizado.
-3. Feriados: confirmar que dias úteis ignoram feriados no início.
-4. **Linguagem do código** (recomendação: TypeScript/Node para escuta, tela e MCP; Python só onde a ferramenta exige).
-5. Fase comercial: cada cliente usa o **próprio** plano do ChatGPT? Os termos da OpenAI para isso não foram verificados (o usuário deixou os termos de lado para uso pessoal).
+1. Quer a lista de **contatos pessoais a ignorar** (opcional) ou o Heimdall escuta tudo? E prefere preencher o cadastro em **arquivo** ou em **formulário na tela**? (`fase-1-cadastro-inicial.md`)
 
 **Planejamento que ainda não existe**
-6. Estrutura do repositório (pastas, serviços) e **Docker Compose** (serviços, portas, volumes).
-7. **Runbooks verificados** de instalação por componente (passos com a página de origem).
-8. **Prompts e personalidade** do Heimdall: `SOUL.md` (assessor), templates dos relatórios, extração de compromissos e sinais, catálogo de objeções, skills iniciais.
-9. **Aprendizado**: como as correções do usuário viram melhoria (`registrar_feedback`, critérios de "potencial" e "sem retorno").
-10. Segurança operacional: onde ficam os segredos, **backup e restauração** (sessão do WhatsApp e acervo), rotina dos 90 dias e "apagar tudo de um cliente".
-11. Manutenção: atualização de versões (Baileys muda o protocolo; Hermes e Hindsight), versões fixadas.
-12. Testes: lista detalhada e integração contínua no GitHub.
+2. **Runbooks verificados** de instalação por componente (passos com a página de origem).
+3. **Prompts e personalidade** do Heimdall: `SOUL.md` (assessor), modelos dos relatórios, extração de compromissos e sinais, catálogo de objeções, skills iniciais.
+4. **Aprendizado**: como as correções do usuário viram melhoria (`registrar_feedback`, critérios de "potencial" e "sem retorno").
+5. Segurança operacional: onde ficam os segredos, **backup e restauração** (sessão do WhatsApp e acervo), rotina dos 90 dias e "apagar tudo de um cliente".
+6. Manutenção: atualização de versões (Baileys muda o protocolo; Hermes e Hindsight), versões fixadas.
+7. Testes: lista detalhada e integração contínua no GitHub.
+8. Versão comercial com chave de API do cliente: desenho da troca de provedor (Hermes e Hindsight).
 
-**Spike (depois do verificador de ambiente)**
+**Feito neste ciclo:** cadastro inicial (modelos), arquitetura e serviços (Compose em desenho), estrutura do repositório.
+
+**Spike**
 - Usuário baixa o repositório no notebook e roda `spike/preflight/`; testar o `.ps1` no Windows real e o `.sh` no macOS.
-- E1 a E13 de `fase-1-spike.md` (WhatsApp, ponte Q, cron, Hindsight com ChatGPT, Whisper, markitdown com PDF do Meet, Krayin, regras, relatório, correlação, cota, segurança).
+- E1 a E13 de `fase-1-spike.md` (WhatsApp, ponte Q, cron, Hindsight com ChatGPT, Whisper, markitdown com PDF do Meet, Krayin, regras, relatório, correlação, cota, segurança). Escrever e testar o Compose.
 - PDFs de exemplo do Meet e áudios de teste (o usuário fornece na configuração).
 
 **Riscos técnicos abertos**
-Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13; consumo de memória do Hermes e do listener (desconhecido); cota do ChatGPT Plus (medir).
+Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13; consumo de memória do Hermes e do núcleo (desconhecido); **janela de 5 horas do ChatGPT Plus compartilhada** entre Hermes, Hindsight e a IA instaladora; números brasileiros e o nono dígito no WhatsApp (não documentado).

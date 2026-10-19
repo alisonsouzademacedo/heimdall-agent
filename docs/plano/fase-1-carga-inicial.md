@@ -20,6 +20,9 @@ O Hindsight permite rodar **sem LLM** (`HINDSIGHT_API_LLM_PROVIDER=none`): ele g
 **5. Controlar o ritmo, não deixar no padrão.**
 O padrão do Hindsight permite **32 chamadas simultâneas** ao modelo (`HINDSIGHT_API_LLM_MAX_CONCURRENT`); com um plano de assinatura convém algo como **2 a 4**, e há limite próprio para a extração (`HINDSIGHT_API_RETAIN_LLM_MAX_CONCURRENT`). Ele já tenta de novo com espera crescente (3 tentativas, de 1 s até 60 s). Do nosso lado: **teto diário de uso** (parar ao atingir uma fração da cota e retomar no dia seguinte) e **janela noturna** para o lote pesado. Foi exatamente o erro 429 que encontramos ao baixar documentação em ritmo alto.
 
+**5b. A cota é uma janela de 5 horas, compartilhada.**
+Segundo a documentação do Hindsight, no ChatGPT Plus o limite de **cinco horas é compartilhado com todos os apps que usam o plano, incluindo o Codex** (e, portanto, com o Hermes e com a IA instaladora). Quando o limite é atingido, o Hindsight **adia a extração e tenta de novo 30 minutos depois**, sem falhar. Planejar o lote pesado para horários em que o usuário não esteja usando o plano e reservar parte da janela para o Hermes responder no self-chat.
+
 **6. Cadeia de contingência de modelos [validar].**
 O Hindsight aceita uma cadeia de modelos com troca automática quando um falha, e roteamento por metadados. Exemplo: primeiro o login do ChatGPT; se a cota acabar ou der erro, segue para um modelo local. Opcional e depende de hardware.
 
