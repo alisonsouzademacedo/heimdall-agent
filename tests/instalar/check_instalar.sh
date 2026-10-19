@@ -13,8 +13,10 @@ BAD=$(grep -nE '\$[A-Za-z_][A-Za-z0-9_]*:([^A-Za-z0-9_]|$)' "$PS1" | grep -vE '\
 if grep -nP '[^\x00-\x7F]' "$PS1" instalar/PROMPT-IA.txt iniciar.cmd >/dev/null; then fail "arquivo com caractere fora de ASCII"; else pass "instalador, prompt e iniciar.cmd so com ASCII"; fi
 if grep -qiE 'Invoke-Expression|\biex\b|--accept-license|--quiet|Set-ExecutionPolicy|Add-MpPreference|-Verb RunAs' "$PS1"; then fail "o instalador usa comando proibido (iex, aceitar licenca por voce, mexer em seguranca do Windows, elevar sem pedir)"; else pass "sem iex, sem aceitar licenca pelo dono, sem mexer em seguranca do Windows"; fi
 URLS=$(grep -oE 'https?://[^ "'"'"')]+' "$PS1" | sed -E 's|(https?://[^/]+).*|\1|' | sort -u | tr '\n' ' ')
-for u in $URLS; do case "$u" in https://desktop.docker.com|https://git-scm.com|https://nodejs.org|https://www.python.org|https://docs.docker.com) ;; *) fail "endereco nao previsto no instalador: $u";; esac; done
+for u in $URLS; do case "$u" in https://desktop.docker.com|https://git-scm.com|https://nodejs.org|https://www.python.org|https://docs.docker.com|https://github.com) ;; *) fail "endereco nao previsto no instalador: $u";; esac; done
 pass "enderecos no instalador: $URLS"
+for g in $(grep -oE 'github\.com/[A-Za-z0-9_./-]+' "$PS1" | sort -u); do case "$g" in github.com/alisonsouzademacedo/heimdall-agent.git) ;; *) fail "repositorio GitHub inesperado: $g";; esac; done
+pass "o unico repositorio GitHub citado e o do projeto"
 grep -q 'Git.Git' "$PS1" && grep -q 'OpenJS.NodeJS.LTS' "$PS1" && grep -q 'Python.Python.3.14' "$PS1" && pass "IDs do winget iguais aos da documentacao (codex-manual.md)" || fail "IDs do winget diferem da documentacao"
 grep -qF 'instalar\instalar.ps1' iniciar.cmd && grep -q "ExecutionPolicy Bypass" iniciar.cmd && grep -q "pause" iniciar.cmd && pass "iniciar.cmd chama o instalador e pausa" || fail "iniciar.cmd incompleto"
 grep -qx 'instalar-relatorio.txt' .gitignore && pass ".gitignore cobre o relatorio do instalador" || fail ".gitignore sem instalar-relatorio.txt"
@@ -79,6 +81,39 @@ N
   # H) Docker instalado mas parado: avisa e termina com pendencia
   fake "$T/e" python "Python 3.12.1"; fake "$T/e" docker "erro" 1; roda "$T/e" "" -SomenteMostrar; C=$?
   grep -q "NAO esta rodando" "$T/saida.txt" && pass "H) Docker parado e avisado" || fail "H) Docker parado nao avisado"
+
+  # I) conectar a pasta ao GitHub (com git de verdade e um "GitHub" local)
+  if command -v git >/dev/null 2>&1; then
+    GIT_REAL=$(command -v git)
+    ORIGEM="$T/origem"; mkdir -p "$ORIGEM"; (cd "$ORIGEM" && git init -q -b main && git config user.email t@t && git config user.name t && mkdir -p instalar && echo "ola" > arquivo.txt && git add -A && git commit -q -m inicial)
+    git clone -q --bare "$ORIGEM" "$T/remoto.git"
+    PROJ="$T/proj"; mkdir -p "$PROJ/instalar"; cp "$PS1" "$PROJ/instalar/instalar.ps1"; cp "$ORIGEM/arquivo.txt" "$PROJ/arquivo.txt"   # como o conteudo do ZIP: sem .git
+    novo_bin g; printf '#!/bin/sh\nexec "%s" "$@"\n' "$GIT_REAL" > "$T/g/git"; chmod +x "$T/g/git"; fake "$T/g" node "v22.22.0"; fake "$T/g" python "Python 3.12.1"; fake "$T/g" docker "Docker version 29"
+    printf '' | HEIMDALL_REPO_URL="$T/remoto.git" PATH="$T/g" "$PW" -NoProfile -File "$PROJ/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida.txt" 2>&1
+    (cd "$PROJ" && [ "$(git rev-parse --abbrev-ref HEAD)" = main ] && [ "$(git remote get-url origin)" = "$T/remoto.git" ] && [ "$(git rev-parse --abbrev-ref main@{upstream})" = origin/main ]) && pass "I) a pasta do ZIP virou repositorio ligado ao GitHub (main acompanha origin/main)" || fail "I) git nao foi conectado"
+    (cd "$PROJ" && [ -z "$(git status --porcelain | grep -v '^?? instalar' | grep -v '^?? instalar-relatorio' | grep -v '^?? data')" ]) && pass "I) os arquivos baixados nao aparecem como alterados" || fail "I) o git mostra arquivos alterados apos conectar"
+    printf '' | HEIMDALL_REPO_URL="$T/remoto.git" PATH="$T/g" "$PW" -NoProfile -File "$PROJ/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida2.txt" 2>&1
+    grep -q "ja conectada" "$T/saida2.txt" && pass "I) rodar de novo nao refaz a conexao" || fail "I) segunda execucao refez a conexao"
+    # J) URL do GitHub quebrada: vira relatorio de bug, sem derrubar o instalador
+    PROJ2="$T/proj2"; mkdir -p "$PROJ2/instalar"; cp "$PS1" "$PROJ2/instalar/instalar.ps1"
+    printf '' | HEIMDALL_REPO_URL="$T/nao-existe.git" PATH="$T/g" "$PW" -NoProfile -File "$PROJ2/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida3.txt" 2>&1
+    BUG=$(ls "$PROJ2"/data/bugs/*conectar-git*.md 2>/dev/null | head -1)
+    [ -n "$BUG" ] && grep -q "^estado: aberto" "$BUG" && grep -q "^origem: instalador" "$BUG" && pass "J) falha ao conectar o git gera relatorio de bug aberto em data/bugs" || fail "J) sem relatorio de bug ao falhar o git"
+    grep -q "Bugs de instalacao" "$BUG" 2>/dev/null && pass "J) o relatorio instrui a IA (teste que falha, correcao, LICOES, commit)" || fail "J) relatorio sem instrucoes para a IA"
+    # K) winget falha e imprime segredo: o relatorio nao pode conter o segredo
+    novo_bin k; FALSO_GHP="ghp""_abcdefghijklmnopqrstuvwxyz1234567890"   # segredo FALSO montado em partes (o teste de higiene procura chaves nos arquivos)
+    printf '#!/bin/sh\necho "erro token=SEGREDO123456 e %s em C:\\\\Users\\\\Joao\\\\x"\nexit 1\n' "$FALSO_GHP" > "$T/k/winget"; chmod +x "$T/k/winget"
+    PROJ3="$T/proj3"; mkdir -p "$PROJ3/instalar"; cp "$PS1" "$PROJ3/instalar/instalar.ps1"
+    printf '' | PATH="$T/k" "$PW" -NoProfile -File "$PROJ3/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard -Sim > "$T/saida4.txt" 2>&1
+    BUG3=$(ls "$PROJ3"/data/bugs/*instalar-git*.md 2>/dev/null | head -1)
+    [ -n "$BUG3" ] && pass "K) falha do winget gera relatorio" || fail "K) falha do winget nao gerou relatorio"
+    if [ -n "$BUG3" ]; then
+      ! grep -q "SEGREDO123456\|ghp_abcdefghijkl\|Joao" "$BUG3" && pass "K) segredos e nome de usuario NAO vao para o relatorio" || fail "K) o relatorio vazou segredo ou usuario"
+      grep -q "Codigo de saida: 1" "$BUG3" && pass "K) o relatorio traz o codigo de saida" || fail "K) sem codigo de saida"
+    fi
+  else
+    echo "  [NAO EXECUTADO] cenarios I-K: git nao encontrado"; [ "${REQUIRE_PWSH:-0}" = 1 ] && FAIL=$((FAIL+1))
+  fi
   rm -rf "$T"
 fi
 

@@ -5,14 +5,15 @@ ANTES DE QUALQUER ACAO, leia por inteiro, nesta ordem:
 2) docs/plano/PROGRESS.md (onde paramos) e docs/plano/README.md (decisoes D1-D29)
 3) docs/plano/fase-1-spike.md (parte B), docs/plano/fase-1-requisitos-e-preflight.md, docs/plano/fase-1-arquitetura-e-compose.md
 4) docs/plano/runbooks/ (README e 01 a 08)
+ANTES de tudo, liste data\bugs\*.md com "estado: aberto" (erros reais desta maquina, gerados pelo instalador e pela tela) e trate cada um como manda o AGENTS.md, secao "Bugs de instalacao". A pasta ja foi ligada ao GitHub pelo instalador (git remote -v); o primeiro envio exige o meu login: pare e me peca.
 Depois leia a documentacao de cada componente ANTES de mexer nele (tabela do AGENTS.md; paginas inteiras, nao trechos).
 
-OBJETIVO: deixar o "background" pronto para eu fazer o resto pela tela de onboarding (prototipo em docs/plano/prototipo-onboarding/). A definicao de pronto esta no fim de docs/plano/fase-1-onboarding-visual.md. Ja rodei o instalador (iniciar.cmd): Git, Node, Python e Docker estao instalados; veja instalar-relatorio.txt.
+OBJETIVO: deixar o "background" pronto para eu fazer o resto pela tela de onboarding (prototipo em docs/plano/prototipo-onboarding/). A definicao de pronto esta no fim de docs/plano/fase-1-onboarding-visual.md. Ja rodei o instalador (iniciar.cmd): ele instalou o que faltava, ligou a pasta ao GitHub e abriu a tela de configuracao (hoje so o passo Ambiente funciona; os outros sao seu trabalho); veja instalar-relatorio.txt.
 
 PASSOS (um de cada vez; avise o que vai fazer e como eu confiro; PARE e peca minha confirmacao antes de instalar programas, abrir portas, fazer login, escanear QR ou apagar algo):
 1. Rode spike/preflight e a linha de base dos testes (em apps\core: npm test; com Git Bash: sh tests/run-all.sh). Mostre a saida real. Se algo falhar, o codigo esta errado ate se provar o contrario (regra 5): explique e espere.
 2. Siga os runbooks 02 (Hindsight; ATENCAO: embeddings, reranker e busca em PORTUGUES antes de qualquer carga), 03 (Hermes; ferramentas restritas, chave da API, pasta de trabalho que NAO seja a raiz do repositorio) e 06 (transcricao e PDF). Fixe versoes; nada de "latest". Escreva o Docker Compose e teste.
-3. Construa a tela de onboarding a partir do prototipo, com os passos e testes descritos em docs/plano/fase-1-onboarding-visual.md. O teste de conversao e transcricao usa PDFs e audios REAIS ja extraidos do WhatsApp (eu nao vou fornecer material de teste).
+3. Termine a tela de onboarding (apps/core/src/onboarding; o passo Ambiente e o botao Relatar problema ja existem e tem testes) a partir do prototipo, com os passos e testes descritos em docs/plano/fase-1-onboarding-visual.md. O teste de conversao e transcricao usa PDFs e audios REAIS ja extraidos do WhatsApp (eu nao vou fornecer material de teste).
 4. Verifique as "so a pratica" de runbooks/README.md e registre o que viu funcionar.
 5. Antes de cada etapa que exige mim (QR do WhatsApp, login do ChatGPT no Hermes e no Hindsight, destino do backup), pare e diga EXATAMENTE o que fazer.
 

@@ -6,15 +6,21 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIR = new URL('.', import.meta.url).pathname;
-const fontes = readdirSync(DIR).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
-const codigo = (f: string): string => readFileSync(join(DIR, f), 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+function listar(pasta: string, prefixo = ''): string[] {
+  return readdirSync(join(DIR, pasta), { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? listar(join(pasta, e.name), `${prefixo}${e.name}/`) : e.name.endsWith('.ts') && !e.name.endsWith('.test.ts') ? [`${prefixo}${e.name}`] : []
+  );
+}
+const fontes = listar('.');
+// Remove comentarios de linha (cuidado com "http://" dentro de texto) e de bloco antes de procurar padroes proibidos.
+const codigo = (f: string): string => readFileSync(join(DIR, f), 'utf8').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1').replace(/\/\*[\s\S]*?\*\//g, '');
 
 function arquivosCom(padrao: RegExp): string[] {
   return fontes.filter((f) => padrao.test(codigo(f)));
 }
 
 test('existem fontes para vigiar (o teste nao passa por falta de arquivos)', () => {
-  assert.ok(fontes.length >= 8, fontes.join(','));
+  assert.ok(fontes.length >= 12, fontes.join(','));
   assert.ok(fontes.includes('envio.ts') && fontes.includes('apagar.ts'));
 });
 
@@ -23,9 +29,25 @@ test('o transporte so e chamado em envio.ts (nenhum outro arquivo envia)', () =>
   assert.deepEqual(arquivosCom(/sendMessage|sendPresenceUpdate|sendReceipt|relayMessage|groupParticipantsUpdate/), []);
 });
 
-test('o nucleo nao abre rede, processos nem eval fora de arquivos autorizados (hoje: nenhum)', () => {
-  assert.deepEqual(arquivosCom(/\bfetch\s*\(|node:http|node:https|node:net|node:dgram|node:tls|XMLHttpRequest|WebSocket/), []);
-  assert.deepEqual(arquivosCom(/node:child_process|\bexecSync\b|\bspawn\s*\(|\beval\s*\(|new Function\s*\(/), []);
+test('rede: so o servidor LOCAL da tela usa node:http, e escuta apenas em 127.0.0.1', () => {
+  assert.deepEqual(arquivosCom(/node:http\b|node:https|node:dgram|node:tls|from 'node:net'/).sort(), ['onboarding/servidor.ts']);
+  // O unico "fetch(" e o JavaScript do NAVEGADOR (texto em recursos.ts), que so chama o proprio servidor (enderecos relativos;
+  // servidor.test.ts garante que nao ha nenhum http(s):// nele).
+  assert.deepEqual(arquivosCom(/\bfetch\s*\(|XMLHttpRequest|WebSocket|\.connect\s*\(|createConnection/), ['onboarding/recursos.ts']);
+  const srv = codigo('onboarding/servidor.ts');
+  assert.match(srv, /\.listen\(porta, '127\.0\.0\.1'/);
+  assert.doesNotMatch(srv, /0\.0\.0\.0|'::'|\.listen\(\s*porta\s*\)/);
+});
+
+test('processos externos: so ambiente.ts (comandos fixos); nunca eval', () => {
+  assert.deepEqual(arquivosCom(/node:child_process|\bexecSync\b|\bexecFile(Sync)?\b|\bspawn(Sync)?\s*\(|\bfork\s*\(/), ['onboarding/ambiente.ts']);
+  assert.deepEqual(arquivosCom(/\beval\s*\(|new Function\s*\(/), []);
+});
+
+test('a tela local nao tem caminho para envio, apagamento nem aprendizado', () => {
+  for (const f of ['onboarding/servidor.ts', 'onboarding/ambiente.ts', 'onboarding/recursos.ts', 'onboarding/passos.ts']) {
+    assert.doesNotMatch(codigo(f), /from '\.\.?\/(\.\.\/)?(envio|apagar|aprendizado|backup)\.ts'/, f);
+  }
 });
 
 test('DELETE FROM e DROP so aparecem em apagar.ts (apagar dados tem um unico porteiro)', () => {
@@ -39,8 +61,9 @@ test('o MCP nao importa o porteiro de apagar nem o de envio', () => {
   assert.doesNotMatch(mcp, /from '\.\/(apagar|envio)\.ts'/);
 });
 
-test('nenhum arquivo grava texto direto no disco (so o backup copia o banco)', () => {
-  assert.deepEqual(arquivosCom(/writeFileSync|appendFileSync|createWriteStream|\bunlinkSync\b|\brmSync\b|\brenameSync\b/), []);
+test('gravar texto em disco: so bugs.ts (relatorios sem segredos); nunca apagar/renomear arquivos', () => {
+  assert.deepEqual(arquivosCom(/writeFileSync|appendFileSync|createWriteStream/), ['bugs.ts']);
+  assert.deepEqual(arquivosCom(/\bunlinkSync\b|\brmSync\b|\brenameSync\b|\brmdirSync\b|fs\.promises|node:fs\/promises/), []);
 });
 
 test('nenhum segredo, token ou chave fixos no codigo', () => {

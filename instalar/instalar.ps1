@@ -13,6 +13,45 @@ function Ok($t) { Write-Host "  [OK]      $t" -ForegroundColor Green }
 function Falta($t) { Write-Host "  [FALTA]   $t" -ForegroundColor Yellow }
 function Info($t) { Write-Host "  $t" }
 
+# ---------- relatorio de bugs (formato igual ao de apps/core/src/bugs.ts; ver docs/plano/fase-1-instalador-e-bugs.md) ----------
+function Limpa([string]$t) {
+  if ($null -eq $t) { return '' }
+  $t = [regex]::Replace($t, '\b(sk|fc|ghp|gho|ghs)[-_][A-Za-z0-9_-]{16,}', '$1-***')
+  $t = [regex]::Replace($t, 'github_pat_[A-Za-z0-9_]{20,}', 'github_pat_***')
+  $t = [regex]::Replace($t, '\bBearer\s+[A-Za-z0-9._~+/=-]{12,}', 'Bearer ***', 'IgnoreCase')
+  $t = [regex]::Replace($t, '(api[_-]?key|token|secret|senha|password|passwd|authorization)(["'']?\s*[:=]\s*["'']?)[^\s"'',;]+', '$1$2***', 'IgnoreCase')
+  $t = [regex]::Replace($t, '\b\d{6,}(:\d+)?@(s\.whatsapp\.net|lid|g\.us|broadcast|newsletter)\b', '<jid>', 'IgnoreCase')
+  $t = [regex]::Replace($t, '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '<email>')
+  $t = [regex]::Replace($t, '([A-Za-z]:\\Users\\)[^\\\s"'']+', '$1<usuario>', 'IgnoreCase')
+  $t = [regex]::Replace($t, '(/home/|/Users/)[^/\s"'']+', '$1<usuario>')
+  return $t
+}
+function RegistraBug([string]$etapa, [string]$resumo, [string]$comando, [string]$saida, $codigo) {
+  try {
+    $pasta = Join-Path $raiz 'data\bugs'
+    New-Item -ItemType Directory -Force -Path $pasta | Out-Null
+    $slug = ([regex]::Replace($etapa.ToLower(), '[^a-z0-9]+', '-')).Trim('-'); if (-not $slug) { $slug = 'sem-nome' }; if ($slug.Length -gt 40) { $slug = $slug.Substring(0, 40) }
+    $agora = (Get-Date).ToUniversalTime()
+    $carimbo = $agora.ToString('yyyyMMdd-HHmmss')
+    $arquivo = Join-Path $pasta "$carimbo-$slug.md"
+    $n = 2; while (Test-Path $arquivo) { $arquivo = Join-Path $pasta "$carimbo-$slug-$n.md"; $n++ }
+    $so = ''; if ($ehWindows) { try { $so = (Get-CimInstance Win32_OperatingSystem).Caption + ' ' + (Get-CimInstance Win32_OperatingSystem).Version } catch { } }
+    $linhas = @('---', 'tipo: bug', "id: $carimbo-$slug", 'origem: instalador', "etapa: $slug", 'estado: aberto', ("criado_em: " + $agora.ToString('yyyy-MM-ddTHH:mm:ssZ')), '---', '',
+      ('# Bug: ' + (Limpa $resumo)), '', '## Ambiente', "- sistema: $(Limpa $so)", "- powershell: $($PSVersionTable.PSVersion)", "- node: $(Limpa (PrimeiraLinha 'node' @('--version')))", "- git: $(Limpa (PrimeiraLinha 'git' @('--version')))", '',
+      '## Comando e saida (sem segredos)', ('Comando: ' + (Limpa $comando)))
+    if ($null -ne $codigo) { $linhas += "Codigo de saida: $codigo" }
+    $limpa = Limpa $saida; if ($limpa.Length -gt 4000) { $limpa = '[...cortado...]' + $limpa.Substring($limpa.Length - 4000) }
+    $linhas += @('', '```', $limpa, '```', '', '## O que a IA deve fazer (AGENTS.md, "Bugs de instalacao")',
+      '1. Reproduzir com um teste automatizado que FALHA. 2. Corrigir e rodar TODOS os testes. 3. Atualizar instrucoes/runbook. 4. Registrar em docs/plano/LICOES.md.',
+      '5. Trocar "estado: aberto" por "estado: resolvido" aqui. 6. Commit e envio ao GitHub (peca o login ao dono se for preciso).', '')
+    [System.IO.File]::WriteAllText($arquivo, ($linhas -join "`n"), (New-Object System.Text.UTF8Encoding($false)))
+    Info "Relatorio de problema salvo em: $arquivo"
+  } catch { Info 'Nao consegui salvar o relatorio de problema.' }
+}
+
+# Qualquer erro inesperado vira relatorio de bug (e o instalador continua nos passos seguintes).
+trap { RegistraBug 'excecao-instalador' ([string]$_.Exception.Message) ($_.InvocationInfo.PositionMessage) ($_ | Out-String) $null; continue }
+
 Titulo 'Heimdall: instalador'
 $ehWindows = ($env:OS -eq 'Windows_NT')
 if (-not $ehWindows -and $env:HEIMDALL_TESTE -ne '1') {
@@ -76,10 +115,13 @@ function Pergunta($texto) {
 }
 
 function InstalarWinget($i) {
-  if (-not (Tem 'winget')) { return $false }
+  if (-not (Tem 'winget')) { RegistraBug "winget-ausente" "winget nao encontrado ao instalar $($i.Nome)" "winget install --id $($i.Winget)" '' $null; return $false }
   Info "Executando: winget install --id $($i.Winget)"
-  & winget install --id $i.Winget
+  $saida = & winget install --id $i.Winget 2>&1 | Out-String
+  $codigo = $LASTEXITCODE
+  Write-Host $saida
   AtualizaPath
+  if ($codigo -ne 0) { RegistraBug "instalar-$($i.Chave)" "winget falhou ao instalar $($i.Nome)" "winget install --id $($i.Winget)" $saida $codigo }
   return $true
 }
 
@@ -87,11 +129,12 @@ function InstalarDocker {
   if ($env:HEIMDALL_TESTE -eq '1') { Info "(teste) baixaria $urlDocker e rodaria o instalador"; return }
   $dest = Join-Path $env:TEMP 'DockerDesktopInstaller.exe'
   Info 'Baixando o instalador oficial do Docker Desktop (cerca de 500 MB; pode demorar)...'
-  Invoke-WebRequest -Uri $urlDocker -OutFile $dest -UseBasicParsing
+  try { Invoke-WebRequest -Uri $urlDocker -OutFile $dest -UseBasicParsing } catch { RegistraBug 'baixar-docker' 'nao consegui baixar o instalador do Docker Desktop' $urlDocker ($_ | Out-String) $null; return }
   Info 'Abrindo o instalador (instalacao so para o seu usuario, como recomenda a documentacao do Docker).'
   Info 'O instalador vai mostrar os termos de uso do Docker: LEIA e aceite SE concordar. Este programa nao aceita por voce.'
-  Start-Process -FilePath $dest -Wait -ArgumentList 'install', '--user'
+  $p = Start-Process -FilePath $dest -Wait -PassThru -ArgumentList 'install', '--user'
   AtualizaPath
+  if ($p.ExitCode -ne 0) { RegistraBug 'instalar-docker' 'o instalador do Docker Desktop terminou com erro' 'Docker Desktop Installer.exe install --user' '' $p.ExitCode }
 }
 
 if ($faltando.Count -gt 0 -and -not $SomenteMostrar) {
@@ -124,29 +167,60 @@ if ($ehWindows) {
   } catch { }
 }
 
+# ---------- conectar a pasta ao GitHub ----------
+# O ZIP do GitHub vem sem a pasta .git. Aqui ligamos a pasta ao repositorio (sem mexer nos arquivos), para a IA poder commitar e enviar.
+function ConectaGit {
+  if (-not (Tem 'git')) { return }
+  $url = $env:HEIMDALL_REPO_URL; if (-not $url) { $url = 'https://github.com/alisonsouzademacedo/heimdall-agent.git' }
+  Push-Location $raiz
+  try {
+    if ((Test-Path '.git') -and ((& git remote 2>$null) -contains 'origin')) { Ok 'pasta ja conectada ao GitHub'; return }
+    Info "Conectando esta pasta ao GitHub ($url)..."
+    $log = ''
+    $passos = @(@('init', '-q'), @('checkout', '-q', '-B', 'main'), @('remote', 'add', 'origin', $url), @('fetch', '-q', 'origin', 'main'), @('reset', '-q', 'origin/main'), @('branch', '--set-upstream-to=origin/main', 'main'))
+    foreach ($a in $passos) {
+      if ((Test-Path '.git') -and $a[0] -eq 'init') { continue }
+      $o = & git @a 2>&1 | Out-String; $log += "git $($a -join ' ')`n$o`n"
+      if ($LASTEXITCODE -ne 0) { RegistraBug 'conectar-git' "falhou: git $($a -join ' ')" "git $($a -join ' ')" $log $LASTEXITCODE; Falta 'nao consegui conectar a pasta ao GitHub (o projeto funciona, mas a IA nao vai conseguir enviar correcoes).'; return }
+    }
+    Ok 'pasta conectada ao GitHub (branch main)'
+  } finally { Pop-Location }
+}
+if (-not $SomenteMostrar) { Titulo 'Conexao com o GitHub'; if (Tem 'git') { ConectaGit } else { Info 'Git ainda nao instalado: conecto depois.' } }
+
 $nucleo = Join-Path $raiz 'apps\core'
 if (-not $SemTestes -and -not $SomenteMostrar -and (NodeOk) -and (Test-Path $nucleo)) {
   Titulo 'Testes do nucleo do Heimdall'
   Push-Location $nucleo
-  if (-not (Test-Path 'node_modules')) { Info 'Preparando (npm ci)...'; & npm ci --no-audit --no-fund 2>&1 | Out-Null }
-  & npm test 2>&1 | Select-Object -Last 12
-  if ($LASTEXITCODE -eq 0) { Ok 'testes do nucleo passaram' } else { Falta 'algum teste falhou: mande o arquivo instalar-relatorio.txt para a IA/ao suporte' }
+  if (-not (Test-Path 'node_modules')) { Info 'Preparando (npm ci)...'; $o = & npm ci --no-audit --no-fund 2>&1 | Out-String; if ($LASTEXITCODE -ne 0) { RegistraBug 'npm-ci' 'npm ci falhou' 'npm ci' $o $LASTEXITCODE } }
+  $saidaTestes = & npm test 2>&1 | Out-String
+  $codigoTestes = $LASTEXITCODE
+  ($saidaTestes -split "`n" | Select-Object -Last 12) -join "`n" | Write-Host
+  if ($codigoTestes -eq 0) { Ok 'testes do nucleo passaram' } else { Falta 'algum teste falhou (relatorio salvo em data\bugs)'; RegistraBug 'testes-nucleo' 'os testes do nucleo falharam na maquina do dono' 'npm test' $saidaTestes $codigoTestes }
   Pop-Location
 }
 
-# ---------- proximo passo: uma IA continua a configuracao ----------
+# ---------- proximo passo ----------
 Titulo 'Proximo passo'
 $promptArq = Join-Path $PSScriptRoot 'PROMPT-IA.txt'
 $pendentes = @($itens | Where-Object { -not (& $_.Ok) }).Count
-if ($pendentes -gt 0 -or -not (DockerRodando)) {
-  Info 'Ainda faltam itens acima. Resolva e de duplo clique em iniciar.cmd de novo.'
-} else {
-  Ok 'Tudo que o Heimdall precisa neste computador esta pronto.'
-  Info 'A configuracao dos servicos (Hindsight, Hermes, WhatsApp) e feita por uma IA seguindo as regras do projeto (AGENTS.md).'
-  Info 'Se voce ainda nao tem uma, instale o Claude Code: winget install Anthropic.ClaudeCode (comando da documentacao oficial dele).'
-  if ((Test-Path $promptArq) -and -not $SemClipboard -and $ehWindows) {
-    try { Get-Content -Raw -Encoding UTF8 $promptArq | Set-Clipboard; Ok 'O texto inicial para a IA ja foi COPIADO. Abra a IA nesta pasta e use CTRL+V.' } catch { Info "Abra o arquivo $promptArq e copie o texto." }
-  } else { Info "O texto inicial para a IA esta em: $promptArq" }
+if ((Test-Path $promptArq) -and -not $SemClipboard -and $ehWindows) {
+  try { Get-Content -Raw -Encoding UTF8 $promptArq | Set-Clipboard; Ok 'O texto inicial para a IA foi COPIADO (CTRL+V). Na primeira rodada, abra uma IA nesta pasta e cole.' } catch { Info "O texto para a IA esta em: $promptArq" }
+} else { Info "O texto inicial para a IA esta em: $promptArq" }
+if ($pendentes -gt 0) { Info 'Ainda faltam itens acima. Resolva e de duplo clique em iniciar.cmd de novo. A tela abre mesmo assim, para voce ver o que falta.' }
+
+$telaOk = (NodeOk) -and (Test-Path (Join-Path $raiz 'apps\core\src\onboarding\iniciar.ts'))
+if ($telaOk -and -not $SomenteMostrar) {
+  if ($env:HEIMDALL_TESTE -eq '1') { Info '(teste) abriria a tela de configuracao' }
+  else {
+    Titulo 'Tela de configuracao'
+    Info 'Abrindo a tela no navegador. Deixe ESTA janela aberta enquanto usar a tela.'
+    try { Stop-Transcript | Out-Null } catch { }
+    Push-Location $raiz
+    & node 'apps\core\src\onboarding\iniciar.ts'
+    if ($LASTEXITCODE -ne 0) { RegistraBug 'abrir-tela' 'a tela de configuracao nao abriu' 'node apps\core\src\onboarding\iniciar.ts' '' $LASTEXITCODE }
+    Pop-Location
+  }
 }
 
 try { Stop-Transcript | Out-Null } catch { }

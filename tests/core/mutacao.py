@@ -30,6 +30,16 @@ MUTACOES = [
     ("src/relatorio.ts", "if (chave === 'aguardando' && lista.length <= MIN_AGUARDANDO) continue;", "", "corte preserva 'aguardando'"),
     ("src/backup.ts", "if (existsSync(destino)) throw new Error('o arquivo de backup ja existe');", "", "backup nao sobrescreve"),
     ("src/backup.ts", "return diaLocal(ultimoBackupEm, fuso) < diaLocal(agora, fuso);", "return agora - ultimoBackupEm > 86_400_000;", "primeiro uso do dia no fuso do dono"),
+    ("src/onboarding/servidor.ts", "if (!hostsOk.includes(req.headers.host ?? ''))", "if (false)", "tela: confere o Host (DNS rebinding)"),
+    ("src/onboarding/servidor.ts", "codigoUsado = true;", "", "tela: codigo de uso unico"),
+    ("src/onboarding/servidor.ts", "if (req.headers['x-heimdall'] !== '1')", "if (false)", "tela: POST exige cabecalho proprio (CSRF)"),
+    ("src/onboarding/servidor.ts", "origem !== undefined && !hostsOk.some", "false && !hostsOk.some", "tela: confere a Origin"),
+    ("src/onboarding/servidor.ts", "server.listen(porta, '127.0.0.1'", "server.listen(porta", "tela: escuta so em 127.0.0.1"),
+    ("src/onboarding/servidor.ts", "HttpOnly; SameSite=Strict", "SameSite=Strict", "tela: cookie HttpOnly"),
+    ("src/onboarding/servidor.ts", "if (!temSessao(req)) return", "if (false) return", "tela: exige sessao"),
+    ("src/onboarding/ambiente.ts", "memTotalBytes / GIB); // 7,8 GiB", "memTotalBytes / GIB) + 1; // 7,8 GiB", "ambiente: memoria arredondada como no verificador"),
+    ("src/bugs.ts", "t = t.replace(/\\bBearer", "t = t; t.replace(/\\bBearer", "bugs: Bearer mascarado"),
+    ("src/bugs.ts", "existentes.has(nome); n++", "false; n++", "bugs: repeticoes no mesmo segundo ganham numero"),
     ("src/mcp-contrato.ts", "escreve: true, escreveEm: ['feedback']", "escreve: true, escreveEm: ['feedback', 'mensagens']", "MCP so escreve em feedback"),
 ]
 
