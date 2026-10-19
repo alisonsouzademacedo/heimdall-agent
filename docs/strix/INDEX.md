@@ -7,6 +7,8 @@ Fonte: https://docs.strix.ai/ e https://github.com/usestrix/strix. Páginas obti
 ## Como foram obtidas (e uma lição)
 Primeiro pelo Firecrawl (`onlyMainContent`). **Esse caminho perdeu informação**: os nomes das opções (`--target`, `--scan-mode`...) vivem em componentes `<ParamField>` do Mintlify e sumiram do texto, e vários títulos vieram com `\#` e `\>`. As páginas finais são o **Markdown original servido pelo próprio site** (basta acrescentar `.md` ao endereço), com a origem na primeira linha. Teste: `tests/docs/check_docs.sh`. Registro em `docs/plano/LICOES.md`.
 
+**Nome de arquivo:** a página inicial do site (`index.md` na origem) está salva como `introducao.md`, porque `index.md` e este `INDEX.md` colidem no Windows (nomes só diferentes por maiúscula viram um arquivo só). Teste: `tests/repo/check_higiene.sh`.
+
 ## O que o Strix é (resumo do que as páginas dizem)
 Agentes de IA "hackers" de código aberto que rodam o seu código ou aplicação num **contêiner Docker isolado** (baseado em Kali Linux), tentam explorar falhas de verdade e **validam com prova de conceito**. Cobrem controle de acesso, injeção, SSRF, XSS, lógica de negócio, autenticação e infraestrutura (`index.md`, `tools/sandbox.md`).
 

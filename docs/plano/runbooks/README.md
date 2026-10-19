@@ -22,6 +22,7 @@
 - **R5. Versões fixas:** imagem do Hermes por tag `X.Y.Z` ou digest; imagem do Hindsight por tag; Krayin 2.2.6 (exigido pelo pacote da API); Baileys em versão escolhida e registrada.
 - **R6. Segredos fora do git e senhas padrão trocadas** (Krayin: `admin@example.com` / `admin123`; MySQL do exemplo: `root`/`root`).
 - **R7. Nunca copiar exemplos que enviam mensagens** (o exemplo do `quickstart` do Baileys responde a toda mensagem recebida).
+- **R9. Windows: caminhos de arquivo.** Nunca usar `new URL(...).pathname` como caminho de disco (no Windows vira `/C:/...`); usar `fileURLToPath` (`node:url`). Em Python, abrir arquivos com `encoding='utf-8'` (o padrão do Windows é cp1252). Origem: `LICOES.md`, 2026-10-19.
 - **R8. Restringir as ferramentas do Hermes** e proteger a API com chave: a API dá acesso a **todas as ferramentas, incluindo terminal** (`docs/hermes-agent/user-guide/features/api-server.md`, "Security"); a documentação registra uma campanha de junho de 2026 que explorou painéis e APIs expostos (`docker.md`).
 
 ## Pontos que estavam "não verificados" e foram conferidos nas documentações (2026-10-20)

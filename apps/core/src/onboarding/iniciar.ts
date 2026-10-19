@@ -22,7 +22,7 @@ export async function principal(raiz: string = process.cwd()): Promise<void> {
   console.log('Heimdall: a tela de configuracao esta no ar (so nesta maquina).');
   console.log(`Se o navegador nao abrir sozinho, copie este endereco: ${link}`);
   console.log('Deixe esta janela aberta enquanto usa a tela. Para encerrar: feche a janela ou CTRL+C.');
-  if (!abrirNavegador(link)) console.log('(Nao consegui abrir o navegador sozinho.)');
+  if (process.env.HEIMDALL_SEM_NAVEGADOR !== '1' && !abrirNavegador(link)) console.log('(Nao consegui abrir o navegador sozinho.)');
   const encerrar = () => { servidor.fechar().then(() => { banco.close(); process.exit(0); }); };
   process.on('SIGINT', encerrar);
   process.on('SIGTERM', encerrar);

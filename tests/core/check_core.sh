@@ -20,10 +20,19 @@ if node -e "const p=require('./apps/core/package.json'); process.exit(p.dependen
 
 cd apps/core || exit 2
 [ -d node_modules ] || npm ci --no-audit --no-fund >/dev/null 2>&1
-if node --test "src/**/*.test.ts" >/tmp/heimdall-core-test.txt 2>&1; then pass "testes de unidade ($(grep -E '^# pass' /tmp/heimdall-core-test.txt | cut -d' ' -f3) passaram)"; else fail "testes de unidade"; grep -E "^not ok" /tmp/heimdall-core-test.txt | head; fi
+if node --test "src/**/*.test.ts" >/tmp/heimdall-core-test.txt 2>&1; then pass "testes de unidade ($(grep -E '^(# |ℹ )pass ' /tmp/heimdall-core-test.txt | awk '{print $NF}') passaram)"; else fail "testes de unidade"; grep -E "^not ok" /tmp/heimdall-core-test.txt | head; fi
 if npx tsc --noEmit >/tmp/heimdall-core-tsc.txt 2>&1; then pass "tipos (tsc sem erros)"; else fail "tipos"; head -10 /tmp/heimdall-core-tsc.txt; fi
 cd ../..
-if python3 tests/core/mutacao.py >/tmp/heimdall-core-mut.txt 2>&1; then pass "teste dos testes ($(grep -c PEGOU /tmp/heimdall-core-mut.txt) mutacoes detectadas)"; else fail "teste dos testes"; grep -E "SOBREVIVEU|DESATUALIZADA" /tmp/heimdall-core-mut.txt; fi
+# No Windows "python3" costuma ser o atalho falso da Loja: usa o primeiro interpretador que RODA de verdade (LICOES.md, 2026-10-19).
+PY=""; for c in python3 python py; do if "$c" -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)" >/dev/null 2>&1; then PY="$c"; break; fi; done
+[ -n "$PY" ] || { fail "Python 3 nao encontrado (o teste dos testes precisa dele)"; PY=false; }
+if "$PY" tests/core/mutacao.py >/tmp/heimdall-core-mut.txt 2>&1; then pass "teste dos testes ($(grep -c PEGOU /tmp/heimdall-core-mut.txt) mutacoes detectadas)"; else fail "teste dos testes"; grep -E "SOBREVIVEU|DESATUALIZADA" /tmp/heimdall-core-mut.txt; fi
+
+# O "teste dos testes" so vale se os testes PASSAM sem estrago: numa copia com um teste quebrado ele deve recusar (linha de base), nao dizer que pegou tudo.
+TMPC=$(mktemp -d); cp -r apps/core "$TMPC/core"; rm -rf "$TMPC/core/node_modules"
+printf "import test from 'node:test';\nimport assert from 'node:assert/strict';\ntest('quebrado de proposito', () => assert.equal(1, 2));\n" > "$TMPC/core/src/zz-quebrado.test.ts"
+if [ -n "$PY" ] && [ "$PY" != false ] && HEIMDALL_CORE_DIR="$TMPC/core" "$PY" tests/core/mutacao.py >/tmp/heimdall-core-mut-base.txt 2>&1; then fail "mutacao.py aceitou uma copia com teste quebrado (linha de base nao conferida)"; else grep -q "LINHA DE BASE" /tmp/heimdall-core-mut-base.txt && pass "mutacao.py recusa rodar quando os testes ja falham (linha de base)" || fail "mutacao.py nao explicou a falha da linha de base"; fi
+rm -rf "$TMPC"
 
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"
 [ "$FAIL" -eq 0 ]

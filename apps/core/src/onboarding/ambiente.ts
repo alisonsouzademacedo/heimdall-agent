@@ -20,6 +20,9 @@ export interface Medidas {
   discoLivreBytes: number;
   nodeVersao: string; // ex.: "v22.22.0"
   dockerRodando: boolean;
+  // So no Windows (o Docker Desktop precisa dos dois; windows-install.md). undefined = nao se aplica ou nao foi medido.
+  virtualizacao?: boolean;
+  wsl?: boolean;
 }
 
 const GIB = 1024 ** 3;
@@ -42,6 +45,12 @@ export function avaliar(m: Medidas): Verificacao[] {
   const disco = Math.floor(m.discoLivreBytes / GIB);
   v.push({ id: 'disco', rotulo: `Disco: ${disco} GB livres`, detalhe: disco >= 50 ? 'Folgado' : disco >= 30 ? 'Acima do minimo de 30 GB' : 'Abaixo do minimo de 30 GB (so a imagem do Hindsight pesa cerca de 9 GB).', estado: disco >= 50 ? 'ok' : disco >= 30 ? 'atencao' : 'falha' });
   v.push({ id: 'node', rotulo: `Node.js ${m.nodeVersao}`, detalhe: nodeSuficiente(m.nodeVersao) ? 'Versao suficiente' : 'Precisa de 22.18 ou mais', estado: nodeSuficiente(m.nodeVersao) ? 'ok' : 'falha' });
+  if (m.virtualizacao !== undefined) {
+    v.push({ id: 'virtualizacao', rotulo: `Virtualização: ${m.virtualizacao ? 'ligada' : 'desligada'}`, detalhe: m.virtualizacao ? 'O Docker Desktop consegue rodar' : 'Desligada. Ligue na BIOS/UEFI (reinicie o computador e entre na configuracao da placa; o nome da opcao varia: Intel VT-x, Virtualization Technology ou SVM). Sem isso o Docker nao abre.', estado: m.virtualizacao ? 'ok' : 'falha' });
+  }
+  if (m.wsl !== undefined) {
+    v.push({ id: 'wsl', rotulo: `WSL 2: ${m.wsl ? 'instalado' : 'nao instalado'}`, detalhe: m.wsl ? 'Pronto para o Docker Desktop' : 'Instale com "wsl --install" num PowerShell aberto como administrador e reinicie o computador.', estado: m.wsl ? 'ok' : 'falha' });
+  }
   v.push({ id: 'docker', rotulo: 'Docker', detalhe: m.dockerRodando ? 'Rodando' : 'Instalado? Abra o Docker Desktop, aceite os termos e espere ficar verde.', estado: m.dockerRodando ? 'ok' : 'falha' });
   return v;
 }
@@ -57,10 +66,25 @@ function dockerRodando(): boolean {
   } catch { return false; }
 }
 
+// Windows: ha hipervisor ativo OU a virtualizacao esta ligada no firmware (mesma leitura que o "systeminfo"). Comando FIXO.
+function virtualizacaoLigada(): boolean {
+  try {
+    const r = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', '(Get-CimInstance Win32_ComputerSystem).HypervisorPresent -or (Get-CimInstance Win32_Processor | Select-Object -First 1).VirtualizationFirmwareEnabled'], { timeout: 20_000, encoding: 'utf8', windowsHide: true });
+    return r.status === 0 && /^true\s*$/i.test(r.stdout ?? '');
+  } catch { return false; }
+}
+
+// "wsl --version" sai com codigo 0 so quando o WSL moderno esta instalado (a saida do wsl e UTF-16: ignorada).
+function wslInstalado(): boolean {
+  try { return spawnSync('wsl', ['--version'], { timeout: 15_000, stdio: 'ignore', windowsHide: true }).status === 0; } catch { return false; }
+}
+
 export function medirSistema(pasta: string = process.cwd()): Medidas {
   let livre = 0;
   try { const s = statfsSync(pasta); livre = s.bavail * s.bsize; } catch { livre = 0; }
-  return { plataforma: platform(), memTotalBytes: totalmem(), memLivreBytes: freemem(), discoLivreBytes: livre, nodeVersao: process.version, dockerRodando: dockerRodando() };
+  const m: Medidas = { plataforma: platform(), memTotalBytes: totalmem(), memLivreBytes: freemem(), discoLivreBytes: livre, nodeVersao: process.version, dockerRodando: dockerRodando() };
+  if (m.plataforma === 'win32') { m.virtualizacao = virtualizacaoLigada(); m.wsl = wslInstalado(); }
+  return m;
 }
 
 // Abre a tela no navegador padrao. So aceita enderecos http://127.0.0.1:porta/ (nada de abrir qualquer coisa).

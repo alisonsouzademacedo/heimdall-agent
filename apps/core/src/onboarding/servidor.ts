@@ -2,6 +2,7 @@
 // Travas (testadas em servidor.test.ts): escuta so em 127.0.0.1; confere o cabecalho Host (contra DNS rebinding);
 // codigo de uso unico na primeira abertura, depois cookie HttpOnly/SameSite=Strict; POST exige cabecalho proprio e
 // Origin local (contra CSRF); corpo pequeno; politica de seguranca de conteudo restritiva; nenhuma rota envia mensagem.
+import { arch, platform } from 'node:os';
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
@@ -128,7 +129,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
           const descricao = typeof dados.descricao === 'string' ? dados.descricao.trim() : '';
           if (!descricao || descricao.length > 4000) return json(res, 400, { erro: 'descricao vazia ou longa demais' });
           if (!PASSOS.some((p) => p.id === etapa)) return json(res, 400, { erro: 'etapa desconhecida' });
-          const caminho = gravarRelatorio(op.pastaBugs, { origem: 'onboarding', etapa: `onboarding-${etapa}`, resumo: descricao.split('\n')[0]!.slice(0, 200), saida: descricao }, agora());
+          const caminho = gravarRelatorio(op.pastaBugs, { origem: 'onboarding', etapa: `onboarding-${etapa}`, resumo: descricao.split('\n')[0]!.slice(0, 200), saida: descricao, ambiente: { sistema: platform(), arquitetura: arch(), node: process.version } }, agora());
           return json(res, 200, { arquivo: caminho.split(/[\\/]/).pop() });
         }
         return json(res, 404, { erro: 'nao encontrado' });

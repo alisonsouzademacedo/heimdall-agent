@@ -56,6 +56,7 @@ Quando existir código, estes testes automáticos são obrigatórios e ficam em 
 - **MCP:** contrato de cada ferramenta (entrada, saída e que nenhuma apaga dados).
 - **Relatórios:** teste de "retrato" (snapshot) com dados sintéticos; no máximo uma página.
 Use **dados sintéticos** nos testes; nunca conversas reais.
+O dono usa **Windows**: em código e testes use `fileURLToPath` (nunca `URL.pathname` como caminho) e abra arquivos Python com `encoding='utf-8'` (`runbooks/README.md`, R9); nunca crie dois arquivos cujos nomes diferem só por maiúscula (no Windows um apaga o outro).
 
 ## Cada erro resolvido vira aprendizado permanente
 Nenhum erro é "só corrigido". Para **cada erro**, faça os seis passos, nesta ordem:

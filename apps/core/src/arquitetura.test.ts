@@ -4,8 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIR = new URL('.', import.meta.url).pathname;
+const DIR = fileURLToPath(new URL('.', import.meta.url)); // .pathname vira "/C:/..." no Windows (LICOES.md, 2026-10-19)
 function listar(pasta: string, prefixo = ''): string[] {
   return readdirSync(join(DIR, pasta), { withFileTypes: true }).flatMap((e) =>
     e.isDirectory() ? listar(join(pasta, e.name), `${prefixo}${e.name}/`) : e.name.endsWith('.ts') && !e.name.endsWith('.test.ts') ? [`${prefixo}${e.name}`] : []

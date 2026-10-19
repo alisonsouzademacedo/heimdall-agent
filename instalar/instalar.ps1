@@ -3,6 +3,8 @@
 # Parametros: -SomenteMostrar (nao instala nada)  -Sim (responde S a tudo; so para testes)  -SemPausa  -SemTestes  -SemClipboard
 param([switch]$SomenteMostrar, [switch]$Sim, [switch]$SemPausa, [switch]$SemTestes, [switch]$SemClipboard)
 $ErrorActionPreference = 'Continue'
+# O Node escreve em UTF-8; o PowerShell 5.1 leria o console em outra codificacao e estragaria os acentos.
+try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch { }
 $raiz = Split-Path -Parent $PSScriptRoot
 $relatorio = Join-Path $raiz 'instalar-relatorio.txt'
 try { Start-Transcript -Path $relatorio -Force | Out-Null } catch { }
@@ -91,6 +93,24 @@ function AtualizaPath {
   }
 }
 
+# Docker Desktop (WSL 2) precisa de virtualizacao ligada na BIOS e do WSL 2 (docs/docker/desktop/setup/install/windows-install.md).
+# Valores simulados so em teste: HEIMDALL_TESTE=1 com HEIMDALL_TESTE_VIRT / HEIMDALL_TESTE_WSL = 0 ou 1.
+function VirtualizacaoOk {
+  if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_VIRT) { return ($env:HEIMDALL_TESTE_VIRT -eq '1') }
+  if (-not $ehWindows) { return $true }
+  try {
+    $hv = (Get-CimInstance Win32_ComputerSystem).HypervisorPresent
+    $fw = (Get-CimInstance Win32_Processor | Select-Object -First 1).VirtualizationFirmwareEnabled
+    return ([bool]$hv -or [bool]$fw)
+  } catch { return $true }   # nao consegui medir: nao bloqueio por palpite
+}
+function WslOk {
+  if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_WSL) { return ($env:HEIMDALL_TESTE_WSL -eq '1') }
+  if (-not $ehWindows) { return $true }
+  if (-not (Tem 'wsl')) { return $false }
+  try { & wsl --version *> $null; return ($LASTEXITCODE -eq 0) } catch { return $false }
+}
+
 # ---------- itens ----------
 # IDs do winget: documentados em docs/openai-codex/docs/codex-manual.md (Git.Git, OpenJS.NodeJS.LTS, Python.Python.3.14).
 # Docker Desktop: instalador oficial e comando de instalacao em docs/docker/desktop/setup/install/windows-install.md.
@@ -106,6 +126,17 @@ Titulo 'O que ja existe neste computador'
 $faltando = @()
 foreach ($i in $itens) {
   if (& $i.Ok) { Ok "$($i.Nome)" } else { Falta "$($i.Nome)  (para: $($i.Pq))"; $faltando += $i }
+}
+
+# Virtualizacao e WSL: sem eles o Docker instala mas nao abre. So aparece no Windows (ou em teste).
+$virtOk = VirtualizacaoOk
+$wslOk = WslOk
+$semDockerPronto = (-not $virtOk) -or (-not $wslOk)
+if ($ehWindows -or $env:HEIMDALL_TESTE_VIRT -or $env:HEIMDALL_TESTE_WSL) {
+  Titulo 'Virtualizacao e WSL (o Docker Desktop precisa dos dois)'
+  if ($virtOk) { Ok 'Virtualizacao ligada' } else { Falta 'Virtualizacao DESLIGADA. Ligue na BIOS/UEFI: reinicie o computador e entre na configuracao da placa (a tecla e o nome da opcao variam: Intel VT-x, Virtualization Technology ou SVM). Isso so voce pode fazer.' }
+  if ($wslOk) { Ok 'WSL 2 instalado' } else { Falta 'WSL 2 nao instalado. Depois da virtualizacao ligada: abra o PowerShell como administrador, rode "wsl --install" e reinicie o computador.' }
+  if ($semDockerPronto) { Info 'Atencao: o Docker Desktop nao vai abrir ate resolver isso. Pode instalar o resto agora e deixar o Docker para depois.' }
 }
 
 function Pergunta($texto) {
@@ -128,8 +159,21 @@ function InstalarWinget($i) {
 function InstalarDocker {
   if ($env:HEIMDALL_TESTE -eq '1') { Info "(teste) baixaria $urlDocker e rodaria o instalador"; return }
   $dest = Join-Path $env:TEMP 'DockerDesktopInstaller.exe'
-  Info 'Baixando o instalador oficial do Docker Desktop (cerca de 500 MB; pode demorar)...'
+  Info 'Baixando o instalador oficial do Docker Desktop (cerca de 500 MB; pode demorar, e nao mostra barra de progresso)...'
+  $ProgressPreference = 'SilentlyContinue'   # no PowerShell 5.1 a barra de progresso deixa o download MUITO mais lento
   try { Invoke-WebRequest -Uri $urlDocker -OutFile $dest -UseBasicParsing } catch { RegistraBug 'baixar-docker' 'nao consegui baixar o instalador do Docker Desktop' $urlDocker ($_ | Out-String) $null; return }
+  # So executa se a assinatura digital for valida e da Docker. O nome do assinante nao foi conferido contra o arquivo real nesta maquina:
+  # se a conferencia recusar, o relatorio de bug mostra quem assinou, para a IA e o dono decidirem (nunca se executa por palpite).
+  $bib = Join-Path $PSScriptRoot 'assinatura.ps1'
+  if (-not (Test-Path $bib)) { RegistraBug 'assinatura-docker' 'instalar\assinatura.ps1 nao encontrado; nao executei o instalador do Docker' $dest '' $null; Falta 'Nao consegui conferir a assinatura do instalador do Docker; por seguranca nao vou executa-lo.'; return }
+  . $bib
+  $conf = AssinaturaConfere $dest 'Docker Inc'
+  if (-not $conf.Ok) {
+    RegistraBug 'assinatura-docker' "assinatura do instalador do Docker recusada: $($conf.Motivo)" $dest "assinante: $($conf.Assinante)" $null
+    Falta "A assinatura digital do instalador do Docker NAO confere ($($conf.Motivo)). Por seguranca nao vou executa-lo. Arquivo: $dest"
+    return
+  }
+  Ok 'assinatura digital do instalador do Docker conferida (Docker Inc)'
   Info 'Abrindo o instalador (instalacao so para o seu usuario, como recomenda a documentacao do Docker).'
   Info 'O instalador vai mostrar os termos de uso do Docker: LEIA e aceite SE concordar. Este programa nao aceita por voce.'
   $p = Start-Process -FilePath $dest -Wait -PassThru -ArgumentList 'install', '--user'
@@ -142,6 +186,7 @@ if ($faltando.Count -gt 0 -and -not $SomenteMostrar) {
   foreach ($i in $faltando) {
     Write-Host ''
     Info "$($i.Nome): $($i.Pq)."
+    if ($i.Chave -eq 'docker' -and $semDockerPronto) { Info 'Atencao: sem virtualizacao e WSL 2 (veja acima) o Docker Desktop instala mas nao abre. Recomendo responder N por enquanto.' }
     if (Pergunta "Posso instalar $($i.Nome) agora?") {
       if ($i.Chave -eq 'docker') { InstalarDocker }
       elseif (-not (InstalarWinget $i)) { Info "O winget nao foi encontrado. Baixe manualmente em: $($i.Manual)" }
@@ -192,7 +237,7 @@ $nucleo = Join-Path $raiz 'apps\core'
 if (-not $SemTestes -and -not $SomenteMostrar -and (NodeOk) -and (Test-Path $nucleo)) {
   Titulo 'Testes do nucleo do Heimdall'
   Push-Location $nucleo
-  if (-not (Test-Path 'node_modules')) { Info 'Preparando (npm ci)...'; $o = & npm ci --no-audit --no-fund 2>&1 | Out-String; if ($LASTEXITCODE -ne 0) { RegistraBug 'npm-ci' 'npm ci falhou' 'npm ci' $o $LASTEXITCODE } }
+  # Sem instalar pacotes aqui: node --test nao usa nenhum (so o tsc usa; ver 'npm run typecheck').
   $saidaTestes = & npm test 2>&1 | Out-String
   $codigoTestes = $LASTEXITCODE
   ($saidaTestes -split "`n" | Select-Object -Last 12) -join "`n" | Write-Host
@@ -204,6 +249,7 @@ if (-not $SemTestes -and -not $SomenteMostrar -and (NodeOk) -and (Test-Path $nuc
 Titulo 'Proximo passo'
 $promptArq = Join-Path $PSScriptRoot 'PROMPT-IA.txt'
 $pendentes = @($itens | Where-Object { -not (& $_.Ok) }).Count
+if ($semDockerPronto) { $pendentes++ }
 if ((Test-Path $promptArq) -and -not $SemClipboard -and $ehWindows) {
   try { Get-Content -Raw -Encoding UTF8 $promptArq | Set-Clipboard; Ok 'O texto inicial para a IA foi COPIADO (CTRL+V). Na primeira rodada, abra uma IA nesta pasta e cole.' } catch { Info "O texto para a IA esta em: $promptArq" }
 } else { Info "O texto inicial para a IA esta em: $promptArq" }

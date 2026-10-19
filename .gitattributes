@@ -1,0 +1,3 @@
+# Fim de linha fixo (o Git do Windows, com core.autocrlf=true, reescreveria os .sh como CRLF e o shell quebraria).
+*.sh text eol=lf
+*.cmd text eol=crlf

@@ -19,3 +19,5 @@ Cada linha: o que rodar, o que se espera, de onde vem. Registrar a saída real e
 | 13 | Cron de teste `--deliver local` (um minuto à frente) e ler `/opt/data/cron/output/` | arquivo `.md` gerado | `cron.md` |
 | 14 | Relatório de teste enviado ao self-chat como `.md` | chega íntegro | spike E2 |
 | 15 | `docker compose down` e `up` | nada se perde (volumes nomeados) | R2 |
+| 16 | **Windows, hardware (nao automatico):** em PowerShell, systeminfo deve mostrar Virtualizacao Habilitada no Firmware: Sim (ou Um hipervisor foi detectado); wsl --status deve responder sem dizer que o WSL nao esta instalado | virtualizacao ligada na BIOS/UEFI pelo dono (depende do fabricante; o tecla de entrada nao foi verificada) e wsl --install como administrador, com reinicio | windows-install.md (requisitos e WSL: Verification and setup) |
+| 17 | **Windows:** docker version e docker run hello-world depois do passo 16 e de abrir o Docker Desktop (aceite dos termos e feito pelo dono) | mensagem de confirmacao | windows-install.md |
