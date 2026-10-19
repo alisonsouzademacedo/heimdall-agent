@@ -56,25 +56,27 @@ O usuário avaliou e decidiu seguir, com base em testes próprios: cota do ChatG
 
 Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13.
 
-## O que falta
-**Etapas de planejamento (ordem proposta)**
-1. ~~Áudio (STT)~~: planejado em `fase-1-audio.md` (Whisper local; teste de capacidade). Volume informado (poucos, até 3 min).
-2. ~~PDF → .md~~: planejado em `fase-1-pdf.md` (markitdown). Faltam PDFs reais de amostra.
-3. ~~Relatórios~~: decididos em `fase-1-relatorios.md`. Falta fechar as regras iniciais de "sem retorno" e "potencial" (propostas no documento).
-4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
-5. ~~Kanban/CRM~~: **Krayin** escolhido (`fase-2-crm.md`); documentação em `docs/krayin/`.
-6. ~~Modelo de dados~~: proposto em `fase-1-modelo-de-dados.md`; aprovado.
+## O que falta (2026-10-19)
+**Decisões do usuário**
+1. Acesso à tela de onboarding: só na máquina (assumido) ou também pela rede.
+2. **Lista inicial de pessoas internas** (Pedro e demais colegas): o cadastro explícito de papéis tem prioridade sobre o aprendizado.
+3. Feriados: confirmar que dias úteis ignoram feriados no início.
+4. **Linguagem do código** (recomendação: TypeScript/Node para escuta, tela e MCP; Python só onde a ferramenta exige).
+5. Fase comercial: cada cliente usa o **próprio** plano do ChatGPT? Os termos da OpenAI para isso não foram verificados (o usuário deixou os termos de lado para uso pessoal).
 
-**Spike (antes de construir)**
-- Ler o código do bridge do Hermes direto (a análise atual veio de resumo parcial).
-- API Server do Hermes: sessões, memória e latência numa conversa de self-chat.
-- Hindsight em Docker local com `chatgpt` e Plus; medir cota por mensagem.
-- Baileys só leitura: logar `notify` e `append` de DM e grupo; mídia na chegada.
+**Planejamento que ainda não existe**
+6. Estrutura do repositório (pastas, serviços) e **Docker Compose** (serviços, portas, volumes).
+7. **Runbooks verificados** de instalação por componente (passos com a página de origem).
+8. **Prompts e personalidade** do Heimdall: `SOUL.md` (assessor), templates dos relatórios, extração de compromissos e sinais, catálogo de objeções, skills iniciais.
+9. **Aprendizado**: como as correções do usuário viram melhoria (`registrar_feedback`, critérios de "potencial" e "sem retorno").
+10. Segurança operacional: onde ficam os segredos, **backup e restauração** (sessão do WhatsApp e acervo), rotina dos 90 dias e "apagar tudo de um cliente".
+11. Manutenção: atualização de versões (Baileys muda o protocolo; Hermes e Hindsight), versões fixadas.
+12. Testes: lista detalhada e integração contínua no GitHub.
 
-**Perguntas do onboarding ainda sem resposta**
-1. Aceita o risco de restrição da conta comercial?
-3. Os clientes sabem do assistente (LGPD)?
-4. Quais serviços externos aceita receber o conteúdo (LLM, transcrição)? Contatos a excluir (família, pessoal)?
-9–11. Horário do diário e do semanal, fuso, conteúdo, idioma, tamanho; há modelo de relatório?
-12–13. O que ele deve aprender, como você corrige, e se pode sugerir respostas sem enviá-las.
-15–16. Linguagem do código (Python/TypeScript) e qual CRM.
+**Spike (depois do verificador de ambiente)**
+- Usuário baixa o repositório no notebook e roda `spike/preflight/`; testar o `.ps1` no Windows real e o `.sh` no macOS.
+- E1 a E13 de `fase-1-spike.md` (WhatsApp, ponte Q, cron, Hindsight com ChatGPT, Whisper, markitdown com PDF do Meet, Krayin, regras, relatório, correlação, cota, segurança).
+- PDFs de exemplo do Meet e áudios de teste (o usuário fornece na configuração).
+
+**Riscos técnicos abertos**
+Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13; consumo de memória do Hermes e do listener (desconhecido); cota do ChatGPT Plus (medir).
