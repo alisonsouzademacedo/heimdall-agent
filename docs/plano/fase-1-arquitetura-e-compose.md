@@ -23,7 +23,7 @@ data/                 dados reais; fora do git
 ## Serviços
 | Serviço | Origem (documentação) | Portas | Dados | Observações |
 |---|---|---|---|---|
-| `hermes` | imagem `nousresearch/hermes-agent`, comando `gateway run` | API compatível com OpenAI em **8642** (opcional; necessária para a ponte Q) | `~/.hermes` montado em `/opt/data` | API só liga com `API_SERVER_ENABLED=true`; fora do `127.0.0.1` do contêiner exige `API_SERVER_HOST=0.0.0.0` e `API_SERVER_KEY` (mín. 8 caracteres); fuso por `timezone: America/Sao_Paulo`; login do ChatGPT por código de dispositivo, guardado no volume |
+| `hermes` | imagem `nousresearch/hermes-agent`, comando `gateway run` | API compatível com OpenAI em **8642** (opcional; necessária para a ponte Q) | **volume nomeado** montado em `/opt/data` (pasta do computador pode corromper o `state.db` no Docker Desktop); **1 GB de RAM mínimo, 2 a 4 GB recomendado** | API só liga com `API_SERVER_ENABLED=true`; fora do `127.0.0.1` do contêiner exige `API_SERVER_HOST=0.0.0.0` e `API_SERVER_KEY` (mín. 8 caracteres); fuso por `timezone: America/Sao_Paulo`; login do ChatGPT por código de dispositivo, guardado no volume |
 | `hindsight` | imagem `ghcr.io/vectorize-io/hindsight` | API **8888**, painel **9999** | volume `hindsight-data`; `--shm-size=1g`; usuário não-root (UID 1000) | O banco embutido (pg0) é descrito como **só para desenvolvimento**; produção pede PostgreSQL externo |
 | `postgres` | PostgreSQL com pgvector (exigência do Hindsight) | interna | volume próprio | 0,5 GB mínimo, 1 GB+ recomendado |
 | `krayin` | imagem `webkul/krayin` (Docker Hub) ou Compose com Nginx, PHP e MySQL | 80 no contêiner (ex.: **8082** no host) | volumes da aplicação e do MySQL | A imagem única é descrita como ambiente rápido/descartável; para persistir, usar Compose com volumes **[validar]**. 3 GB de RAM declarados |
@@ -49,3 +49,9 @@ Primeiro para o próprio usuário, com o plano do ChatGPT. Para o viés comercia
 
 ## Não verificado / a medir
 Consumo de memória do Hermes e do `core`; se a imagem única do Krayin persiste dados sem Compose; compatibilidade entre as portas padrão (8642, 8888, 9999, 8082, 1455) e o que já roda na máquina do usuário (o verificador já checa 1455 e 8888).
+
+## Atualização após ler os roteiros (2026-10-20)
+- **SQLite e Docker Desktop:** pastas do computador montadas em contêineres (Windows e Mac) podem corromper bancos em modo WAL com escritores simultâneos. Vale para o `state.db` do Hermes **e para o `acervo.sqlite`**. Decisão: bancos em **volumes nomeados**; só os arquivos de texto (dossiês, relatórios) ficam numa pasta visível ao usuário.
+- **Hermes:** a API dá acesso a todas as ferramentas, inclusive terminal; restringir `agent.disabled_toolsets` e exigir a chave. Detalhes em `runbooks/03-hermes.md`.
+- **Disco:** a imagem completa do Hindsight tem ~9 GB (amd64); o verificador passa a exigir 30 GB livres como mínimo e recomendar 50 GB.
+- **Docker Desktop** é pago para empresas com 250+ funcionários ou US$ 10 milhões+ de receita (relevante para a versão comercial).

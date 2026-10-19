@@ -20,6 +20,12 @@ Os modelos ficam no git, **em branco**. Os arquivos preenchidos ficam em `data/c
 ## Edição depois
 Editar o arquivo em `data/cadastro/` e usar "recarregar cadastro" (comando ou botão do painel). Cada recarga atualiza contatos, o Hindsight e o MCP, e registra a versão.
 
-## Perguntas
-1. Quer a lista de **contatos pessoais a ignorar**, ou o Heimdall escuta literalmente tudo, inclusive família e amigos? (Os modelos já trazem a seção, opcional.)
-2. Prefere preencher em arquivo de texto ou **por formulário na tela de onboarding**? (O formulário é mais amigável, e é a base do produto comercial.)
+## Decisões do usuário (2026-10-20)
+- **Escuta tudo.** O usuário **não tem contatos pessoais** no WhatsApp empresarial, só o **próprio número pessoal**. Esse número entra no cadastro do usuário (campo "Meu número pessoal") com `papel = dono_pessoal`: fica **fora das regras de cliente** (não gera follow-up nem cobrança) e seu conteúdo é contexto do próprio usuário. Não é canal de comando: o Heimdall só conversa com o dono no self-chat. A seção opcional "contatos a ignorar" dos modelos fica **vazia**.
+- **Cadastro por formulário** na tela de onboarding (não por arquivo). O formulário grava o que hoje está nos modelos: os campos dos três modelos são a especificação dos campos do formulário. Os arquivos em `data/cadastro/` passam a ser a **cópia exportável** do que foi preenchido.
+
+## Formulário (campos)
+1. **Usuário:** nome completo, como prefere ser chamado, função, o que faz no dia a dia, telefone do WhatsApp comercial, número pessoal, metas, jeito de se comunicar, horário de trabalho, observações.
+2. **Empresa:** nome, o que faz e vende, produtos e serviços, para quem vende, diferenciais, processo comercial, objeções comuns e como contornar, objeções irreversíveis, concorrentes, site e canais. (O funil de 5 etapas já vem preenchido.)
+3. **Equipe:** tabela com nome, função, telefone (com validação e máscara de DDI e DDD), relação, observações; botão para adicionar linha. Depois de conectar o WhatsApp, a tela mostra, ao lado de cada telefone, se ele foi **encontrado no WhatsApp** (resolvido por `onWhatsApp`) e avisa os que não foram.
+Posição no onboarding: depois do passo 1 (QR), porque a verificação dos telefones precisa da conexão; o preenchimento em si pode ser feito antes.

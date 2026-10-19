@@ -24,7 +24,7 @@ Status: **proposta para aprovação**. Fontes: `docs/baileys/concepts/jids.md`, 
 
 ## Tabelas do acervo (rascunho)
 **Pessoas e clientes**
-- `contatos`: id, nome, **papel** (`cliente`, `interno`, `fornecedor`, `pessoal`, `desconhecido`), `papel_fonte` (`cadastro`, `inferido`, `confirmado`), `cliente_id`
+- `contatos`: id, nome, **papel** (`cliente`, `interno`, `dono_pessoal`, `fornecedor`, `pessoal`, `desconhecido`), `papel_fonte` (`cadastro`, `inferido`, `confirmado`), `cliente_id`
 - `contato_jids`: jid, contato_id, tipo (`lid`/`pn`) — aliases
 - `clientes`: id, nome (empresa ou negócio), notas. Um cliente pode ter vários contatos; um contato "pessoa sem empresa" cria um cliente com o mesmo nome.
 

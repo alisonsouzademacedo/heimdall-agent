@@ -27,6 +27,8 @@ O verificador precisa rodar numa máquina **sem nada instalado**. O Windows traz
 **Declarados nas documentações:**
 - Krayin: RAM 3 GB ou mais (a doc não diz se é só para instalar), PHP 8.3+, MySQL 8.0.32+ ou MariaDB.
 - Hindsight (imagem completa): API 1,5 GB mínimo, 2 GB recomendado; PostgreSQL 0,5 GB mínimo, 1 GB+ recomendado.
+- Hermes (contêiner): 1 GB de RAM mínimo, 2 a 4 GB recomendado (`docs/hermes-agent/user-guide/docker.md`).
+- Docker Desktop: Windows com WSL 2 exige 8 GB de RAM; macOS, 4 GB.
 - faster-whisper, modelo `small` em `int8` na CPU: ~1,5 GB de RAM (benchmark deles; não há dados para modelos maiores em CPU).
 - Whisper com GPU: ~1 GB (tiny/base) até ~10 GB (large) de VRAM; `turbo` ~6 GB.
 - Baileys: Node 20+. Hermes: Python 3.14 gerenciado por ele (não depende do sistema).
@@ -36,7 +38,7 @@ O verificador precisa rodar numa máquina **sem nada instalado**. O Windows traz
 |---|---|---|
 | Memória | 8 GB | 16 GB |
 | Núcleos | 2 | 4 ou mais |
-| Disco livre | 15 GB | 30 GB ou mais (imagens, modelos, áudios e PDFs de 90 dias) |
+| Disco livre | **30 GB** | **50 GB** ou mais (imagem do Hindsight ~9 GB, imagem do Hermes, Krayin, modelo do Whisper, áudios e PDFs de 90 dias) |
 | GPU | não exige | NVIDIA com ≥ 6 GB de VRAM acelera o áudio, mas não é necessária |
 
 ## O que o verificador checa hoje

@@ -32,6 +32,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D24 | Cadastro inicial de **usuário, empresa e equipe interna** (função e telefone); cadastro tem prioridade sobre inferência; dias úteis ignoram feriados no início | usuário |
 | D25 | Linguagem: **TypeScript/Node** no núcleo; Python só onde a ferramenta exige | usuário (recomendação aceita) |
 | D26 | Comercial: primeiro para o próprio usuário com o plano do ChatGPT; **ideal que o cliente tenha a sua API** | usuário |
+| D27 | Cadastro por **formulário** na tela de onboarding; o usuário escuta tudo e **não tem contatos pessoais** no WhatsApp empresarial, só o próprio número pessoal (tratar como `dono_pessoal`, fora das regras de cliente) | usuário |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
@@ -51,6 +52,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-2-crm.md`: Krayin, funil, autonomia.
 - `fase-1-spike.md`: 13 experimentos de viabilidade antes de construir.
 - `fase-1-operacao-da-ia.md`: regras para a IA instaladora (`AGENTS.md`), memória, testes de regressão.
+- `runbooks/`: roteiros de instalação por componente (documentados, não executados) e testes de fumaça.
 - `fase-1-cadastro-inicial.md`: cadastro de usuário, empresa e equipe (modelos em `templates/cadastro/`).
 - `fase-1-arquitetura-e-compose.md`: estrutura do repositório, serviços, portas, rede e logins.
 - `fase-1-carga-inicial.md`: 14 estratégias para a primeira carga de dados.
@@ -64,10 +66,10 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 
 ## O que falta (2026-10-19, atualizado)
 **Decisões do usuário**
-1. Quer a lista de **contatos pessoais a ignorar** (opcional) ou o Heimdall escuta tudo? E prefere preencher o cadastro em **arquivo** ou em **formulário na tela**? (`fase-1-cadastro-inicial.md`)
+1. ~~Contatos pessoais e forma de cadastro~~: resolvidos (escuta tudo; formulário).
 
 **Planejamento que ainda não existe**
-2. **Runbooks verificados** de instalação por componente (passos com a página de origem).
+2. ~~Roteiros de instalação~~: feitos em `runbooks/` (documentados; a execução é o spike).
 3. **Prompts e personalidade** do Heimdall: `SOUL.md` (assessor), modelos dos relatórios, extração de compromissos e sinais, catálogo de objeções, skills iniciais.
 4. **Aprendizado**: como as correções do usuário viram melhoria (`registrar_feedback`, critérios de "potencial" e "sem retorno").
 5. Segurança operacional: onde ficam os segredos, **backup e restauração** (sessão do WhatsApp e acervo), rotina dos 90 dias e "apagar tudo de um cliente".

@@ -6,3 +6,5 @@ data/
 *.sqlite
 *.sqlite3
 auth_info*/
+preflight-resultado.json
+preflight-relatorio.txt

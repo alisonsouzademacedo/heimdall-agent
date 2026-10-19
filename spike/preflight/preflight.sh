@@ -82,7 +82,7 @@ if [ "$RAM_MB" -ge 15000 ]; then ok "memoria $((RAM_MB/1024)) GB (recomendado: 1
 elif [ "$RAM_MB" -ge 7500 ]; then warn "memoria $((RAM_MB/1024)) GB: atende o minimo (8 GB), mas apertado para rodar tudo junto"
 else bad "memoria $((RAM_MB/1024)) GB: abaixo do minimo (8 GB)"; fi
 if [ "$CORES" -ge 4 ]; then ok "CPU com $CORES nucleos"; else warn "CPU com $CORES nucleos (recomendado: 4 ou mais)"; fi
-if [ "${DISK_FREE_GB:-0}" -ge 30 ]; then ok "disco livre ${DISK_FREE_GB} GB"; elif [ "${DISK_FREE_GB:-0}" -ge 15 ]; then warn "disco livre ${DISK_FREE_GB} GB (recomendado: 30 GB ou mais)"; else bad "disco livre ${DISK_FREE_GB:-0} GB (minimo: 15 GB)"; fi
+if [ "${DISK_FREE_GB:-0}" -ge 50 ]; then ok "disco livre ${DISK_FREE_GB} GB"; elif [ "${DISK_FREE_GB:-0}" -ge 30 ]; then warn "disco livre ${DISK_FREE_GB} GB: atende o minimo (30 GB), recomendado 50 GB ou mais (a imagem do Hindsight sozinha tem cerca de 9 GB)"; else bad "disco livre ${DISK_FREE_GB:-0} GB (minimo: 30 GB)"; fi
 [ "$AVX2" = "nao" ] && warn "CPU sem AVX2: a transcricao de audio (faster-whisper) pode ficar muito lenta"
 # docker
 if [ -z "$DOCKER_V" ]; then bad "Docker nao encontrado (necessario para Hindsight e Krayin)"
