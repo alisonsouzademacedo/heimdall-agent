@@ -29,6 +29,9 @@ Complemento recomendado (ainda não feito): um **roteiro de instalação verific
 - O Hindsight cuida da memória **do Heimdall** (conversas de clientes). Misturar a memória de quem constrói com a de quem opera complica e vaza contexto.
 - Reavaliar se o volume de registros crescer a ponto de a IA não achar o que precisa.
 
+## Regra "cada erro resolvido vira aprendizado permanente" (decisão do usuário, 2026-10-20)
+Para a IA que instala o Heimdall: cada erro corrigido exige (1) um **teste de regressão** que falhava antes, (2) a correção com todos os testes passando, (3) **atualização das instruções** (roteiro do componente e, se geral, `AGENTS.md`), (4) uma linha em `docs/plano/LICOES.md`, (5) correção da documentação do projeto se a causa foi uma suposição errada, e (6) só então o commit. A regra está em `AGENTS.md`, com a salvaguarda de que a IA **só acrescenta** instruções e **nunca remove ou enfraquece as regras inegociáveis** sem aprovação do dono, e com o limite de tamanho do `AGENTS.md` (32 KiB no Codex).
+
 ## Testes de regressão (explicação simples)
 São testes automáticos que rodam **sempre**, antes e depois de qualquer mudança, para provar que o que funcionava continua funcionando. A IA muda o código, roda os testes, e se algo quebrou o sistema acusa na hora. As regras em `AGENTS.md` impedem a IA de "consertar" apagando ou enfraquecendo os testes. Categorias obrigatórias estão listadas lá (regras de follow-up, segurança de envio, entrada de mensagens, banco, MCP e relatórios), sempre com dados sintéticos.
 

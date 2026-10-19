@@ -11,7 +11,7 @@ Tudo mora em `/opt/data` (`config.yaml`, `.env`, `SOUL.md`, `sessions/`, `memori
 ## Passos
 1. **Configuração inicial interativa** (documentada com pasta montada; com volume nomeado trocar `-v`):
    `docker run -it --rm -v hermes-data:/opt/data nousresearch/hermes-agent setup`
-2. **Modelo:** com o contêiner rodando, `docker exec -it hermes hermes model` e escolher **ChatGPT or Codex Subscription** (login por código de dispositivo). Credenciais em `/opt/data/auth.json`. **[validar]** o uso de `-it` no `docker exec`; a documentação mostra `docker exec hermes hermes ...` sem terminal interativo.
+2. **Modelo:** com o contêiner rodando, `docker exec -it hermes hermes model` e escolher **ChatGPT or Codex Subscription** (login por código de dispositivo). Credenciais em `/opt/data/auth.json`. `-i` (manter entrada aberta) e `-t` (terminal) são opções documentadas do `docker exec` (`docs/docker/reference/cli/docker/container/exec.md`, que traz `docker exec -it mycontainer sh`); a documentação do Hermes mostra `docker exec hermes hermes ...` para comandos sem interação e `docker run -it --rm ... setup` para o assistente. O que falta confirmar é só o comportamento real do menu `hermes model` dentro do contêiner.
 3. **Gateway em segundo plano** (forma da documentação, a adaptar):
    `docker run -d --name hermes --restart unless-stopped -v hermes-data:/opt/data -p 127.0.0.1:8642:8642 -e API_SERVER_ENABLED=true -e API_SERVER_HOST=0.0.0.0 -e API_SERVER_KEY=<chave longa> nousresearch/hermes-agent gateway run`
    `API_SERVER_HOST=0.0.0.0` vale **dentro** do contêiner; a porta no computador fica em `127.0.0.1` (R1). `API_SERVER_KEY` tem no mínimo 8 caracteres (gerar com `openssl rand -hex 32`) e é **obrigatória em toda instalação**, mesmo em loopback.
@@ -53,4 +53,4 @@ Tudo mora em `/opt/data` (`config.yaml`, `.env`, `SOUL.md`, `sessions/`, `memori
 `docker rm -f hermes`; o volume `hermes-data` preserva configuração e memória (remover só com intenção).
 
 ## Não verificado
-`docker exec -it ... hermes model`; lista exata de toolsets a desabilitar; formato do corpo de `POST /api/jobs`; leitura de `cron/output` pelo `core`.
+O menu `hermes model` dentro do contêiner (o `-it` em si está documentado); lista exata de toolsets a desabilitar; formato do corpo de `POST /api/jobs`; leitura de `cron/output` pelo `core`.

@@ -33,6 +33,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D25 | Linguagem: **TypeScript/Node** no núcleo; Python só onde a ferramenta exige | usuário (recomendação aceita) |
 | D26 | Comercial: primeiro para o próprio usuário com o plano do ChatGPT; **ideal que o cliente tenha a sua API** | usuário |
 | D27 | Cadastro por **formulário** na tela de onboarding; o usuário escuta tudo e **não tem contatos pessoais** no WhatsApp empresarial, só o próprio número pessoal (tratar como `dono_pessoal`, fora das regras de cliente) | usuário |
+| D28 | Regra para a IA instaladora: **cada erro resolvido gera teste de regressão, atualização das instruções e registro em `LICOES.md`**; só acrescenta, nunca enfraquece as regras inegociáveis | usuário |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
@@ -52,6 +53,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-2-crm.md`: Krayin, funil, autonomia.
 - `fase-1-spike.md`: 13 experimentos de viabilidade antes de construir.
 - `fase-1-operacao-da-ia.md`: regras para a IA instaladora (`AGENTS.md`), memória, testes de regressão.
+- `LICOES.md`: registro de erros resolvidos (teste, instruções atualizadas).
 - `runbooks/`: roteiros de instalação por componente (documentados, não executados) e testes de fumaça.
 - `fase-1-cadastro-inicial.md`: cadastro de usuário, empresa e equipe (modelos em `templates/cadastro/`).
 - `fase-1-arquitetura-e-compose.md`: estrutura do repositório, serviços, portas, rede e logins.
@@ -86,3 +88,5 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 
 **Riscos técnicos abertos**
 Hindsight auto-hospedado (discussão pública de falha, não lida); Baileys v8 muda o formato de login e o Hermes fixa Baileys 7.0.0-rc13; consumo de memória do Hermes e do núcleo (desconhecido); **janela de 5 horas do ChatGPT Plus compartilhada** entre Hermes, Hindsight e a IA instaladora; números brasileiros e o nono dígito no WhatsApp (não documentado).
+
+**Verificado em 2026-10-20 (OpenAI):** o uso do plano via "Sign in with ChatGPT" é documentado para **apps de código aberto e locais**, com Plus e Pro elegíveis (Hermes está na lista oficial de parceiros). **App pago ou hospedado remotamente exige o formulário de interesse da OpenAI**; para a versão comercial, o caminho garantido é a **chave de API do cliente** (D26). Ver `runbooks/07-logins.md`.

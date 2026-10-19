@@ -3,7 +3,7 @@
 Este arquivo vale para qualquer IA (Claude Code, Codex, Antigravity ou outra). Leia **inteiro** antes de agir. O dono do projeto **não é programador**: explique em português simples, diga o que fez, por que, e como ele confere.
 
 ## O projeto
-Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D22, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
+Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D28, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
 
 ## Regras inegociáveis
 1. **O Heimdall nunca envia mensagem a ninguém além do self-chat do dono.** Nenhuma ferramenta, nenhum código e nenhuma configuração pode criar outro caminho de envio. Se uma tarefa exigir isso, pare e pergunte.
@@ -53,6 +53,15 @@ Quando existir código, estes testes automáticos são obrigatórios e ficam em 
 - **MCP:** contrato de cada ferramenta (entrada, saída e que nenhuma apaga dados).
 - **Relatórios:** teste de "retrato" (snapshot) com dados sintéticos; no máximo uma página.
 Use **dados sintéticos** nos testes; nunca conversas reais.
+
+## Cada erro resolvido vira aprendizado permanente
+Nenhum erro é "só corrigido". Para **cada erro**, faça os seis passos, nesta ordem:
+1. **Reproduza com um teste automatizado que falha** antes da correção (teste de regressão em `tests/`). Se não der para automatizar (depende do WhatsApp real, de login ou de hardware), escreva o passo em `docs/plano/runbooks/08-testes-de-fumaca.md` e explique ao dono por que não é automático.
+2. **Corrija** o código. O teste novo e **todos os anteriores** precisam passar.
+3. **Atualize as instruções** para o erro não voltar: a seção "Armadilhas" do roteiro do componente em `docs/plano/runbooks/` e, se a lição for geral, este `AGENTS.md`. Mudanças aqui só **acrescentam**; **nunca remova nem enfraqueça as regras inegociáveis 1 a 6 sem aprovação explícita do dono**. Mantenha este arquivo curto (o Codex lê no máximo 32 KiB; o Claude Code recomenda menos de 200 linhas): detalhes ficam em `docs/plano/LICOES.md` e nos roteiros.
+4. **Registre** em `docs/plano/LICOES.md`: data, sintoma, causa, correção, teste criado, arquivos de instrução alterados.
+5. **Corrija a documentação do projeto** em `docs/plano/` quando o erro vier de uma suposição errada.
+6. **Só então faça o commit**, citando o teste e o registro. Erro sem teste, sem atualização de instruções ou sem registro **não está resolvido**.
 
 ## Quando perguntar ao dono
 Escolha entre opções com impacto, qualquer coisa nos itens da regra 4, qualquer divergência entre documentação e realidade, e sempre que você estiver com menos de certeza do que o necessário para agir.

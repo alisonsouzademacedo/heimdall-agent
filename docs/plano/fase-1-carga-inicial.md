@@ -23,6 +23,9 @@ O padrão do Hindsight permite **32 chamadas simultâneas** ao modelo (`HINDSIGH
 **5b. A cota é uma janela de 5 horas, compartilhada.**
 Segundo a documentação do Hindsight, no ChatGPT Plus o limite de **cinco horas é compartilhado com todos os apps que usam o plano, incluindo o Codex** (e, portanto, com o Hermes e com a IA instaladora). Quando o limite é atingido, o Hindsight **adia a extração e tenta de novo 30 minutos depois**, sem falhar. Planejar o lote pesado para horários em que o usuário não esteja usando o plano e reservar parte da janela para o Hermes responder no self-chat.
 
+**5c. Controles do próprio ChatGPT (verificado em `docs/openai-codex/siwc/`).**
+Em ChatGPT → Configurações → Uso, o usuário pode **limitar o uso semanal de cada app entre 10% e 100%**: reservar uma fatia para o Heimdall e deixar o resto para o Codex que instala e para o Hermes. O erro 429 `subscription_sharing_usage_limit_exceeded` significa **pausar**, não falhar (o limite pode ser do app e não do plano inteiro). No **Pro** o limite de 5 horas não se aplica. A transcrição de áudio **não** pode usar esse fluxo (a API de transcrição e a entrada de áudio não são suportadas): continua local.
+
 **6. Cadeia de contingência de modelos [validar].**
 O Hindsight aceita uma cadeia de modelos com troca automática quando um falha, e roteamento por metadados. Exemplo: primeiro o login do ChatGPT; se a cota acabar ou der erro, segue para um modelo local. Opcional e depende de hardware.
 

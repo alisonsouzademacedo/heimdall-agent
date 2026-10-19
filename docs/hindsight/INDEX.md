@@ -186,3 +186,6 @@ Leia primeiro: developer/index, developer/api/quickstart, developer/retain, deve
 - [Page Not Found](security/policies.md) — 0 KB
 - [Page Not Found](security/webhooks-siem.md) — 0 KB
 
+
+## Receitas de Docker Compose (do repositório, não do site)
+- `compose-recipes/external-pg/docker-compose.yaml`: Hindsight com **PostgreSQL + pgvector** (`pgvector/pgvector:pg18`). Receita oficial; **publica portas sem `127.0.0.1` e usa chave de API**: adaptar. Outras receitas do repositório (cuda, local-llm, tei, nginx, etc.) **não foram salvas**.

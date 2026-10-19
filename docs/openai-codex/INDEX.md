@@ -275,3 +275,8 @@ Leia primeiro: auth, cli, config-file, agent-approvals-security, automations, co
 - [Windows sandbox](docs/windows/windows-sandbox.md) — 16 KB
 - [WSL](docs/windows/wsl.md) — 3 KB
 
+
+## Sign in with ChatGPT para apps de código aberto (`siwc/`, 10 páginas)
+Fonte: https://developers.openai.com/siwc/ (cópias `.md`, baixadas em 2026-10-20). **Essencial para o Hindsight e para a versão comercial.**
+- [Visão geral (apps de código aberto e locais; app pago ou remoto exige formulário)](siwc/token-sharing-open-source.md)
+- [Login](siwc/token-sharing-open-source_sign-in.md) · [Contas e sessões (limites do Plus, limite por app de 10% a 100%)](siwc/token-sharing-open-source_profiles-and-sessions.md) · [Modelos e inferência](siwc/token-sharing-open-source_models-and-inference.md) · [Codex app-server](siwc/token-sharing-open-source_codex-app-server.md) · [VMs próprias](siwc/token-sharing-open-source_self-hosted-vms.md) · [Referência de tokens](siwc/token-sharing-open-source_token-reference.md) · [Erros e recuperação](siwc/token-sharing-open-source_errors-and-recovery.md) · [Limitações da prévia](siwc/token-sharing-open-source_preview-limitations.md) · [Diretrizes de interface](siwc/ui-ux-guidelines.md)

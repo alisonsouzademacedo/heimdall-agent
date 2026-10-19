@@ -23,3 +23,15 @@
 - **R6. Segredos fora do git e senhas padrão trocadas** (Krayin: `admin@example.com` / `admin123`; MySQL do exemplo: `root`/`root`).
 - **R7. Nunca copiar exemplos que enviam mensagens** (o exemplo do `quickstart` do Baileys responde a toda mensagem recebida).
 - **R8. Restringir as ferramentas do Hermes** e proteger a API com chave: a API dá acesso a **todas as ferramentas, incluindo terminal** (`docs/hermes-agent/user-guide/features/api-server.md`, "Security"); a documentação registra uma campanha de junho de 2026 que explorou painéis e APIs expostos (`docker.md`).
+
+## Pontos que estavam "não verificados" e foram conferidos nas documentações (2026-10-20)
+| Ponto | Resultado | Onde está |
+|---|---|---|
+| Windows Home com Docker Desktop (WSL 2) | **Parcial**: Home roda contêineres Linux (explícito) e há seção "WSL 2 and Windows Home" (implícito); a lista de requisitos cita só Pro/Enterprise/Education. **Só a prática confirma** | `01-docker.md` |
+| Plano Plus no login do Hindsight com o ChatGPT | **Parcial**: Plus e Pro são elegíveis (explícito, OpenAI); o fluxo vale para apps de código aberto e locais; elegibilidade individual só aparece no primeiro uso (403 `subscription_sharing_user_not_eligible`). **Só a prática confirma esta conta** | `07-logins.md`, `docs/openai-codex/siwc/` |
+| Imagem de PostgreSQL com pgvector | **Explícito** na receita oficial `external-pg`: `pgvector/pgvector:pg18` | `02-hindsight.md`, `docs/hindsight/compose-recipes/` |
+| `docker exec -it` | **Explícito** no Docker (`-i`, `-t`). Falta só o comportamento do menu `hermes model` | `03-hermes.md` |
+| Instalação do `hindsight-admin` | **Explícito**: `pip install hindsight-api`, ou dentro do contêiner. Falta confirmar na versão slim | `02-hindsight.md` |
+
+## O que só a prática vai responder (lista viva para o spike)
+Windows Home com Docker Desktop; a conta Plus do usuário no fluxo do Hindsight; menu `hermes model` no contêiner; caminho real da API do Krayin (`/api/admin` ou `/api/v1`); persistência da imagem única do Krayin; campo de motivo de perda; envio de `.md` como documento no WhatsApp; nono dígito de números brasileiros; alcance real do histórico do Baileys; consumo de memória e cota; qualidade do Whisper em português e do PDF do Meet; `local_files_only` do faster-whisper; corpo do `POST /api/jobs` do Hermes; leitura de `cron/output` pelo núcleo; autenticação do MCP do Hindsight; imagem slim com `hindsight-admin`.
