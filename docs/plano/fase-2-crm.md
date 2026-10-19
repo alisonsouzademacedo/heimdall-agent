@@ -38,8 +38,43 @@ Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM 
 - Se o Comp AI CRM tem Kanban ou token de API na aplicação (o README não diz).
 - Existência e preço de integrações pagas com WhatsApp do ecossistema Krayin (irrelevantes: o Heimdall usa o Baileys).
 
-## Decisões pendentes
-1. Confirmar o Krayin.
-2. Autonomia da escrita no CRM (propor primeiro ou executar e avisar).
-3. Etapas do funil (você já usa quais? Krayin permite criar as suas).
-4. Já existem clientes/negócios em algum CRM ou planilha para importar?
+## Funil do usuário (2026-10-19)
+| # | Etapa | Entra quando |
+|---|---|---|
+| 1 | **Contato iniciado** | o cliente **respondeu** |
+| 2 | **1ª Reunião Agendada** | o usuário conseguiu marcar a primeira reunião |
+| 3 | **2ª Reunião Agendada** | depois da 1ª reunião, o cliente marcou a segunda, para **apresentação de proposta personalizada** ao cenário e necessidade da indústria/fábrica |
+| 4 | **Fechamento / Ganho** | o cliente virou cliente de fato (etapa `won`) |
+| 5 | **Perdido / Arquivado** | o usuário não dá mais continuidade (etapa `lost`): (a) **estourou a tentativa de follow-up** (7 sem retorno) ou (b) **objeção clara e irreversível** |
+
+**Objeções irreversíveis** (exemplos do usuário): doença grave na família, falência da fábrica/indústria, total satisfação com o marketing atual. **Todo o resto é objeção contornável**: o usuário tenta converter, e o cliente **não** vai para Perdido.
+
+Alinhamento com as regras anteriores: quem **nunca respondeu** não está no funil (só no acervo, com contagem no semanal); o lead nasce na etapa 1 quando o cliente responde pela primeira vez. Motivos de perda do CRM: `tentativas_esgotadas`, `doenca_grave_familiar`, `falencia`, `satisfeito_com_marketing_atual`, `outro_irreversivel`. Objeções **contornáveis** são registradas como objeção (alimentam o "padrão de objeções" do semanal) sem mudar a etapa.
+
+Gatilhos propostos (o Heimdall detecta, o usuário aprova):
+- 1 → 2: surge compromisso do tipo reunião com aquele cliente (primeira).
+- 2 → 3: a 1ª reunião ocorreu (data passou ou chegou transcrição) e foi marcada uma segunda.
+- → Ganho: o cliente confirma que fecha; sempre proposto.
+- → Perdido: 7 tentativas esgotadas (o acervo já marca `desconsiderado` sozinho e para os lembretes; **a mudança no CRM é proposta**) ou objeção irreversível identificada (sempre proposta, pois exige julgamento).
+
+## Autonomia (decisão do usuário: seguir a sugestão)
+Fase A: o Heimdall **propõe** cada movimento e **espera o "ok" do usuário**. As propostas vêm **dentro do relatório das 08:00** (sem alertas fora de hora), numeradas, para aprovar com uma resposta curta no self-chat ("ok 1 e 3", "não, o 2 fica"). O usuário também pode ordenar a qualquer momento ("mova a empresa X para ganho"), e isso o Heimdall executa. Fase B (depois de acertar bastante): liberar automático só para o que é determinístico e de baixo risco (criar lead em Contato iniciado; avançar para Reunião Agendada); **Ganho e Perdido continuam sempre com confirmação**.
+
+## Dados
+**Começar do zero**, sem importação.
+
+## Dúvida do usuário: "é pesado para um CRM?"
+O Krayin declara "Servidor: Apache 2 ou NGINX (com PHP-FPM recomendado); RAM: 3 GB ou mais; PHP 8.3+; Composer 2.5+". A documentação **não diz se os 3 GB são só para instalar ou para rodar**. É normal para um app Laravel com banco próprio, mas é mais do que a necessidade de um único usuário. O custo real deve ser **medido no spike** (memória do Krayin parado e em uso).
+
+## Alternativa enxuta (não descartada)
+O nosso modelo de dados já tem clientes, contatos, compromissos e estados. Cinco etapas cabem numa coluna `etapa` com histórico, **sem outra pilha**. Perde-se a tela de Kanban pronta (teria de ser construída e mantida). Comparação:
+| | Krayin | Funil próprio |
+|---|---|---|
+| Tela Kanban | pronta | a construir |
+| Pilha extra | PHP + MySQL + servidor web | nenhuma |
+| API para o Heimdall | pacote `krayin/rest-api` | interna |
+| Manutenção | atualizar o Krayin | manter nosso código |
+| Atividades, e-mail, custom fields | prontos | não |
+
+## Decisão pendente
+**Krayin ou funil próprio?** (recomendação: Krayin, desde que o spike confirme um consumo aceitável de memória na máquina escolhida; sem o Krayin, o funil próprio cobre a necessidade com menos peças).
