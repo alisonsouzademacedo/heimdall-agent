@@ -1,0 +1,32 @@
+<!-- source: https://docs.docker.com/reference/cli/docker/mcp/secret/rm/ -->
+# docker mcp secret rm
+
+**Description:** Remove secrets from the local OS Keychain
+
+**Usage:** `docker mcp secret rm name1 name2 ...`
+
+
+
+
+
+
+
+
+
+
+## Description
+
+Remove secrets from the local OS Keychain
+
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--all` |  |  Remove all secrets |
+
+
+
+
+
+

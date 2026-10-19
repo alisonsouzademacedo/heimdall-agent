@@ -1,0 +1,26 @@
+<!-- source: https://docs.docker.com/reference/cli/docker/compose/unpause/ -->
+# docker compose unpause
+
+**Description:** Unpause services
+
+**Usage:** `docker compose unpause [SERVICE...]`
+
+
+
+
+
+
+
+
+
+
+## Description
+
+Unpauses paused containers of a service
+
+
+
+
+
+
+
