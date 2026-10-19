@@ -17,5 +17,5 @@ PASSOS (um de cada vez; avise o que vai fazer e como eu confiro; PARE e peca min
 4. Verifique as "so a pratica" de runbooks/README.md e registre o que viu funcionar.
 5. Antes de cada etapa que exige mim (QR do WhatsApp, login do ChatGPT no Hermes e no Hindsight, destino do backup), pare e diga EXATAMENTE o que fazer.
 
-REGRAS DE OURO: nunca envie mensagem a ninguem (so existira o self-chat); nunca peca nem imprima chaves, tokens ou conversas no chat (eu digito segredos so aqui, na minha maquina); dados reais ficam em data\ (fora do git); todo erro resolvido vira teste que falhava + correcao + registro em docs/plano/LICOES.md; mudancas pequenas; ao terminar cada passo, atualize docs/plano/PROGRESS.md e faca commit. Nao use o Strix.
+REGRAS DE OURO: nunca envie mensagem a ninguem (so existira o self-chat); nunca peca nem imprima chaves, tokens ou conversas no chat (eu digito segredos so aqui, na minha maquina); dados reais ficam em data\ (fora do git); todo erro resolvido vira teste que falhava + correcao + registro em docs/plano/LICOES.md; mudancas pequenas; ao terminar cada passo, atualize docs/plano/PROGRESS.md e faca commit. O Strix (revisao de seguranca) so roda pelo aplicativo do GitHub, em PRs, e e teste de 7 dias; nao rode scans por conta propria nem envie codigo a servicos externos sem eu autorizar.
 Comece pelo passo 1.
