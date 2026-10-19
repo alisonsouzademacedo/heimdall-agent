@@ -34,6 +34,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D26 | Comercial: primeiro para o próprio usuário com o plano do ChatGPT; **ideal que o cliente tenha a sua API** | usuário |
 | D27 | Cadastro por **formulário** na tela de onboarding; o usuário escuta tudo e **não tem contatos pessoais** no WhatsApp empresarial, só o próprio número pessoal (tratar como `dono_pessoal`, fora das regras de cliente) | usuário |
 | D28 | Regra para a IA instaladora: **cada erro resolvido gera teste de regressão, atualização das instruções e registro em `LICOES.md`**; só acrescenta, nunca enfraquece as regras inegociáveis | usuário |
+| D29 | Personalidade: **sem exemplos do usuário**; o Heimdall aprende o jeito de falar dele ao processar o conteúdo e cria a própria personalidade (proposta com aprovação no self-chat, a confirmar) | usuário |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 

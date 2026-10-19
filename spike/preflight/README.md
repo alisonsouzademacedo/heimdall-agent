@@ -9,9 +9,19 @@ Verifica se a máquina atende aos requisitos do Heimdall. **Só lê informaçõe
 
 **Windows, passo a passo (não clique duas vezes no arquivo):**
 1. Abra a pasta onde está o `preflight.ps1`, clique na barra de endereço, digite `powershell` e tecle Enter (abre o PowerShell já nessa pasta).
-2. Rode: `powershell -ExecutionPolicy Bypass -File .\preflight.ps1`
-3. Se aparecer um erro de "scripts desabilitados" ou "arquivo bloqueado", rode antes `Unblock-File .\preflight.ps1`.
-4. A janela espera você teclar Enter no fim. O relatório também fica em `preflight-relatorio.txt`.
+2. **Copie a linha inteira abaixo, começando pela palavra `powershell`, cole e tecle Enter:**
+   ```
+   powershell -ExecutionPolicy Bypass -File .\preflight.ps1
+   ```
+   Se aparecer "o termo '-ExecutionPolicy' não é reconhecido", faltou a palavra `powershell` no começo da linha.
+3. **Outro jeito**, já dentro do PowerShell aberto (duas linhas, uma de cada vez):
+   ```
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   .\preflight.ps1
+   ```
+   A primeira linha vale só para esta janela e não altera o computador de forma permanente.
+4. Se aparecer um erro de "scripts desabilitados" ou "arquivo bloqueado", rode antes `Unblock-File .\preflight.ps1`.
+5. A janela espera você teclar Enter no fim. O relatório também fica em `preflight-relatorio.txt`.
 
 Saída: relatório na tela (`[OK]`, `[ATENCAO]`, `[FALHA]`) e `preflight-resultado.json` na pasta atual.
 Código de saída: `0` atende · `1` atende com ressalvas · `2` não atende.
