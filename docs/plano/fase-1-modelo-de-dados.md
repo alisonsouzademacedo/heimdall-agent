@@ -67,8 +67,10 @@ Consequência: a "memória inteira" é montada de dias fechados + reuniões; o d
 ## Fluxo
 mensagem chega → `mensagens` (+ `midias`) → `fila` → transcrever/converter → extração (compromissos, sinais, papel, correlação) → recalcula `acompanhamento` → atualiza `dossies` → no fechamento do dia, `retain` no Hindsight.
 
-## Decisões pendentes (usuário)
-1. **Mensagens apagadas ou editadas pelo remetente:** manter o texto original (marcado como apagado) ou descartar? (proposta: manter, marcado)
-2. **Grupos:** como tratar cobrança de resposta em grupo — só quando mencionarem o usuário, ou nunca? E há grupos de clientes ou só internos?
-3. **Retenção (LGPD):** por quanto tempo guardar áudio e PDF originais, e se o usuário quer um comando para apagar tudo de um cliente.
-4. **Cliente = empresa** com vários contatos (proposta) ou cada pessoa é um cliente?
+## Decisões do usuário (2026-10-19)
+1. **Mensagens apagadas ou editadas:** manter o texto original, marcado como apagado/editado.
+2. **Grupos:** são poucos e **só internos**. O Heimdall **absorve tudo** (para entender cada pessoa da empresa, a função e o jeito), mas **não cobra resposta nem avisa** por grupo. Grupos não entram nas regras de acompanhamento de cliente.
+3. **Retenção:** guardar **no mínimo 90 dias**. Passado o prazo, o Heimdall **avisa** o usuário, que apaga ou pede ao Heimdall para apagar. Nada é apagado automaticamente. (Vale para áudios e PDFs originais; o que fazer com mensagens e transcrições: a definir.)
+4. **Cliente = empresa**, com vários contatos.
+
+Consequências: contatos de grupos internos recebem `papel = interno` e alimentam um perfil de cada colega (função, jeito de trabalhar) no dossiê interno; é preciso um aviso de vencimento de 90 dias no relatório e um comando de apagar (por cliente ou por período).
