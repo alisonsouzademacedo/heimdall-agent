@@ -15,4 +15,4 @@ jobs:
       - name: Versao do PowerShell (informativo)
         run: command -v pwsh && pwsh --version || echo "pwsh nao encontrado"
       - name: Rodar todos os testes
-        run: sh tests/run-all.sh
+        run: REQUIRE_PWSH=1 sh tests/run-all.sh

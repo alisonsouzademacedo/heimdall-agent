@@ -77,7 +77,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 4. ~~**Aprendizado**~~ (proposta em `fase-1-aprendizado.md`, aguarda aprovação): como as correções do usuário viram melhoria (`registrar_feedback`, critérios de "potencial" e "sem retorno").
 5. ~~Segurança operacional~~ (aprovada em `fase-1-seguranca-operacional.md`, decisões do dono em 2026-10-20): onde ficam os segredos, **backup e restauração** (sessão do WhatsApp e acervo), rotina dos 90 dias e "apagar tudo de um cliente".
 6. ~~Manutenção~~ (proposta em `fase-1-manutencao-e-versoes.md`, sem pergunta pendente): atualização de versões (Baileys muda o protocolo; Hermes e Hindsight), versões fixadas.
-7. Testes: lista detalhada e integração contínua no GitHub.
+7. ~~Testes~~ (`fase-1-testes-e-ci.md`: executor único, 3 conjuntos rodando no GitHub; faltam os testes do código): lista detalhada e integração contínua no GitHub.
 8. Versão comercial com chave de API do cliente: desenho da troca de provedor (Hermes e Hindsight).
 
 **Feito neste ciclo:** cadastro inicial (modelos), arquitetura e serviços (Compose em desenho), estrutura do repositório.
