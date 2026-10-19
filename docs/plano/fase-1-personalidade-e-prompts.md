@@ -21,8 +21,14 @@ O usuário **não vai fornecer exemplos** de como escreve nem de como o Heimdall
 ## Escrito em 2026-10-20 (aguarda revisão do dono)
 - `prompts/relatorios/{comum,diario,semanal}.md` e exemplo sintético em `prompts/relatorios/exemplos/`. Regras de `docs/plano/fase-1-relatorios.md` (D14, D15) aplicadas; estados e contagens vêm calculados do código, o modelo só redige.
 
+## Decisões do usuário sobre os relatórios (2026-10-20)
+Formato e ordem aprovados; limite de ~350/450 palavras aprovado, com a condição de **caber em uma tela**; o Heimdall deve **sugerir seções novas** quando um padrão se repetir (exemplo do dono: 7 dias seguidos), sempre com aprovação dele no self-chat.
+
+## Escrito: extração
+`prompts/extracao/compromissos-e-sinais.md` (aguarda revisão do dono; saída JSON alinhada às tabelas `compromissos` e `sinais_potencial` de `fase-1-modelo-de-dados.md`).
+
 ## Ainda a escrever
-Extração de compromissos e sinais de potencial; catálogo de objeções (contornáveis x irreversíveis, com os exemplos do usuário: doença grave na família, falência da fábrica, total satisfação com o marketing atual); skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
+Catálogo de objeções (contornáveis x irreversíveis, com os exemplos do usuário: doença grave na família, falência da fábrica, total satisfação com o marketing atual); skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
 
 ## Decisão (antes pergunta em aberto)
 O Heimdall pode usar o perfil de voz também para **sugerir rascunhos de resposta** ao usuário nos relatórios (sem nunca enviar)? **Resposta do usuário: sim, pode.** Os rascunhos aparecem só nos relatórios, como sugestão para ele copiar; o Heimdall nunca envia (regra 1).
