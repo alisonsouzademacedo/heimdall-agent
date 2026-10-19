@@ -61,7 +61,7 @@ Write-Host "Disco:    $diskGb GB livres na unidade atual"
 Write-Host ("GPU:      " + $(if ($gpuName) { "$gpuName ($([math]::Round($vramMb/1024)) GB de VRAM)" } else { 'nenhuma NVIDIA detectada' }))
 Write-Host "Fuso:     $tz"; Write-Host ""; Write-Host "Verificacoes:"
 
-if ($osName -match 'Windows (10|11)') { Ok "$osName: suportado (docs do Hermes: Windows 10 e 11)" } else { Warn "versao do Windows nao listada como suportada: $osName" }
+if ($osName -match 'Windows (10|11)') { Ok "${osName}: suportado (docs do Hermes: Windows 10 e 11)" } else { Warn "versao do Windows nao listada como suportada: $osName" }
 if ($osName -match "Home") { Warn "Windows Home: a documentacao do Docker Desktop diz que Home so roda conteineres Linux (suficiente para o Heimdall) e lista Pro/Enterprise/Education nos requisitos; confirmar no teste" }
 if ($isArm) { Warn "Windows ARM64: a transcricao local de audio (faster-whisper) NAO e suportada pelo Hermes nesta arquitetura (docs do Hermes)" }
 if ($ramMb -ge 15000) { Ok ("memoria {0} GB (recomendado: 16 GB ou mais)" -f [math]::Round($ramMb/1024)) }

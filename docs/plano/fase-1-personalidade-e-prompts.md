@@ -21,5 +21,5 @@ O usuário **não vai fornecer exemplos** de como escreve nem de como o Heimdall
 ## Ainda a escrever (próxima sessão)
 Modelos dos relatórios diário e semanal; extração de compromissos e sinais de potencial; catálogo de objeções (contornáveis x irreversíveis, com os exemplos do usuário: doença grave na família, falência da fábrica, total satisfação com o marketing atual); skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
 
-## Pergunta em aberto
-O Heimdall pode usar o perfil de voz também para **sugerir rascunhos de resposta** ao usuário nos relatórios (sem nunca enviar)? Não respondida até aqui.
+## Decisão (antes pergunta em aberto)
+O Heimdall pode usar o perfil de voz também para **sugerir rascunhos de resposta** ao usuário nos relatórios (sem nunca enviar)? **Resposta do usuário: sim, pode.** Os rascunhos aparecem só nos relatórios, como sugestão para ele copiar; o Heimdall nunca envia (regra 1).

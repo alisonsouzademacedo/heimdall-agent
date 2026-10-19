@@ -31,3 +31,8 @@ Estado de teste (2026-10-19):
 - `preflight.ps1`: **não executado** (sem PowerShell no ambiente de desenvolvimento). Precisa de teste em Windows real.
 
 Os limites usados (memória, disco, núcleos) estão em `docs/plano/fase-1-requisitos-e-preflight.md`, com a origem de cada um.
+
+## Testes do verificador
+- `bash tests/preflight/check_ps1.sh` (precisa de PowerShell 7 instalado, `REQUIRE_PWSH=1` para falhar se não houver). Roda o `.ps1` com um Windows simulado.
+- O terminal do Windows 11 abre o PowerShell por padrão (o prompt mostra `PS C:\...`): você já está nele.
+- Regras do `.ps1`: só caracteres ASCII; usar `${variavel}:` quando houver `:` logo depois do nome.
