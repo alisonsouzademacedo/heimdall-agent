@@ -23,6 +23,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D15 | Follow-up só para cliente que já respondeu; 2 dias entre tentativas; **7 tentativas sem retorno desconsideram** o cliente; cada resposta zera; "usuário sem responder" sempre no topo do próximo relatório; retornos marcados aparecem no relatório do dia | usuário |
 | D16 | Modelo de dados aprovado: manter apagadas/editadas marcadas; grupos só internos, absorvidos sem avisos; retenção mínima de 90 dias com aviso e apagar sob comando; cliente = empresa | usuário |
 | D17 | Funil: Contato iniciado → 1ª Reunião Agendada → 2ª Reunião Agendada → Fechamento/Ganho → Perdido/Arquivado (7 tentativas ou objeção irreversível); CRM do zero; Heimdall propõe e o usuário aprova (movimentos no relatório das 08:00) | usuário |
+| D18 | CRM: **Krayin** (funil de 5 etapas; propõe e usuário aprova) — peso medido no spike (E8) | usuário |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
@@ -39,6 +40,8 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-1-relatorios.md`: horários, regras de follow-up, estados do cliente.
 - `fase-1-mcp.md`: MCP do Hindsight + MCP próprio.
 - `fase-1-modelo-de-dados.md`: tabelas, princípios e fluxo para o Hindsight.
+- `fase-2-crm.md`: Krayin, funil, autonomia.
+- `fase-1-spike.md`: 13 experimentos de viabilidade antes de construir.
 
 ## Riscos avaliados e aceitos pelo usuário (2026-10-18)
 O usuário avaliou e decidiu seguir, com base em testes próprios: cota do ChatGPT Plus (fluxo majoritariamente texto, "não é muito"), termos de uso da assinatura em agentes externos, risco da conta do WhatsApp (o agente só escuta, não responde a terceiros nem dispara em massa), LGPD (confia no provedor) e bugs (testes automáticos de regressão em produção). Mantidos aqui só como pontos a **medir** no spike, não como bloqueios.
@@ -51,7 +54,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 2. ~~PDF → .md~~: planejado em `fase-1-pdf.md` (markitdown). Faltam PDFs reais de amostra.
 3. ~~Relatórios~~: decididos em `fase-1-relatorios.md`. Falta fechar as regras iniciais de "sem retorno" e "potencial" (propostas no documento).
 4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
-5. Kanban/CRM (fase 2): avaliado em `fase-2-crm.md`; recomendação Krayin; funil e autonomia decididos; falta escolher **Krayin ou funil próprio** (peso da pilha PHP).
+5. ~~Kanban/CRM~~: **Krayin** escolhido (`fase-2-crm.md`); documentação em `docs/krayin/`.
 6. ~~Modelo de dados~~: proposto em `fase-1-modelo-de-dados.md`; aprovado.
 
 **Spike (antes de construir)**
