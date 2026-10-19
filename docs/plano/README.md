@@ -50,7 +50,7 @@ Ainda abertos (técnicos): Hindsight auto-hospedado (discussão pública de falh
 2. ~~PDF → .md~~: planejado em `fase-1-pdf.md` (markitdown). Faltam PDFs reais de amostra.
 3. ~~Relatórios~~: decididos em `fase-1-relatorios.md`. Falta fechar as regras iniciais de "sem retorno" e "potencial" (propostas no documento).
 4. MCP: como o Hermes consulta o acervo (MCP do Hindsight ou próprio).
-5. Kanban/CRM (fase 2): qual CRM, tem API/MCP, funis e etapas.
+5. Kanban/CRM (fase 2): avaliado em `fase-2-crm.md`; recomendação Krayin; aguardando confirmação, autonomia da escrita e etapas do funil.
 6. ~~Modelo de dados~~: proposto em `fase-1-modelo-de-dados.md`; aprovado.
 
 **Spike (antes de construir)**
