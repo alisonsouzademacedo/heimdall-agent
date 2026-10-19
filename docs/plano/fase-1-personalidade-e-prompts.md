@@ -18,8 +18,11 @@ O usuário **não vai fornecer exemplos** de como escreve nem de como o Heimdall
 - `data/perfil-de-voz.md` = dados do usuário (fora do git).
 - O que o Hermes grava sozinho em memória e skills continua limitado pelas travas do Hermes (`memory.write_approval` permite exigir aprovação; ver `docs/hermes-agent/user-guide/features/memory.md`).
 
-## Ainda a escrever (próxima sessão)
-Modelos dos relatórios diário e semanal; extração de compromissos e sinais de potencial; catálogo de objeções (contornáveis x irreversíveis, com os exemplos do usuário: doença grave na família, falência da fábrica, total satisfação com o marketing atual); skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
+## Escrito em 2026-10-20 (aguarda revisão do dono)
+- `prompts/relatorios/{comum,diario,semanal}.md` e exemplo sintético em `prompts/relatorios/exemplos/`. Regras de `docs/plano/fase-1-relatorios.md` (D14, D15) aplicadas; estados e contagens vêm calculados do código, o modelo só redige.
+
+## Ainda a escrever
+Extração de compromissos e sinais de potencial; catálogo de objeções (contornáveis x irreversíveis, com os exemplos do usuário: doença grave na família, falência da fábrica, total satisfação com o marketing atual); skills iniciais; **passo de calibração** da personalidade (quando roda, o que o usuário vê, como aprova).
 
 ## Decisão (antes pergunta em aberto)
 O Heimdall pode usar o perfil de voz também para **sugerir rascunhos de resposta** ao usuário nos relatórios (sem nunca enviar)? **Resposta do usuário: sim, pode.** Os rascunhos aparecem só nos relatórios, como sugestão para ele copiar; o Heimdall nunca envia (regra 1).
