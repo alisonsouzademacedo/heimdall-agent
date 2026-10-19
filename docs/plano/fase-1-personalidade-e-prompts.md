@@ -38,3 +38,10 @@ Skills iniciais; **passo de calibração** da personalidade (quando roda, o que 
 
 ## Decisão (antes pergunta em aberto)
 O Heimdall pode usar o perfil de voz também para **sugerir rascunhos de resposta** ao usuário nos relatórios (sem nunca enviar)? **Resposta do usuário: sim, pode.** Os rascunhos aparecem só nos relatórios, como sugestão para ele copiar; o Heimdall nunca envia (regra 1).
+
+## Skills iniciais (escritas em 2026-10-20; aguardam revisão)
+Em `prompts/skills/<nome>/SKILL.md`, no formato do Hermes (`docs/hermes-agent/user-guide/features/skills.md`: frontmatter com `name`, `description` curta, `version`, seções "When to Use / Procedure / Pitfalls / Verification"). Seis skills: `relatorio-diario`, `relatorio-semanal`, `extrair-compromissos-e-sinais`, `classificar-objecao`, `calibrar-personalidade`, `conversar-no-self-chat`.
+- Nas skills, os textos longos (regras comuns, esqueletos, catálogo, extração, calibração) ficam em `references/`. **O repositório guarda uma cópia só** (em `prompts/relatorios/`, `prompts/extracao/`, `prompts/objecoes/`, `docs/plano/`); o script de instalação copia para `references/` de cada skill no volume do Hermes (`/opt/data/skills/`). Ainda não escrito.
+- Os nomes de ferramentas (`dados_do_relatorio`, `cliente`, `registrar_feedback` etc.) vêm do rascunho de `fase-1-mcp.md`; **ainda não existem**.
+- Recomendado ligar `skills.write_approval: true` no início: o Hermes pode criar e alterar skills sozinho (`skill_manage`), e com a trava cada mudança fica pendente até o dono aprovar (`/skills pending`, `/skills approve`). Confirmar no spike que o fluxo funciona pelo self-chat.
+- O `description` das skills foi mantido abaixo de 60 caracteres (padrão citado para `/learn` na documentação).
