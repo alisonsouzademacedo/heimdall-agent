@@ -2,15 +2,24 @@
 
 Memória do projeto para qualquer IA que continue o trabalho. **Atualize ao fim de cada passo.** Não apague entradas antigas.
 
-## Estado atual (2026-10-19)
-- Fase: **planejamento concluído**; spike ainda não iniciado.
-- Decisões: `docs/plano/README.md` (D1 a D18).
-- Verificador de ambiente: `spike/preflight/` (`.sh` validado no Linux; `.ps1` e macOS **não validados**; o usuário tentou rodar no Windows e a janela fechou sozinha: corrigido com pausa e relatório em arquivo, **ainda não reconfirmado**). Limite de disco subiu para 30 GB mínimo e 50 GB recomendado; o `.sh` reprova o ambiente de desenvolvimento (29 GB livres), como esperado; o `.ps1` agora avisa sobre Windows Home.
-- Documentação carregada em `docs/`: hermes-agent, baileys, openai-codex, hindsight, whisper, faster-whisper, markitdown, krayin, docker, claude-code, antigravity.
+## Estado atual (2026-10-20)
+- Fase: **planejamento quase completo**; nenhum código de produto escrito; spike não iniciado.
+- Decisões: `docs/plano/README.md` (D1 a D28), riscos e pendências no mesmo arquivo.
+- Documentação em `docs/` (cada pasta tem `INDEX.md`): hermes-agent, baileys, openai-codex (inclui `siwc/`), hindsight (inclui `compose-recipes/`), whisper, faster-whisper, markitdown, krayin, docker, claude-code, antigravity.
+- Regras para IAs: `AGENTS.md` e `CLAUDE.md` (importa o `AGENTS.md`). Erros resolvidos: `docs/plano/LICOES.md`.
+- Roteiros de instalação (documentados, **não executados**): `docs/plano/runbooks/` (8 arquivos + testes de fumaça).
+- Verificador de ambiente: `spike/preflight/` (`.sh` validado no Linux; `.ps1` e macOS **não validados**; mínimo de disco 30 GB, recomendado 50 GB).
+- Modelos de cadastro: `templates/cadastro/` (o cadastro real será por formulário na tela de onboarding).
+- Branch de trabalho: `claude/affectionate-albattani-rtz8mu`. O repositório remoto **não tem branch `main`**, então não há PR aberto.
 
 ## Próximo passo
-1. Usuário baixa o repositório no notebook (local) e roda o verificador de ambiente.
-2. Iniciar o spike (`docs/plano/fase-1-spike.md`), na ordem sugerida.
+**Item 2 do planejamento: prompts e personalidade do Heimdall** (`SOUL.md` de assessor, modelos dos relatórios diário e semanal, extração de compromissos e sinais de potencial, catálogo de objeções, skills iniciais). Antes de escrever, pedir ao usuário **uma frase dele escrevendo a um cliente** e **uma de como o Heimdall deve falar com ele**.
+Depois, na ordem: 3 aprendizado (como as correções viram melhoria); 4 backup, restauração e rotina dos 90 dias; 5 atualização de versões; 6 testes e integração contínua; 7 troca de provedor para a versão comercial (chave de API do cliente). Então o spike.
+
+## Pendências do usuário
+- Fornecer, na configuração: PDFs de exemplo do Google Meet e áudios de teste.
+- Baixar o repositório no notebook e rodar `spike/preflight/` (e relatar o resultado; testar o `.ps1` no Windows).
+- Lista de pessoas internas (nome, função, telefone), dados dele e da empresa: virão pelo formulário.
 
 ## Registro (mais recente primeiro)
 | Data | Passo | Documentos lidos por inteiro | Testes / evidência | Observações |
