@@ -25,7 +25,7 @@ O que guardar, e como (cada comando vem da documentação indicada):
 | Krayin (fase 2) | cópia do volume do MySQL com o serviço parado (receita de volume da documentação do Docker) | `mysqldump` não está na documentação que temos **[não verificado]** |
 
 **Destino:** um segundo disco ou pasta fora do notebook, **sempre criptografado**, porque o backup junta dados de clientes e segredos. Nunca no git e nunca em serviço de nuvem sem criptografia própria.
-**Quando:** proposta: automático toda madrugada, ou na primeira vez que o notebook ligar depois de 24 horas sem backup; manter os últimos 7 diários e 4 semanais. O Heimdall avisa no relatório se o último backup tem mais de 2 dias.
+**Quando (decidido):** no primeiro uso do dia; manter os últimos 7 diários e 4 semanais. O Heimdall avisa no relatório se o último backup tem mais de 2 dias.
 **Ensaio de restauração:** um backup que nunca foi restaurado não está provado. Uma vez por mês, restaurar em pasta de teste e conferir contagens (mensagens, clientes, documentos). Roteiro a entrar em `runbooks/08-testes-de-fumaca.md`.
 
 ### Restaurar (ordem)
@@ -53,7 +53,7 @@ O que guardar, e como (cada comando vem da documentação indicada):
 - Acervo: mensagens, mídias (arquivos), transcrições, documentos e `.md`, compromissos, sinais, acompanhamento, dossiê, recomendações, ajustes e correções ligadas ao cliente.
 - Hindsight: documentos do cliente (`conv:<cliente_id>:*`, `reuniao:*`) pelo apagar documento, que remove todas as memórias dele (`hindsight document delete <banco> <documento>` consta na documentação). **Não verificado:** se observações e modelos mentais já derivados são reescritos depois; testar no spike (cliente sintético: após apagar, nada deve aparecer em busca nem nos modelos mentais).
 - Hermes: entradas de `MEMORY.md`/`USER.md` que citam o cliente (a documentação lista `hermes journey delete` para memória); histórico de sessões do self-chat que cita o cliente **[não verificado se dá para apagar seletivamente]**.
-- Relatórios antigos que citam o cliente: **decisão sua** (apagar o arquivo, ou manter como histórico).
+- Relatórios antigos que citam o cliente: **mantidos como histórico** (decisão do dono).
 - **WhatsApp:** o Heimdall não apaga nada no WhatsApp (só escuta).
 - Opcional: `apagar e ignorar`, para que novas mensagens desse contato não sejam absorvidas (a documentação do Baileys tem `shouldIgnoreJid`).
 
@@ -66,7 +66,12 @@ O que guardar, e como (cada comando vem da documentação indicada):
 ## Testes de regressão previstos
 Varredura de segredos no repositório · logs sem conteúdo · backup do acervo restaurável e idêntico (contagens) · restauração reaplica a lista de esquecimento · apagar exige o código da etapa 2 e falha com código errado · mensagem de cliente com a frase de confirmação **não** executa nada · após apagar um cliente sintético, nenhuma consulta o encontra (acervo, Hindsight, dossiês) · apagar não toca em outro cliente · MCP não tem ferramenta de apagar.
 
-## Perguntas para você decidir
+## Decisões do dono (2026-10-20)
+1. **Retenção:** aprovado. Após 90 dias, o Heimdall oferece limpar só áudios e PDFs originais; textos, transcrições e `.md` ficam.
+2. **Backup:** destino à escolha entre HD externo, segundo disco ou pen drive, **perguntado na configuração inicial** (onboarding). Ritmo: **no primeiro uso do dia** (não precisa ser de madrugada, o notebook pode estar desligado).
+3. **Relatórios antigos** de cliente apagado: **mantidos como histórico**.
+
+## Perguntas que foram feitas (respondidas acima)
 1. **Retenção:** concorda em ficar só com a limpeza de **áudios e PDFs originais** após 90 dias, mantendo textos e transcrições?
 2. **Backup:** onde fica a cópia (HD externo, segundo disco, pen drive)? E aceita o ritmo "toda madrugada ou no primeiro uso do dia"?
 3. **Relatórios antigos** que citam um cliente apagado: apagar o arquivo ou manter?

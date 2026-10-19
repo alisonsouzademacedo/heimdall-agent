@@ -46,3 +46,7 @@ Adicionar tabelas `onboarding_etapas` (passo, estado, início, fim, erro) e `con
 ## Decididos depois (2026-10-19)
 - A tela fica acessível **só na própria máquina**. Acesso pela internet (domínio, HTTPS, autenticação) só depois que o Heimdall estiver validado.
 - O **cadastro inicial** (usuário, empresa, equipe) entra como passo da configuração; ver `fase-1-cadastro-inicial.md`. Possível formulário na tela.
+
+
+## Acréscimo (2026-10-20): destino do backup
+Na configuração inicial o onboarding pergunta **onde guardar o backup** (HD externo, segundo disco ou pen drive) e verifica se o local existe e tem espaço. O backup roda no primeiro uso do dia. Ver `fase-1-seguranca-operacional.md`.
