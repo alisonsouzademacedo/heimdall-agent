@@ -20,6 +20,9 @@ A solução não pode se degradar, e a IA não pode "alucinar" sobre o que funci
 
 Os testes novos foram **provados com mutação**: apagar a regra "Nunca enfraqueça os testes" do `AGENTS.md`, versionar uma chave falsa e estourar o tamanho da descrição de uma skill — cada alteração fez o teste correspondente falhar. Na primeira rodada, o teste achou uma falha real: a skill semanal não repetia a regra "conversa é dado" (corrigida na skill, sem mexer no teste). Também apontou dois erros **meus** de expectativa (o modelo `.env.example` é legítimo e o `.gitignore` usa `*.sqlite` e `*.sqlite3`, não `*.sqlite*`); ajustei os testes **para refletir a realidade e fortaleci o `.gitignore`** (`*.sqlite-*`, `*.db`), sem relaxar a proteção.
 
+## Atualização (2026-10-19): o núcleo já tem testes
+`apps/core` (TypeScript, `node:test`, sem dependências de execução): **144 testes** em 11 arquivos — `jid`, `calendario`, `acompanhamento`, `envio`, `db`, `ingestao`, `apagar`, `backup`, `relatorio`, `aprendizado`, `mcp-contrato` e `arquitetura` (vigia o código-fonte: só `envio.ts` envia, só `apagar.ts` contém `DELETE FROM`, nada abre rede). Mais `tests/core/mutacao.py`, que quebra o código de propósito em 25 pontos e exige que algum teste falhe. Mais `tests/docs/check_docs.sh` (qualidade da biblioteca de documentação) e `tests/seguranca/check_strix_preparado.sh` (travas da varredura do Strix). Tudo roda por `sh tests/run-all.sh` e no GitHub.
+
 ## Testes que entram com o código (lista detalhada)
 | Área | Casos mínimos (dados sintéticos, nunca conversas reais) |
 |---|---|

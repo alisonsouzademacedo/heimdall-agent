@@ -12,7 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Versao do PowerShell (informativo)
         run: command -v pwsh && pwsh --version || echo "pwsh nao encontrado"
       - name: Rodar todos os testes
-        run: REQUIRE_PWSH=1 sh tests/run-all.sh
+        run: REQUIRE_PWSH=1 REQUIRE_NODE=1 sh tests/run-all.sh

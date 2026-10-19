@@ -1,0 +1,124 @@
+<!-- source: https://docs.strix.ai/contributing.md -->
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.strix.ai/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Contributing
+
+> Contribute to Strix development
+
+## Development Setup
+
+### Prerequisites
+
+* Python 3.12+
+* Latest Go 1.24.x patch (only for Bubble Tea TUI development and release artifacts)
+* Docker (running)
+* [uv](https://docs.astral.sh/uv/)
+* Git
+
+### Local Development
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash theme={null}
+    git clone https://github.com/usestrix/strix.git
+    cd strix
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash theme={null}
+    make setup-dev
+
+    # or manually:
+    uv sync
+    uv run pre-commit install
+    ```
+  </Step>
+
+  <Step title="Configure LLM">
+    ```bash theme={null}
+    export STRIX_LLM="openrouter/z-ai/glm-5.3"
+    export LLM_API_KEY="your-api-key"
+    ```
+  </Step>
+
+  <Step title="Run Strix">
+    ```bash theme={null}
+    uv run strix --target https://example.com
+    ```
+  </Step>
+</Steps>
+
+## Contributing Skills
+
+Skills are specialized knowledge packages that enhance agent capabilities. They live in `strix/skills/`
+
+### Creating a Skill
+
+1. Choose the right category
+2. Create a `.md` file with YAML frontmatter (`name` and `description` fields)
+3. Include practical examples—working payloads, commands, test cases
+4. Provide validation methods to confirm findings
+5. Submit via PR
+
+## Contributing Code
+
+### Pull Request Process
+
+1. **Create an issue first** — Describe the problem or feature
+2. **Fork and branch** — Work from `main`
+3. **Make changes** — Follow existing code style
+4. **Write tests** — Ensure coverage for new features
+5. **Run checks** — `make check-all` should pass
+6. **Submit PR** — Link to issue and provide context
+
+### Code Style
+
+* PEP 8 with 100-character line limit
+* Type hints for all functions
+* Docstrings for public methods
+* Small, focused functions
+* Meaningful variable names
+
+## Package Builds
+
+Editable installs do not require Go; they run the TUI from source (`go run`).
+
+Wheels are intentionally strict: they always bundle the matching Go sidecar and
+are platform-specific.
+
+```bash theme={null}
+make wheel
+```
+
+The build hook (`scripts/tui_sidecar_hook.py`) requires Go 1.24.x or newer, embeds
+the sidecar as `strix/bin/strix-tui`, and assigns the current platform tag.
+Frozen releases built by `scripts/build.sh` and `strix.spec` also require the
+sidecar.
+
+## Reporting Issues
+
+Include:
+
+* Python version and OS
+* Strix version (`strix --version`)
+* LLM being used
+* Full error traceback
+* Steps to reproduce
+
+## Community
+
+<CardGroup cols={2}>
+  <Card title="Discord" icon="discord" href="https://discord.gg/strix-ai">
+    Join the community for help and discussion.
+  </Card>
+
+  <Card title="GitHub Issues" icon="github" href="https://github.com/usestrix/strix/issues">
+    Report bugs and request features.
+  </Card>
+</CardGroup>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

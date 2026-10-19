@@ -7,6 +7,9 @@
 ## E0 — Verificação do ambiente (pronto)
 Antes de tudo: `spike/preflight/` detecta sistema, hardware e requisitos. Ver `docs/plano/fase-1-requisitos-e-preflight.md`.
 
+## Estado em 2026-10-19
+Feitos na nuvem, com dados sintéticos e testes (código em `apps/core/`): **E9** (motor de regras), **E10** (pacote e texto-base do relatório diário; falta o semanal e o texto escrito pelo modelo), **E13 em parte** (envio travado + testes de arquitetura; falta revisar o código de integração com o Baileys quando existir). Preparado, não executado: varredura do Strix (`fase-1-testes-de-seguranca-strix.md`). **Dependem do notebook e do dono:** E1, E2, E3, E4, E5, E6, E7, E8, E11, E12.
+
 ## Suposições a provar
 | # | Pergunta | Como testar | Passa se | Se falhar |
 |---|---|---|---|---|
