@@ -3,6 +3,10 @@
 # Uso (PowerShell):  powershell -ExecutionPolicy Bypass -File .\preflight.ps1
 # Codigo de saida: 0 = atende, 1 = atende com ressalvas, 2 = nao atende
 $ErrorActionPreference = 'SilentlyContinue'
+# Guarda o relatorio completo em arquivo (util se a janela fechar) e evita que a janela feche sozinha no fim.
+try { Start-Transcript -Path 'preflight-relatorio.txt' -Force | Out-Null } catch { }
+function Pausa { if (($Host.Name -eq 'ConsoleHost') -and (-not $env:PREFLIGHT_NOPAUSE)) { Read-Host 'Pressione Enter para fechar' | Out-Null } }
+trap { Write-Host "ERRO: $_"; try { Stop-Transcript | Out-Null } catch { }; Pausa; exit 3 }
 $out = if ($env:PREFLIGHT_OUT) { $env:PREFLIGHT_OUT } else { 'preflight-resultado.json' }
 $script:fail = 0; $script:warn = 0
 function Ok($m)   { Write-Host "  [OK]      $m" }
@@ -95,5 +99,7 @@ Write-Host ""; Write-Host "Resultado: $verdict ($($script:fail) falha(s), $($scr
   ferramentas = [ordered]@{ docker = $dockerV; docker_ativo = $dockerUp; node = $nodeV; python = $pyV; git = $gitV }
   rede = $net; fuso = $tz; portas = [ordered]@{ '1455' = $p1455; '8888' = $p8888 }; whisper_sugerido = $whisper
 } | ConvertTo-Json -Depth 5 | Out-File -Encoding utf8 $out
-Write-Host "Detalhes gravados em $out"
+Write-Host "Detalhes gravados em $out (e o relatorio completo em preflight-relatorio.txt)"
+try { Stop-Transcript | Out-Null } catch { }
+Pausa
 exit $code

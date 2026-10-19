@@ -28,7 +28,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 
 ## Biblioteca de documentação (no repo, para contexto)
-`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio) · `docs/faster-whisper/` (README, código, benchmarks) · `docs/markitdown/` (README, pacotes, conversor de PDF). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
+`docs/hermes-agent/` (458 págs) · `docs/baileys/` (1.778) · `docs/openai-codex/` (203) · `docs/hindsight/` (152) · `docs/whisper/` (repo + anúncio) · `docs/faster-whisper/` (README, código, benchmarks) · `docs/markitdown/` (README, pacotes, conversor de PDF) · `docs/krayin/` · `docs/docker/` (693 págs, subconjunto). Firecrawl: conectado; usado só quando o site não publica `llms-full.txt`.
 
 ## Análises feitas
 - `fase-1-planejamento.md`: o que o Hermes faz e o achado de que a escuta passiva não é nativa.
@@ -42,6 +42,8 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 - `fase-1-modelo-de-dados.md`: tabelas, princípios e fluxo para o Hindsight.
 - `fase-2-crm.md`: Krayin, funil, autonomia.
 - `fase-1-spike.md`: 13 experimentos de viabilidade antes de construir.
+- `fase-1-operacao-da-ia.md`: regras para a IA instaladora (`AGENTS.md`), memória, testes de regressão.
+- `fase-1-onboarding-visual.md`: tela de configuração em 9 passos, só na primeira vez.
 - `fase-1-requisitos-e-preflight.md`: requisitos por sistema e verificador automático (`spike/preflight/`).
 
 ## Riscos avaliados e aceitos pelo usuário (2026-10-18)

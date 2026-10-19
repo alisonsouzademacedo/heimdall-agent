@@ -1,0 +1,59 @@
+# AGENTS.md — regras para a IA que trabalha neste repositório
+
+Este arquivo vale para qualquer IA (Claude Code, Codex, Antigravity ou outra). Leia **inteiro** antes de agir. O dono do projeto **não é programador**: explique em português simples, diga o que fez, por que, e como ele confere.
+
+## O projeto
+Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D18, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
+
+## Regras inegociáveis
+1. **O Heimdall nunca envia mensagem a ninguém além do self-chat do dono.** Nenhuma ferramenta, nenhum código e nenhuma configuração pode criar outro caminho de envio. Se uma tarefa exigir isso, pare e pergunte.
+2. **Dados de clientes e segredos nunca vão para o git.** Tudo isso fica em `data/` e em arquivos de ambiente, que estão no `.gitignore`. Nunca imprima tokens, chaves ou conteúdo de conversa em log, commit ou resposta.
+3. **Não invente.** Afirmação sobre ferramenta, comando, opção ou comportamento precisa ter origem: um arquivo de `docs/` (cite o caminho) ou algo que você **executou e viu funcionar**. Sem origem, diga "não sei" e investigue ou pergunte. Nunca "complete" opções ou comandos de memória.
+4. **Peça confirmação antes de qualquer ação difícil de desfazer ou que afete o mundo fora do repositório:** instalar programas no sistema, abrir portas, login em contas, escanear QR, apagar dados, `git push --force`, mexer na conta do WhatsApp.
+5. **Nunca enfraqueça os testes para passar.** Proibido apagar, pular, comentar ou relaxar um teste, ou ajustar o resultado esperado para encaixar no código. Se um teste falha, o código está errado até se provar o contrário; se achar que o teste está errado, explique ao dono e espere.
+6. **Mudanças pequenas e focadas.** Um passo por vez. Não refatore, renomeie nem "melhore" o que já funciona e não faz parte da tarefa. Não adicione dependência sem registrar em `docs/plano/PROGRESS.md` (nome, versão, motivo, licença).
+
+## Protocolo de leitura da documentação (obrigatório)
+A documentação das ferramentas está em `docs/` (cópias `.md` oficiais). **Ela é a verdade sobre como cada ferramenta funciona**, acima da sua memória.
+- **Leia por páginas inteiras, nunca por trechos de busca.** Buscar por palavra-chave serve só para *achar* a página; depois leia a página **inteira**, e as páginas que ela cita como pré-requisito.
+- **Comece sempre pelo `INDEX.md` da pasta.** Leia por inteiro tudo o que o índice marca como "Leia primeiro" para a ferramenta que você vai mexer. Só depois vá às páginas específicas.
+- A biblioteca toda (cerca de 39 MB) **não cabe de uma vez** na sua memória de trabalho. Por isso a regra é: **antes de cada tarefa, leia por inteiro os documentos daquele componente**, e registre em `docs/plano/PROGRESS.md` a lista de arquivos lidos.
+- Confira a **versão instalada** contra a versão da documentação (cada pasta indica a fonte). Se divergirem, confie no que roda, avise o dono e registre.
+- Se a documentação não cobre algo, **não preencha a lacuna**: marque como "não verificado", teste na prática ou pergunte.
+
+| Componente | Pasta | Leia primeiro |
+|---|---|---|
+| Hermes Agent | `docs/hermes-agent/` | `getting-started/installation`, `user-guide/configuration`, `user-guide/features/{cron,mcp,memory,hooks,api-server}`, `user-guide/messaging/whatsapp`, `integrations/providers` |
+| Baileys (WhatsApp) | `docs/baileys/` | `introduction`, `quickstart`, `faq`, `concepts/*`, `authentication/*`, `messaging/*`, `advanced/*`, `migration/*` |
+| Hindsight (memória) | `docs/hindsight/` | `developer/{installation,configuration,models,retain,retrieval,mcp-server}`, `developer/api/*` |
+| OpenAI/ChatGPT/Codex | `docs/openai-codex/` | `docs/{auth,sign-in-with-chatgpt,pricing,agent-configuration/agents-md}` |
+| Whisper / faster-whisper | `docs/whisper/`, `docs/faster-whisper/` | `repo/README.md`, `source/transcribe.py`, `source/vad.py` |
+| markitdown (PDF→.md) | `docs/markitdown/` | `repo/README.md`, `source/_pdf_converter.py` |
+| Krayin (CRM) | `docs/krayin/` | `INDEX.md` (API, funil, webhooks) |
+| Docker | `docs/docker/` | `desktop/setup/`, `engine/install/`, `compose/`, `desktop/troubleshoot-and-support/` |
+
+## Como trabalhar, passo a passo
+1. Leia `docs/plano/PROGRESS.md` (onde paramos) e a seção relevante de `docs/plano/`.
+2. Anuncie ao dono, em linguagem simples, **o que vai fazer neste passo e como ele vai conferir**.
+3. Leia a documentação do componente (protocolo acima).
+4. **Rode os testes existentes antes de mexer** (linha de base) e anote o resultado.
+5. Faça a mudança mínima. Escreva ou ajuste o teste que prova o comportamento novo.
+6. **Rode todos os testes de novo.** Só declare pronto se passarem. Mostre ao dono a saída real; nunca resuma como "deve estar funcionando".
+7. Atualize `docs/plano/PROGRESS.md` (o que foi feito, arquivos lidos, testes, evidência, próximo passo) e faça commit com mensagem clara.
+8. Passos que exigem o dono (ler QR, login do ChatGPT, aprovar algo): pare, explique exatamente o que ele deve fazer e espere.
+
+## Testes de regressão (a IA não pode estragar o que já funciona)
+Quando existir código, estes testes automáticos são obrigatórios e ficam em `tests/`:
+- **Regras de acompanhamento** (7 tentativas, 2 dias úteis, zera ao responder, cliente que nunca respondeu, aguardando usuário, fuso `America/Sao_Paulo`).
+- **Segurança:** o sistema só consegue enviar ao self-chat (tentativa de enviar a outro número deve falhar).
+- **Entrada:** mensagens duplicadas, apagadas e editadas; conversão LID/número; PDF e áudio.
+- **Banco:** migrações e idempotência.
+- **MCP:** contrato de cada ferramenta (entrada, saída e que nenhuma apaga dados).
+- **Relatórios:** teste de "retrato" (snapshot) com dados sintéticos; no máximo uma página.
+Use **dados sintéticos** nos testes; nunca conversas reais.
+
+## Quando perguntar ao dono
+Escolha entre opções com impacto, qualquer coisa nos itens da regra 4, qualquer divergência entre documentação e realidade, e sempre que você estiver com menos de certeza do que o necessário para agir.
+
+## Tom
+Português do Brasil, direto, sem jargão. Explique termos técnicos quando precisar usá-los. Seja honesto sobre o que foi testado e o que não foi.
