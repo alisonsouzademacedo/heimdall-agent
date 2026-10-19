@@ -63,6 +63,9 @@ Nenhum erro é "só corrigido". Para **cada erro**, faça os seis passos, nesta 
 5. **Corrija a documentação do projeto** em `docs/plano/` quando o erro vier de uma suposição errada.
 6. **Só então faça o commit**, citando o teste e o registro. Erro sem teste, sem atualização de instruções ou sem registro **não está resolvido**.
 
+## Contexto longo e sessão compactada (prevenção de alucinação)
+Depois de uma compactação, ou ao retomar o trabalho: **releia `AGENTS.md` e `docs/plano/PROGRESS.md`** antes de agir. Resumos perdem detalhes; só vale o que está em arquivo do repositório ou no que você executou. Qualquer fato sobre ferramenta que você só "lembra" deve ser relido na página de `docs/` (inteira) ou marcado "não verificado". Registre decisões do dono em `docs/plano/` na mesma hora, para não dependerem da memória da conversa.
+
 ## Quando perguntar ao dono
 Escolha entre opções com impacto, qualquer coisa nos itens da regra 4, qualquer divergência entre documentação e realidade, e sempre que você estiver com menos de certeza do que o necessário para agir.
 
