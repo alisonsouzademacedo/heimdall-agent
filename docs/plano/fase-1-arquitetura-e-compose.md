@@ -1,6 +1,6 @@
 # Arquitetura, estrutura do repositório e serviços (Docker Compose)
 
-Status: **proposta**. Nenhum arquivo de Compose foi escrito nem testado; será criado e testado no spike, pela IA, seguindo o `AGENTS.md`. Fontes: `docs/hermes-agent/user-guide/docker.md` e `features/api-server.md`, `docs/hindsight/developer/installation.md`, `models.md` e `configuration.md`, `docs/krayin/devdocs/2.2/introduction/installation.md`, `docs/docker/` (Compose e rede).
+Status (2026-10-20): o **Compose foi escrito** em `infra/compose/docker-compose.yml` (PostgreSQL, Hindsight, Hermes e o trabalhador de áudio/PDF sob demanda), com as imagens em `infra/hindsight/` e `apps/media-worker/`; o `core` roda no computador, **fora** do Compose. Testes: `tests/infra/`. **Krayin e o MCP do Heimdall não estão no Compose** (fase 2 / ainda não existem). O restante deste texto é o desenho original. Fontes: `docs/hermes-agent/user-guide/docker.md` e `features/api-server.md`, `docs/hindsight/developer/installation.md`, `models.md` e `configuration.md`, `docs/krayin/devdocs/2.2/introduction/installation.md`, `docs/docker/` (Compose e rede).
 
 ## Decisões do usuário (2026-10-19)
 - **Acesso só na máquina** por enquanto. Quando o Heimdall estiver validado, o usuário comprará um domínio e abrirá pela internet (fase futura, exige HTTPS e autenticação).

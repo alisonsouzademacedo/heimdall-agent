@@ -21,5 +21,17 @@ for opcao in '--target' '--scan-mode' '--max-budget' '--fail-on' '--instruction-
 done
 [ -s docs/strix/INDEX.md ] && pass "INDEX.md do Strix existe" || fail "falta docs/strix/INDEX.md"
 
+# WSL (Microsoft): o caminho manual com dism foi o que funcionou na maquina do dono (LICOES.md, 2026-10-19); a pagina precisa estar no repositorio, inteira.
+[ -s docs/wsl/INDEX.md ] && pass "INDEX.md do WSL existe" || fail "falta docs/wsl/INDEX.md"
+SEM_ORIGEM_WSL=$(for f in $(find docs/wsl -name '*.md' ! -name INDEX.md 2>/dev/null); do head -1 "$f" | grep -q '^<!-- source: https://' || echo "$f"; done)
+[ -z "$SEM_ORIGEM_WSL" ] && [ -n "$(find docs/wsl -name '*.md' ! -name INDEX.md 2>/dev/null)" ] && pass "toda pagina do WSL indica a origem" || fail "paginas do WSL ausentes ou sem origem"
+for termo in 'dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux' 'VirtualMachinePlatform' 'wsl --set-default-version 2'; do
+  grep -qF -- "$termo" docs/wsl/install-manual.md 2>/dev/null && pass "install-manual.md traz: $termo" || fail "install-manual.md sem: $termo"
+done
+for termo in 'autoMemoryReclaim' 'vmIdleTimeout' 'memory=' 'processors='; do
+  grep -qF -- "$termo" docs/wsl/wsl-config.md 2>/dev/null && pass "wsl-config.md traz: $termo" || fail "wsl-config.md sem: $termo"
+done
+grep -qF 'docs/wsl' AGENTS.md && pass "AGENTS.md lista a pasta docs/wsl na tabela" || fail "AGENTS.md nao lista docs/wsl"
+
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"
 [ "$FAIL" -eq 0 ]

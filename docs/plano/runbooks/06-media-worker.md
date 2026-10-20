@@ -23,5 +23,11 @@ Contêiner próprio, em **rede interna sem internet** depois do download do mode
 ## Verificação
 Transcrever um áudio de teste em português e conferir o texto; converter um PDF de transcrição do Meet de exemplo e conferir falas, horários e participantes; medir tempo e memória (E6, E7).
 
+## Armadilhas (medido em 2026-10-20)
+- **Fixar o `av`.** O `faster-whisper==1.2.1` declara `av>=11` **sem limite superior**; com o `av` mais novo (19.0.1) a transcrição quebra: `TypeError: open() got an unexpected keyword argument 'metadata_errors'` (em `faster_whisper/audio.py`, `decode_audio`). Funcionou com **`av==16.1.0`** (wheel `cp312` ~39 MB). A imagem do trabalhador de áudio **deve fixar `av`** (e as demais versões); sem isso uma instalação nova em outro computador falha.
+- Resultado de referência (CPU, 8 threads vistas, `small`, `int8`, `language="pt"`, VAD ligado): 258,8 s de áudio sintético em 94,8 s (0,37× o tempo real), carregar o modelo 1,3 s, **pico 1373 MB**. Qualidade não avaliada: houve uma inserção ("um copyright") e mais palavras do que o falado (alucinação), como a documentação do Whisper avisa.
+- **A imagem está no repositório:** `apps/media-worker/Dockerfile` e `requirements.txt` (todas as versões exatas, geradas em `python:3.12-slim` limpo). Testes: `tests/infra/check_infra.sh` (pins) e `tests/infra/smoke_docker.sh` (decodifica WAV com o `av` fixo, carrega o modelo `small` **sem internet** e lê um PDF sintético com o markitdown; **qualidade da transcrição não é avaliada**).
+- O modelo `small` (`Systran/faster-whisper-small`, 464 MB) pode ser baixado com `download_model("small", output_dir=...)` (`docs/faster-whisper/source/utils.py`) e embutido na imagem.
+
 ## Não verificado
 Qualidade em português por modelo; tempo em CPU de modelos grandes; comportamento do `local_files_only` com modelo pré-baixado; qualidade do PDF do Meet.

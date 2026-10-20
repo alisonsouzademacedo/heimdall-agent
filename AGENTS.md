@@ -3,7 +3,7 @@
 Este arquivo vale para qualquer IA (Claude Code, Codex, Antigravity ou outra). Leia **inteiro** antes de agir. O dono do projeto **não é programador**: explique em português simples, diga o que fez, por que, e como ele confere.
 
 ## O projeto
-Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D29, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
+Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D30, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
 
 ## Regras inegociáveis
 1. **O Heimdall nunca envia mensagem a ninguém além do self-chat do dono.** Nenhuma ferramenta, nenhum código e nenhuma configuração pode criar outro caminho de envio. Se uma tarefa exigir isso, pare e pergunte.
@@ -33,6 +33,7 @@ A documentação das ferramentas está em `docs/` (cópias `.md` oficiais). **El
 | Docker | `docs/docker/` | `desktop/setup/`, `engine/install/`, `compose/`, `desktop/troubleshoot-and-support/` |
 | Claude Code | `docs/claude-code/` | `memory`, `best-practices`, `permissions`, `hooks-guide`, `settings`, `security` |
 | Antigravity | `docs/antigravity/` | `rules`, `getting-started`, `permissions`, `sandbox`, `mcp`, `cli/best-practices` |
+| WSL 2 (Windows) | `docs/wsl/` | `INDEX.md`, `install-manual`, `wsl-config` |
 | Strix (testes de segurança; **não adotado por ora**, custa por uso) | `docs/strix/` | `INDEX.md`, `usage/cli`, `advanced/configuration`, `usage/scan-modes` |
 
 **Ferramenta ou repositório novo:** antes de usar, traga a documentação para `docs/<ferramenta>/` (Firecrawl), **prefira o Markdown original do site** (muitos servem a página com `.md` no fim do endereço) e **confira o resultado**: a raspagem "só conteúdo principal" já perdeu nomes de opções. Crie o `INDEX.md` da pasta, acrescente a linha na tabela acima e rode `tests/docs/check_docs.sh`. Registre o que foi lido em `docs/plano/PROGRESS.md`.
@@ -56,7 +57,7 @@ Quando existir código, estes testes automáticos são obrigatórios e ficam em 
 - **MCP:** contrato de cada ferramenta (entrada, saída e que nenhuma apaga dados).
 - **Relatórios:** teste de "retrato" (snapshot) com dados sintéticos; no máximo uma página.
 Use **dados sintéticos** nos testes; nunca conversas reais.
-O dono usa **Windows**: em código e testes use `fileURLToPath` (nunca `URL.pathname` como caminho) e abra arquivos Python com `encoding='utf-8'` (`runbooks/README.md`, R9); nunca crie dois arquivos cujos nomes diferem só por maiúscula (no Windows um apaga o outro).
+O dono usa **Windows**: em código e testes use `fileURLToPath` (nunca `URL.pathname` como caminho) e abra arquivos Python com `encoding='utf-8'` (`runbooks/README.md`, R9); nunca crie dois arquivos cujos nomes diferem só por maiúscula (no Windows um apaga o outro). Ao gravar texto com PowerShell use aspas simples ou here-string: em aspas duplas o acento grave vira caractere de controle (`0 e `v corrompem o arquivo; LICOES.md, 2026-10-20). **Fixe a versão de toda dependência instalada** (pip, imagens): pacote sem teto de versão quebra numa instalação nova (`av`, 2026-10-20); formate números com cultura invariante. Teste **não pode depender do estado do computador** (Docker rodando, WSL, programas instalados): fixe o estado com variável de teste (`HEIMDALL_TESTE_*`) e teste os dois lados.
 
 ## Cada erro resolvido vira aprendizado permanente
 Nenhum erro é "só corrigido". Para **cada erro**, faça os seis passos, nesta ordem:

@@ -2,6 +2,9 @@
 
 Fontes: `docs/hermes-agent/user-guide/docker.md`, `user-guide/features/{api-server,cron,mcp,memory}.md`, `user-guide/configuration.md` (seções "Timezone" e "Global Toolset Disable"), `reference/toolsets-reference.md`, `integrations/providers.md`, `docs/hindsight/sdks/integrations/hermes.md`.
 
+## No repositório
+O serviço está em `infra/compose/docker-compose.yml` (imagem `nousresearch/hermes-agent:v0.22.2`, `gateway run`, API só em `127.0.0.1:8642`, `API_SERVER_KEY` obrigatória, volume nomeado `hermes-data`, 1 GB de limite, **nenhuma plataforma de mensagens**). `config.yaml` (fuso, `disabled_toolsets`, MCPs, plugin do Hindsight) ainda **não** é gravado pelo Compose: é o passo do assistente de configuração. Teste estático: `tests/infra/check_infra.sh`.
+
 ## Requisitos
 Imagem `nousresearch/hermes-agent` (amd64 e arm64; Python 3.14 dentro da imagem). Recursos do contêiner: **mínimo 1 GB de RAM, 1 CPU, 500 MB de disco; recomendado 2 a 4 GB, 2 CPUs, 2 GB+** (com ferramentas de navegador ativas, pelo menos 2 GB). Usar tag fixa (`X.Y.Z`) ou digest; `latest` e `stable` andam.
 

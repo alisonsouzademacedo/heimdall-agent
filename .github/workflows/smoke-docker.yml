@@ -1,0 +1,15 @@
+# Teste de fumaca com Docker de verdade (constroi as imagens do Heimdall e sobe PostgreSQL + Hindsight). Pesado (baixa ~3 GB e um modelo de 470 MB),
+# por isso SO roda quando alguem aciona a mao (Actions > "Fumaca Docker" > Run workflow). Roteiro: tests/infra/smoke_docker.sh.
+name: Fumaca Docker
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fumaca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fumaca (imagens, Hindsight em portugues, audio sem internet, PDF)
+        run: REQUIRE_DOCKER=1 sh tests/infra/smoke_docker.sh

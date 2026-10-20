@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { avaliar, resumoDeFalhas, abrirNavegador, medirSistema, type Medidas } from './ambiente.ts';
+import { avaliar, resumoDeFalhas, abrirNavegador, medirSistema, lerNvidiaSmi, type Medidas } from './ambiente.ts';
 
 const GIB = 1024 ** 3;
 const bom: Medidas = { plataforma: 'win32', memTotalBytes: 16 * GIB, memLivreBytes: 8 * GIB, discoLivreBytes: 100 * GIB, nodeVersao: 'v22.22.0', dockerRodando: true };
@@ -62,6 +62,11 @@ test('virtualizacao ligada mas WSL ausente: so o WSL falha, e diz como instalar'
   assert.equal(estado(v, 'virtualizacao'), 'ok');
   assert.equal(estado(v, 'wsl'), 'falha');
   assert.match(v.find((x) => x.id === 'wsl')!.detalhe, /wsl --install/);
+  // Na maquina do dono 'wsl --install' respondeu em circulo; o que funcionou foi o caminho manual da Microsoft (docs/wsl/install-manual.md).
+  const d = v.find((x) => x.id === 'wsl')!.detalhe;
+  assert.match(d, /dism\.exe \/online \/enable-feature \/featurename:Microsoft-Windows-Subsystem-Linux/);
+  assert.match(d, /dism\.exe \/online \/enable-feature \/featurename:VirtualMachinePlatform/);
+  assert.match(d, /docs\/wsl\/install-manual\.md/);
 });
 
 test('virtualizacao e WSL presentes: ambas ok e a maquina boa segue sem falhas', () => {
@@ -78,6 +83,22 @@ test('no Windows, medirSistema mede virtualizacao e WSL (booleanos); fora dele, 
   const m = medirSistema(process.cwd());
   if (m.plataforma === 'win32') { assert.equal(typeof m.virtualizacao, 'boolean'); assert.equal(typeof m.wsl, 'boolean'); }
   else { assert.equal(m.virtualizacao, undefined); assert.equal(m.wsl, undefined); }
+});
+
+// Dados para o perfil por tipo de computador (perfil.ts): arquitetura, CPUs e placa de video NVIDIA.
+test('lerNvidiaSmi: le "nome, memoria" do nvidia-smi; varias placas: fica com a de mais memoria; lixo: nada', () => {
+  assert.deepEqual(lerNvidiaSmi('NVIDIA GeForce GTX 1650, 4096\n'), { nome: 'NVIDIA GeForce GTX 1650', vramMb: 4096 });
+  assert.deepEqual(lerNvidiaSmi('NVIDIA T400, 2048\r\nNVIDIA RTX A4000, 16376\r\n'), { nome: 'NVIDIA RTX A4000', vramMb: 16376 });
+  assert.equal(lerNvidiaSmi(''), null);
+  assert.equal(lerNvidiaSmi('NVIDIA-SMI has failed because it could not communicate with the NVIDIA driver'), null);
+  assert.equal(lerNvidiaSmi('Placa, nao-e-numero'), null);
+});
+
+test('medirSistema tambem mede arquitetura, CPUs e placa NVIDIA (ou nenhuma)', () => {
+  const m = medirSistema(process.cwd());
+  assert.equal(typeof m.arch, 'string');
+  assert.ok(typeof m.cpus === 'number' && m.cpus >= 1);
+  assert.ok(m.gpuNvidia === null || (typeof m.gpuNvidia!.nome === 'string' && m.gpuNvidia!.vramMb > 0));
 });
 
 test('abrirNavegador so aceita enderecos locais do proprio Heimdall', () => {

@@ -10,6 +10,7 @@ import type { Banco } from '../db.ts';
 import { gravarRelatorio, listarAbertos } from '../bugs.ts';
 import { PASSOS } from './passos.ts';
 import { resumoDeFalhas, type Verificacao } from './ambiente.ts';
+import type { Perfil } from './perfil.ts';
 import { CSS, JS, HTML } from './recursos.ts';
 
 export interface OpcoesServidor {
@@ -17,6 +18,7 @@ export interface OpcoesServidor {
   codigo: string; // uso unico
   pastaBugs: string;
   sondar: () => Verificacao[] | Promise<Verificacao[]>;
+  perfil?: () => Perfil | Promise<Perfil>; // perfil ideal deste computador (perfil.ts); viaja na resposta do "Testar ambiente"
   agora?: () => number;
 }
 
@@ -122,7 +124,8 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
           const verificacoes = await op.sondar();
           const falhas = resumoDeFalhas(verificacoes);
           op.banco.prepare("UPDATE onboarding_etapas SET estado = ?, fim = ?, erro = ? WHERE passo = 'ambiente'").run(falhas ? 'vermelho' : 'verde', agora(), falhas || null);
-          return json(res, 200, { verificacoes, ok: !falhas });
+          const perfil = op.perfil ? await op.perfil() : undefined;
+          return json(res, 200, perfil ? { verificacoes, ok: !falhas, perfil } : { verificacoes, ok: !falhas });
         }
         if (url.pathname === '/api/bug') {
           const etapa = typeof dados.etapa === 'string' ? dados.etapa : '';

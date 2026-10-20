@@ -49,3 +49,5 @@ jobs:
         run: REQUIRE_PWSH=1 sh tests/instalar/check_ambiente_windows.sh
       - name: Instalador - assinatura digital (so roda no Windows)
         run: REQUIRE_PWSH=1 sh tests/instalar/check_assinatura.sh
+      - name: Instalador - reparo do Docker com socket preso
+        run: REQUIRE_PWSH=1 sh tests/instalar/check_docker_reparo.sh

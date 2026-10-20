@@ -135,7 +135,7 @@ $semDockerPronto = (-not $virtOk) -or (-not $wslOk)
 if ($ehWindows -or $env:HEIMDALL_TESTE_VIRT -or $env:HEIMDALL_TESTE_WSL) {
   Titulo 'Virtualizacao e WSL (o Docker Desktop precisa dos dois)'
   if ($virtOk) { Ok 'Virtualizacao ligada' } else { Falta 'Virtualizacao DESLIGADA. Ligue na BIOS/UEFI: reinicie o computador e entre na configuracao da placa (a tecla e o nome da opcao variam: Intel VT-x, Virtualization Technology ou SVM). Isso so voce pode fazer.' }
-  if ($wslOk) { Ok 'WSL 2 instalado' } else { Falta 'WSL 2 nao instalado. Depois da virtualizacao ligada: abra o PowerShell como administrador, rode "wsl --install" e reinicie o computador.' }
+  if ($wslOk) { Ok 'WSL 2 instalado' } else { Falta 'WSL 2 nao instalado. Depois da virtualizacao ligada: abra o PowerShell como administrador, rode "wsl --install" e reinicie o computador.' ; Info 'Se "wsl --install" responder em circulo ("instale executando wsl.exe --install"), use o caminho manual da Microsoft (docs/wsl/install-manual.md): como administrador, rode dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart e depois dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart; reinicie e rode "wsl --update".' }
   if ($semDockerPronto) { Info 'Atencao: o Docker Desktop nao vai abrir ate resolver isso. Pode instalar o resto agora e deixar o Docker para depois.' }
 }
 
@@ -203,6 +203,32 @@ Titulo 'Estado do Docker'
 if (DockerRodando) { Ok 'Docker rodando' }
 elseif (DockerInstalado) { Falta 'Docker instalado, mas NAO esta rodando. Abra o Docker Desktop pelo menu Iniciar, aceite os termos, espere ficar verde e rode iniciar.cmd de novo.' }
 else { Falta 'Docker ainda nao instalado.' }
+
+# Docker Desktop que nao abre depois de um desligamento brusco: arquivo de conexao preso (engine.sock). Ver instalar/docker-reparo.ps1 e LICOES.md (2026-10-20).
+# Em teste: HEIMDALL_TESTE=1 e HEIMDALL_TESTE_SECRETS_DIR apontam para uma pasta falsa.
+$bibReparo = Join-Path $PSScriptRoot 'docker-reparo.ps1'
+$pastaSegredos = $null
+if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_SECRETS_DIR) { $pastaSegredos = $env:HEIMDALL_TESTE_SECRETS_DIR }
+if ($ehWindows -and -not $pastaSegredos -and (Test-Path $bibReparo)) { . $bibReparo; $pastaSegredos = PastaSegredosDocker }
+$dockerFunciona = DockerRodando
+if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_DOCKER_RODANDO) { $dockerFunciona = ($env:HEIMDALL_TESTE_DOCKER_RODANDO -eq '1') }   # so em teste: nao depender do Docker real do computador
+if ($pastaSegredos -and (Test-Path $bibReparo) -and -not $dockerFunciona) {
+  . $bibReparo
+  $presos = @(SocketsDockerObsoletos $pastaSegredos)
+  if ($presos.Count -gt 0) {
+    Falta 'Arquivo preso do Docker (engine.sock) de um desligamento brusco: o Docker Desktop mostra "An unexpected error occurred ... initializing Secrets Engine ... engine.sock.stale".'
+    Info "Arquivos: $($presos -join ', ') (vazios; o Docker cria de novo ao abrir)."
+    if (-not $SomenteMostrar) {
+      if (DockerDesktopRodando) { Info 'O Docker Desktop esta aberto (provavelmente com a janela de erro): clique em Quit nela, feche o Docker Desktop e rode iniciar.cmd de novo.' }
+      elseif (Pergunta 'Posso parar o WSL (wsl --shutdown) e mover essa pasta do Docker para o lado, para ele abrir? Imagens, conteineres e volumes NAO sao apagados, mas o WSL INTEIRO sera parado: todas as distribuicoes Linux e tudo o que roda nelas fecham. Salve o trabalho antes.') {
+        # Relatos do Docker (desktop-feedback #692) e esta maquina: o Windows nao abre o arquivo preso; so renomear a PASTA funciona, e so com o WSL parado.
+        if ($env:HEIMDALL_TESTE -ne '1' -and (Tem 'wsl')) { Info 'Parando o WSL (wsl --shutdown)...'; & wsl.exe --shutdown 2>&1 | Out-Null; Start-Sleep -Seconds 8 }
+        $rep = RepararSocketsDocker $pastaSegredos $false
+        if ($rep.Ok) { $oque = if ($rep.Movida) { "pasta movida para: $($rep.Movida)" } else { "$($rep.Removidos.Count) arquivo(s) removido(s)" }; Ok "Reparo feito ($oque). Abra o Docker Desktop pelo menu Iniciar e espere ficar verde." } else { Falta "Nao consegui reparar: $($rep.Motivo)"; RegistraBug 'docker-arquivo-preso' "nao consegui remover o arquivo preso do Docker: $($rep.Motivo)" "remover $($presos -join ', ')" '' $null }
+      } else { Info 'Ok, nao removi.' }
+    }
+  }
+}
 
 if ($ehWindows) {
   try {
