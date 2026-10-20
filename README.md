@@ -24,7 +24,7 @@ Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (r
 | `iniciar.cmd`, `instalar/` | Instalador de um clique e texto inicial para a IA |
 | `apps/core/` | Núcleo em TypeScript (sem dependências de execução) e a tela de onboarding |
 | `prompts/`, `templates/` | Personalidade, skills e modelos de cadastro |
-| `docs/plano/` | Planejamento, decisões (D1 a D29), roteiros (`runbooks/`), lições aprendidas |
+| `docs/plano/` | Planejamento, decisões (D1 a D29), roteiros (`runbooks/`), lições aprendidas, orçamento de memória e **perfis por tipo de computador** (`fase-1-perfis-de-computador.md`) |
 | `docs/<ferramenta>/` | Cópia da documentação oficial de cada ferramenta usada |
 | `spike/preflight/` | Verificação do computador antes de instalar |
 | `tests/` | Testes de regressão, segurança, instalador e documentação |

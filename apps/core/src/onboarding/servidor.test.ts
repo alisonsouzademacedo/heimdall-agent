@@ -9,10 +9,12 @@ import { join } from 'node:path';
 import { abrirBanco, migrar } from '../db.ts';
 import { iniciarServidor, MAX_CORPO, MAX_ERROS_CODIGO, type Servidor } from './servidor.ts';
 import { PASSOS } from './passos.ts';
+import { escolherPerfil } from './perfil.ts';
 import { HTML, JS, CSS } from './recursos.ts';
 import type { Verificacao } from './ambiente.ts';
 
-const FAKE_SK = ['sk', 'abcdefghijklmnopqrstuvwxyz123456'].join('-'); // segredo FALSO montado em tempo de execucao
+const GIB = 1024 ** 3;
+const FAKE_SK =['sk', 'abcdefghijklmnopqrstuvwxyz123456'].join('-'); // segredo FALSO montado em tempo de execucao
 const CODIGO = 'codigo-de-teste-123';
 const OK: Verificacao[] = [{ id: 'docker', rotulo: 'Docker', detalhe: 'Rodando', estado: 'ok' }];
 const RUIM: Verificacao[] = [{ id: 'docker', rotulo: 'Docker', detalhe: 'parado', estado: 'falha' }];
@@ -203,6 +205,33 @@ test('retomavel: um servidor novo sobre o mesmo banco mostra o passo ja verde', 
       assert.equal(JSON.parse(est).passos[0].estado, 'verde');
     } finally { await s2.fechar(); }
   } finally { await c.fim(); }
+});
+
+// O perfil por tipo de computador viaja na MESMA resposta do "Testar ambiente" (so quando o servidor recebe um) e a tela sabe mostra-lo.
+test('testar ambiente devolve o perfil recomendado (se houver) e a tela tem codigo para mostra-lo; sem perfil, a resposta nao muda', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'heimdall-perfil-'));
+  const banco = abrirBanco(); migrar(banco);
+  const perfil = escolherPerfil({ plataforma: 'win32', memTotalBytes: 8029 * 1024 * 1024, memLivreBytes: 4 * GIB, discoLivreBytes: 84 * GIB, nodeVersao: 'v24.20.0', dockerRodando: true, arch: 'x64', cpus: 8, gpuNvidia: null });
+  const com = await iniciarServidor({ banco, codigo: 'c1', pastaBugs: join(dir, 'bugs'), sondar: () => OK, perfil: () => perfil });
+  const sem = await iniciarServidor({ banco, codigo: 'c2', pastaBugs: join(dir, 'bugs'), sondar: () => OK });
+  const chamar = (s: Servidor, codigo: string, caminho: string, metodo: string, cookie?: string): Promise<{ cab: Record<string, string | string[] | undefined>; texto: string }> => new Promise((resolve, reject) => {
+    const cab: Record<string, string> = { Host: `127.0.0.1:${s.porta}` };
+    if (cookie) { cab.Cookie = cookie; cab['X-Heimdall'] = '1'; cab['Content-Type'] = 'application/json'; }
+    const q = request({ host: '127.0.0.1', port: s.porta, method: metodo, path: caminho, headers: cab }, (res) => { let t = ''; res.on('data', (d) => (t += d)); res.on('end', () => resolve({ cab: res.headers, texto: t })); });
+    q.on('error', reject); if (cookie) q.write('{}'); q.end();
+  });
+  try {
+    for (const [s, codigo, esperaPerfil] of [[com, 'c1', true], [sem, 'c2', false]] as const) {
+      const cookie = String(((await chamar(s, codigo, `/?codigo=${codigo}`, 'GET')).cab['set-cookie'] as string[])[0]).split(';')[0]!;
+      const r = JSON.parse((await chamar(s, codigo, '/api/ambiente/testar', 'POST', cookie)).texto);
+      assert.equal('perfil' in r, esperaPerfil, `perfil presente=${'perfil' in r}`);
+      if (esperaPerfil) { assert.equal(r.perfil.id, 'enxuto'); assert.ok(Array.isArray(r.perfil.itens) && r.perfil.itens.length > 0); }
+      assert.equal(r.ok, true);
+    }
+    assert.match(JS, /r\.perfil/, 'a tela precisa ler r.perfil');
+    assert.match(JS, /Perfil recomendado/, 'a tela precisa mostrar o titulo do perfil');
+    assert.doesNotMatch(JS, /innerHTML|outerHTML|document\.write|eval\(/);
+  } finally { await com.fechar(); await sem.fechar(); rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('relatar problema: grava o arquivo em bugs/, sem segredos, e a contagem de abertos sobe', async () => {

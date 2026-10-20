@@ -1,7 +1,7 @@
 // Verificacao do ambiente para o passo 0 da tela, e abertura do navegador.
 // Este e um dos dois arquivos autorizados a usar node:child_process (o outro: nenhum). Comandos FIXOS, sem entrada de usuario.
 import { spawn, spawnSync } from 'node:child_process';
-import { freemem, totalmem, platform } from 'node:os';
+import { arch, cpus, freemem, totalmem, platform } from 'node:os';
 import { statfsSync } from 'node:fs';
 
 export type EstadoVerificacao = 'ok' | 'atencao' | 'falha';
@@ -23,6 +23,10 @@ export interface Medidas {
   // So no Windows (o Docker Desktop precisa dos dois; windows-install.md). undefined = nao se aplica ou nao foi medido.
   virtualizacao?: boolean;
   wsl?: boolean;
+  // Para o perfil por tipo de computador (perfil.ts). Ausentes = nao medidos.
+  arch?: string; // ex.: "x64", "arm64"
+  cpus?: number; // processadores logicos
+  gpuNvidia?: { nome: string; vramMb: number } | null; // null = nenhuma placa NVIDIA (ou nvidia-smi ausente)
 }
 
 const GIB = 1024 ** 3;
@@ -79,10 +83,30 @@ function wslInstalado(): boolean {
   try { return spawnSync('wsl', ['--version'], { timeout: 15_000, stdio: 'ignore', windowsHide: true }).status === 0; } catch { return false; }
 }
 
+// Funcao pura: le a saida de "nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits" ("NOME, MB" por linha).
+// Varias placas: fica com a de mais memoria. Qualquer outra coisa (erro do driver, vazio): nenhuma placa.
+export function lerNvidiaSmi(texto: string): { nome: string; vramMb: number } | null {
+  let melhor: { nome: string; vramMb: number } | null = null;
+  for (const linha of texto.split(/\r?\n/)) {
+    const m = /^(.+),\s*(\d+)\s*$/.exec(linha.trim());
+    if (!m) continue;
+    const vramMb = Number(m[2]);
+    if (vramMb > 0 && (melhor === null || vramMb > melhor.vramMb)) melhor = { nome: m[1]!.trim(), vramMb };
+  }
+  return melhor;
+}
+
+function placaNvidia(): { nome: string; vramMb: number } | null {
+  try {
+    const r = spawnSync('nvidia-smi', ['--query-gpu=name,memory.total', '--format=csv,noheader,nounits'], { timeout: 10_000, encoding: 'utf8', windowsHide: true });
+    return r.status === 0 ? lerNvidiaSmi(r.stdout ?? '') : null;
+  } catch { return null; }
+}
+
 export function medirSistema(pasta: string = process.cwd()): Medidas {
   let livre = 0;
   try { const s = statfsSync(pasta); livre = s.bavail * s.bsize; } catch { livre = 0; }
-  const m: Medidas = { plataforma: platform(), memTotalBytes: totalmem(), memLivreBytes: freemem(), discoLivreBytes: livre, nodeVersao: process.version, dockerRodando: dockerRodando() };
+  const m: Medidas = { plataforma: platform(), memTotalBytes: totalmem(), memLivreBytes: freemem(), discoLivreBytes: livre, nodeVersao: process.version, dockerRodando: dockerRodando(), arch: arch(), cpus: cpus().length, gpuNvidia: placaNvidia() };
   if (m.plataforma === 'win32') { m.virtualizacao = virtualizacaoLigada(); m.wsl = wslInstalado(); }
   return m;
 }

@@ -37,7 +37,7 @@ textarea{width:100%;min-height:90px;background:var(--bg);color:var(--fg);border:
 
 export const JS = `
 (function(){
-  var passos=[],atual=0,verifs=[];
+  var passos=[],atual=0,verifs=[],perfilAtual=null;
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e}
   function api(m,u,corpo){
     var o={method:m,headers:{'X-Heimdall':'1'},credentials:'same-origin'};
@@ -68,9 +68,20 @@ export const JS = `
     var g=el('div','grade');verifs.forEach(function(v){
       var c=el('div','verif');c.appendChild(el('span','dot '+v.estado));var d=el('div');d.appendChild(el('div','',v.rotulo));d.appendChild(el('div','det',v.detalhe));c.appendChild(d);g.appendChild(c)});
     s.appendChild(g);
+    if(perfilAtual){s.appendChild(perfilCard(perfilAtual))}
     var b=el('button','acao','Testar ambiente');b.type='button';
-    b.addEventListener('click',function(){b.disabled=true;api('POST','/api/ambiente/testar',{}).then(function(r){verifs=r.verificacoes;return carregar()}).catch(function(e){alert(e.message)}).then(function(){b.disabled=false})});
+    b.addEventListener('click',function(){b.disabled=true;api('POST','/api/ambiente/testar',{}).then(function(r){verifs=r.verificacoes;perfilAtual=r.perfil||null;return carregar()}).catch(function(e){alert(e.message)}).then(function(){b.disabled=false})});
     s.appendChild(b);
+  }
+  function perfilCard(p){
+    var rot={ok:'adequado',apertado:'apertado',nao_recomendado:'nao recomendado'};
+    var c=el('div','aviso');
+    c.appendChild(el('div','','Perfil recomendado: '+p.nome+' \\u00b7 '+(rot[p.adequacao]||p.adequacao)));
+    c.appendChild(el('div','det',p.resumo));
+    var ul=el('ul');p.itens.forEach(function(i){ul.appendChild(el('li','',i.rotulo+': '+i.valor+' ['+i.origem+']'))});c.appendChild(ul);
+    p.avisos.forEach(function(a){c.appendChild(el('div','det','Atencao: '+a))});
+    p.passos.forEach(function(x){c.appendChild(el('div','det','Proximo passo: '+x))});
+    return c;
   }
   function bug(s,id){
     var box=el('div','aviso');box.appendChild(el('div','','Algo deu errado ou estranho neste passo?'));
@@ -85,7 +96,7 @@ export const JS = `
   }
   function tudo(){lateral();painel()}
   function carregar(){return api('GET','/api/estado').then(function(r){passos=r.passos;if(!verifs.length)verifs=r.verificacoes||[];document.getElementById('bugs').textContent='relatorios de bug abertos: '+r.bugsAbertos;tudo()})}
-  carregar().then(function(){return api('POST','/api/ambiente/testar',{})}).then(function(r){verifs=r.verificacoes;return carregar()}).catch(function(){});
+  carregar().then(function(){return api('POST','/api/ambiente/testar',{})}).then(function(r){verifs=r.verificacoes;perfilAtual=r.perfil||null;return carregar()}).catch(function(){});
 })();
 `;
 
