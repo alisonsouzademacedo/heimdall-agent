@@ -37,6 +37,18 @@ test('o notebook do dono (8 GB, GTX 1650, ~1 GB livre): perfil "enxuto", apertad
   assert.match(p.avisos.join(' '), /livre/i, 'com ~1 GB livre tem de avisar para fechar programas');
 });
 
+// Servidor Linux de 8 GB (ex.: VPS): os numeros dos servicos foram medidos no Windows. No Linux nao ha a VM do WSL nem o Docker Desktop
+// (cerca de 2,5 GB medidos no Windows), entao a folga tende a ser MAIOR, mas isso NAO foi medido: o perfil nao pode copiar a conclusao do Windows.
+test('Linux com 8 GB (VPS): nao repete a conclusao do Windows, diz que o Linux nao foi medido e nao cita a VM do WSL', () => {
+  const p = escolherPerfil(maq({ plataforma: 'linux', memTotalBytes: 7.8 * GIB, memLivreBytes: 5.7 * GIB, discoLivreBytes: 33 * GIB, cpus: 4 }));
+  assert.equal(p.id, 'enxuto');
+  assert.doesNotMatch(p.resumo, /Windows chegou/i, 'a conclusao "memoria livre do Windows" nao vale no Linux');
+  assert.doesNotMatch(texto(p), /VM do Docker \(WSL\)/, 'nao existe VM do WSL no Linux');
+  assert.match(p.avisos.join(' '), /medid\w+ (num|no) (notebook )?Windows/i, 'avisa que os numeros vieram do Windows');
+  assert.match(p.avisos.join(' '), /Linux.*nao.*medid|nao.*medid.*Linux/i, 'avisa que o Linux nao foi medido');
+  assert.match(tudo(p), /Docker Engine/);
+});
+
 test('8 GB com a placa de video: a GPU aparece como opcao NAO VERIFICADA, nunca como padrao', () => {
   const t = tudo(escolherPerfil(DONO));
   assert.match(t, /GPU/);

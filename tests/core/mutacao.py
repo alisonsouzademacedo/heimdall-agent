@@ -67,6 +67,7 @@ MUTACOES = [
     ("src/onboarding/perfil.ts", "const gpuBoa = !!m.gpuNvidia && m.plataforma !== 'darwin' && m.gpuNvidia.vramMb >= 4096;", "const gpuBoa = false;", "perfil: Whisper na GPU no perfil folgado"),
     ("src/onboarding/ambiente.ts", "vramMb > 0 && (melhor === null || vramMb > melhor.vramMb)", "vramMb > 0 && (melhor === null || vramMb < melhor.vramMb)", "ambiente: varias placas, fica com a de mais memoria"),
     ("src/onboarding/servidor.ts", "perfil ? { verificacoes, ok: !falhas, perfil } :", "false ? { verificacoes, ok: !falhas, perfil } :", "tela: o perfil viaja na resposta do Testar ambiente"),
+    ("src/onboarding/perfil.ts", "const win = m.plataforma === 'win32';", "const win = true;", "perfil: Linux nao herda a conclusao medida no Windows"),
     ("src/bugs.ts", "t = t.replace(/\\bBearer", "t = t; t.replace(/\\bBearer", "bugs: Bearer mascarado"),
     ("src/bugs.ts", "existentes.has(nome); n++", "false; n++", "bugs: repeticoes no mesmo segundo ganham numero"),
     ("src/mcp-contrato.ts", "escreve: true, escreveEm: ['feedback']", "escreve: true, escreveEm: ['feedback', 'mensagens']", "MCP so escreve em feedback"),

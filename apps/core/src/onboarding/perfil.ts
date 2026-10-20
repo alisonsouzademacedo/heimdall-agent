@@ -69,7 +69,10 @@ export function escolherPerfil(m: Medidas): Perfil {
     passos.push('Use um servidor externo (VPS) para os servicos pesados: decisao D8 de docs/plano/README.md (hoje a D23 diz "so na maquina": mudar isso exige decisao do dono).');
     passos.push('Ou use outro computador com 8 GB de memoria ou mais.');
   } else if (id === 'enxuto') {
-    resumo = 'Cabe, mas sem margem: na medicao real (8 GB) nenhum servico foi morto, porem a memoria livre do Windows chegou a poucas centenas de MB.';
+    const win = m.plataforma === 'win32';
+    resumo = win
+      ? 'Cabe, mas sem margem: na medicao real (8 GB) nenhum servico foi morto, porem a memoria livre do Windows chegou a poucas centenas de MB.'
+      : 'Os servicos cabem em 8 GB (medicao no Windows: nenhum foi morto), mas a folga neste sistema NAO foi medida: aqui nao existe a VM do WSL.';
     itens.push({ rotulo: 'Hindsight', valor: 'imagem slim + extra local-onnx (imagem propria, ver runbooks/02), sem LLM local: cerca de 1,3 GB', origem: 'medido' });
     itens.push({ rotulo: 'Embeddings', valor: 'intfloat/multilingual-e5-small em ONNX (448 MB)', origem: 'medido' });
     itens.push({ rotulo: 'Reranker', valor: 'rrf (sem modelo); qualidade em portugues nao medida', origem: 'medido' });
@@ -79,8 +82,14 @@ export function escolherPerfil(m: Medidas): Perfil {
     itens.push({ rotulo: 'Economia possivel', valor: 'embeddings model_O4.onnx (224 MB) ou qint8 (113 MB, exige AVX-512 VNNI): nao testado', origem: 'estimativa' });
     if (m.plataforma === 'win32') itens.push({ rotulo: 'VM do Docker (WSL)', valor: 'manter o teto padrao (50% da RAM, cerca de 3,8 GB): menor causa falta de memoria, maior deixa o Windows sem folga', origem: 'estimativa' });
     itens.push({ rotulo: 'Carga do historico', valor: 'em lotes, de madrugada, com navegador e outros programas fechados', origem: 'estimativa' });
-    avisos.push('Folga pequena (medido: o Windows chegou a 317 MB livres com o app do Claude e o navegador abertos).');
-    passos.push('Feche o app do Claude e o navegador durante o processamento pesado.');
+    if (win) {
+      avisos.push('Folga pequena (medido: o Windows chegou a 317 MB livres com o app do Claude e o navegador abertos).');
+      passos.push('Feche o app do Claude e o navegador durante o processamento pesado.');
+    } else {
+      avisos.push('Os numeros dos servicos foram medidos num notebook Windows; no Linux nao foram medidos. Sem a VM do WSL e sem o Docker Desktop (cerca de 2,5 GB medidos no Windows) a folga tende a ser maior, mas confirme com docker stats.');
+      passos.push('Meça com docker stats nos primeiros dias e registre em docs/plano/ (vira a segunda maquina medida).');
+      passos.push('Se o servidor tem outros servicos, some o consumo deles: a conta so vale se eles nao crescerem.');
+    }
     passos.push('Transcreva um audio por vez e, se possivel, com o Hindsight parado (o Whisper e o que leva a VM ao teto).');
   } else if (id === 'equilibrado') {
     resumo = 'Folga razoavel: nenhuma parte deste perfil foi medida (documentacao e estimativa).';
