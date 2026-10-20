@@ -15,7 +15,7 @@ Se algo falhar, um relatório sem segredos é gravado em `data\bugs\` e o texto 
 
 ## Estado atual
 
-Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (regras de acompanhamento, envio travado ao self-chat, banco, ingestão, apagar com confirmação, backup, relatórios, aprendizado, contrato MCP), o instalador e o passo "Ambiente" da tela estão prontos e testados em Linux **e num Windows 11 real** (também no GitHub, com Node 22 e 24). No Windows do dono o **Docker Desktop já funciona** (WSL ativado pelo caminho manual da Microsoft, `docs/wsl/`) e a **memória foi medida em 8 GB**: cabe, mas sem margem (`docs/plano/fase-1-orcamento-de-memoria.md`). O instalador e a tela mostram o **perfil recomendado para cada computador** (`docs/plano/fase-1-perfis-de-computador.md`). **Ainda não existem:** os Dockerfiles e o Compose do Heimdall, os passos 2 a 12 da tela de configuração e o relatório semanal. **Onde roda (D30):** primeiro no Windows, até validar; depois migra para uma VPS já com o aprendizado (`docs/plano/fase-2-migracao-para-vps.md`).
+Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (regras de acompanhamento, envio travado ao self-chat, banco, ingestão, apagar com confirmação, backup, relatórios, aprendizado, contrato MCP), o instalador e o passo "Ambiente" da tela estão prontos e testados em Linux **e num Windows 11 real** (também no GitHub, com Node 22 e 24). No Windows do dono o **Docker Desktop já funciona** (WSL ativado pelo caminho manual da Microsoft, `docs/wsl/`) e a **memória foi medida em 8 GB**: cabe, mas sem margem (`docs/plano/fase-1-orcamento-de-memoria.md`). O instalador e a tela mostram o **perfil recomendado para cada computador** (`docs/plano/fase-1-perfis-de-computador.md`). As imagens e o Docker Compose do Heimdall já existem e foram testados com Docker de verdade em Linux (`infra/`, `apps/media-worker/`, `tests/infra/`). **Ainda não existem:** a conexão com o WhatsApp (Baileys), a fila de áudio e PDF, o envio da memória ao Hindsight, a configuração e a ponte com o Hermes, os passos 2 a 12 da tela de configuração e o relatório semanal. **Onde roda (D30):** primeiro no Windows, até validar; depois migra para uma VPS já com o aprendizado (`docs/plano/fase-2-migracao-para-vps.md`).
 
 ## Mapa do repositório
 
@@ -25,7 +25,7 @@ Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (r
 | `apps/core/` | Núcleo em TypeScript (sem dependências de execução) e a tela de onboarding |
 | `apps/media-worker/`, `infra/` | Imagem do trabalhador de áudio/PDF, imagem do Hindsight com embeddings em português e o Docker Compose (versões fixas, portas só em 127.0.0.1) |
 | `prompts/`, `templates/` | Personalidade, skills e modelos de cadastro |
-| `docs/plano/` | Planejamento, decisões (D1 a D29), roteiros (`runbooks/`), lições aprendidas, orçamento de memória e **perfis por tipo de computador** (`fase-1-perfis-de-computador.md`) |
+| `docs/plano/` | Planejamento, decisões (D1 a D30), roteiros (`runbooks/`), lições aprendidas, orçamento de memória e **perfis por tipo de computador** (`fase-1-perfis-de-computador.md`) |
 | `docs/<ferramenta>/` | Cópia da documentação oficial de cada ferramenta usada |
 | `spike/preflight/` | Verificação do computador antes de instalar |
 | `tests/` | Testes de regressão, segurança, instalador e documentação |
