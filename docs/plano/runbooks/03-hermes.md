@@ -3,7 +3,7 @@
 Fontes: `docs/hermes-agent/user-guide/docker.md`, `user-guide/features/{api-server,cron,mcp,memory}.md`, `user-guide/configuration.md` (seções "Timezone" e "Global Toolset Disable"), `reference/toolsets-reference.md`, `integrations/providers.md`, `docs/hindsight/sdks/integrations/hermes.md`.
 
 ## No repositório
-O serviço está em `infra/compose/docker-compose.yml` (imagem `nousresearch/hermes-agent:v0.22.2`, `gateway run`, API só em `127.0.0.1:8642`, `API_SERVER_KEY` obrigatória, volume nomeado `hermes-data`, 1 GB de limite, **nenhuma plataforma de mensagens**). `config.yaml` (fuso, `disabled_toolsets`, MCPs, plugin do Hindsight) ainda **não** é gravado pelo Compose: é o passo do assistente de configuração. Teste estático: `tests/infra/check_infra.sh`.
+O serviço está em `infra/compose/docker-compose.yml` (imagem `nousresearch/hermes-agent:v0.22.2`, `gateway run`, API só em `127.0.0.1:8642`, `API_SERVER_KEY` obrigatória, volume nomeado `hermes-data`, 1 GB de limite, **nenhuma plataforma de mensagens**). `config.yaml` (fuso, ferramentas travadas, MCP do Hindsight) **é gerado por `node apps/ponte/scripts/gerar-config.ts`** e gravado no volume por `docker cp` (o Compose não o faz; `tests/infra/smoke_hermes.sh` mostra o passo a passo e **confere com o Hermes real** que só `memory` e `session_search` ficam ligados). O Hermes só sobe com o Hindsight saudável. Teste estático: `tests/infra/check_infra.sh`.
 
 ## Requisitos
 Imagem `nousresearch/hermes-agent` (amd64 e arm64; Python 3.14 dentro da imagem). Recursos do contêiner: **mínimo 1 GB de RAM, 1 CPU, 500 MB de disco; recomendado 2 a 4 GB, 2 CPUs, 2 GB+** (com ferramentas de navegador ativas, pelo menos 2 GB). Usar tag fixa (`X.Y.Z`) ou digest; `latest` e `stable` andam.
@@ -47,6 +47,8 @@ Tudo mora em `/opt/data` (`config.yaml`, `.env`, `SOUL.md`, `sessions/`, `memori
 `GET http://127.0.0.1:8642/health`; uma chamada de teste ao `/v1/chat/completions`; `docker exec hermes hermes doctor`; `docker logs hermes`; logs em `/opt/data/logs/`.
 
 ## Armadilhas
+- O Hermes conecta o MCP **só na partida** (healthcheck do Hindsight no Compose); `/v1/toolsets` não lista MCP: use `hermes tools list --platform api_server` e `hermes mcp test hindsight`.
+- A lista branca é `platform_toolsets.api_server`; a lista negra `agent.disabled_toolsets` vale por cima. Use as duas.
 - `HERMES_DASHBOARD_INSECURE` é ignorado; painel fora do loopback exige autenticação. Não precisamos do painel.
 - Dois consumidores do plano ChatGPT disputam a cota de 5 horas (R4).
 - A imagem é imutável (`/opt/hermes`); atualizar é trocar de imagem, não `hermes update`.

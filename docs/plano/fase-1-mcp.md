@@ -31,3 +31,8 @@ Somente leitura, exceto a última:
 ## Pendências
 - Linguagem do servidor MCP (Python ou TypeScript) — decidir junto com o listener.
 - Se `dados_do_relatorio` fica no MCP ou em um passo anterior ao cron (o cron já receberia o pacote pronto no prompt).
+
+## Decisão de 2026-10-20: servidor MCP próprio adiado
+- **Motivo técnico (verificado):** o Hermes roda em contêiner e só enxerga serviços da rede do Compose. Um servidor MCP do Heimdall no computador (Node, lendo o SQLite) escutaria em `127.0.0.1`, que o contêiner **não alcança** no Linux/VPS; para alcançar seria preciso abrir a porta para a rede do Docker, o que quebra a regra "portas só em 127.0.0.1". No Docker Desktop do Windows o alcance via `host.docker.internal` não foi testado.
+- **Solução adotada por ora:** os fatos exatos (estados, contagens, prazos) são calculados pelo `core` e entregues ao Hermes **dentro do pedido**, como dados (`apps/ponte/src/agenda.ts` para os relatórios e `selfchat.ts` para o self-chat, que injeta o pacote do dia). O Hermes não recebe ferramenta nenhuma além de `memory`, `session_search` e o MCP do **Hindsight só com `recall` e `reflect`** (lista branca testada em `tests/infra/smoke_hermes.sh`).
+- **Quando retomar:** se precisarmos de consultas livres ao acervo ("o que combinei com o cliente X?"), o caminho é um serviço do Compose com **cópia somente leitura** do acervo ou uma ponte HTTP na rede interna com chave; decidir com o dono. O contrato das ferramentas continua em `apps/core/src/mcp-contrato.ts`.
