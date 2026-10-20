@@ -39,7 +39,7 @@ test('liga tudo: QR e estado na tabela de configuracao, mensagens no acervo, env
     await l.envio()!.texto('ola, dono');
     assert.deepEqual(f.enviados, [{ jid: '5511900000000@s.whatsapp.net', c: { text: 'ola, dono' } }]);
     ver.close();
-    l.parar();
+    await l.parar();
   } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });
 
@@ -57,7 +57,7 @@ test('antes de conectar nao existe envio (envio() e nulo); apos deslogar, volta 
     assert.equal(aberturas, 1);
     const ver = abrirBanco(join(dir, 'acervo.sqlite'));
     assert.equal(lerEstado(ver).estado, 'deslogado');
-    ver.close(); l.parar();
+    ver.close(); await l.parar();
   } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });
 
@@ -81,7 +81,7 @@ test('audio recebido: a escuta enfileira, o laco baixa quando ha conexao, grava 
     assert.equal(m.caminho, `data/midias/${m.sha256}.ogg`);
     assert.equal(readFileSync(join(dir, 'midias', `${m.sha256}.ogg`), 'utf8'), 'audio-sintetico');
     assert.equal((ver.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'transcrever' AND estado = 'pendente'").get() as { n: number }).n, 1);
-    ver.close(); l.parar();
+    ver.close(); await l.parar();
   } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });
 
@@ -96,6 +96,6 @@ test('sem conexao o laco espera: a midia fica na fila, sem gastar tentativa', as
     const ver = abrirBanco(join(dir, 'acervo.sqlite'));
     assert.equal((ver.prepare('SELECT COUNT(*) AS n FROM midias').get() as { n: number }).n, 0);
     assert.deepEqual({ ...(ver.prepare("SELECT estado, tentativas FROM fila WHERE tipo = 'baixar_midia'").get() as object) }, { estado: 'pendente', tentativas: 0 });
-    ver.close(); l.parar();
+    ver.close(); await l.parar();
   } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });

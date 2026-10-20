@@ -41,7 +41,7 @@ export function abrirAcervo(pastaDados: string): Banco {
   return banco;
 }
 
-export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Envio | null; parar(): void; banco: Banco }> {
+export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Envio | null; parar(): Promise<void>; banco: Banco }> {
   const banco = abrirAcervo(o.pastaDados);
   const abrir = o.abrir ?? (await import('./conectar.ts')).abrirConexao as NonNullable<OpcoesListener['abrir']>;
   const serializar = o.serializar ?? (o.abrir ? undefined : (await import('./conectar.ts')).serializarMensagem);
@@ -105,7 +105,7 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
   await supervisor.iniciar();
   return {
     envio: () => envio,
-    parar: () => { baixador.parar(); supervisor.parar(); envio = null; conexaoAberta = null; void baixador.terminou.then(() => banco.close()); },
+    parar: async () => { baixador.parar(); supervisor.parar(); envio = null; conexaoAberta = null; await baixador.terminou; banco.close(); },
     banco
   };
 }
@@ -113,7 +113,7 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const l = await iniciarListener({ pastaDados: join(process.cwd(), 'data') });
   console.log('Heimdall: escuta do WhatsApp ligada (so le e grava). O QR aparece na tela de configuracao.');
-  const sair = () => { l.parar(); process.exit(0); };
+  const sair = () => { void l.parar().then(() => process.exit(0)); };
   process.on('SIGINT', sair);
   process.on('SIGTERM', sair);
 }

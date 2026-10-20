@@ -15,7 +15,9 @@ export interface OpcoesBaixador {
 
 export function iniciarBaixador(o: OpcoesBaixador): { parar(): void; terminou: Promise<void> } {
   const agora = o.agora ?? Date.now;
-  const esperar = o.esperar ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  // A espera padrao acorda quando se pede para parar (senao o fechamento do banco esperaria o intervalo inteiro; no Windows o arquivo aberto trava a limpeza).
+  let acordar: (() => void) | null = null;
+  const esperar = o.esperar ?? ((ms: number) => new Promise<void>((r) => { const t = setTimeout(r, ms); acordar = () => { clearTimeout(t); r(); }; }));
   let parado = false;
   const terminou = (async () => {
     recuperarTravados(o.banco, agora(), o.prazoTravadoMs ?? 15 * 60_000);
@@ -26,5 +28,5 @@ export function iniciarBaixador(o: OpcoesBaixador): { parar(): void; terminou: P
       else await esperar(o.intervaloMs ?? 3000);
     }
   })();
-  return { parar: () => { parado = true; }, terminou };
+  return { parar: () => { parado = true; acordar?.(); }, terminou };
 }
