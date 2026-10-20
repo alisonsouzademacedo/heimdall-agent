@@ -56,13 +56,11 @@ l=json.load(sys.stdin)
 ok={'memory','session_search'}
 extra=[n for n in l if n not in ok and not n.startswith('mcp')]
 sys.exit(1 if extra else 0)" && pass "so memory, session_search e MCPs estao ligados" || fail "toolset inesperado ligado: $LIG"
-echo "$LIG" | "$PY" -I -c "
-import json,sys
-l=json.load(sys.stdin)
-m=[t for n,ts in l.items() if n.startswith('mcp') for t in ts]
-rui=[t for t in m if any(x in t for x in ('delete','clear','create','retain','update','cancel','refresh'))]
-falta=[x for x in ('recall','reflect') if not any(x in t for t in m)]
-sys.exit(1 if (rui or falta) else 0)" && pass "MCP do Hindsight conectado, SO com recall e reflect (nada que escreva ou apague)" || fail "MCP do Hindsight ausente ou com ferramenta de escrita: $LIG"
+# MCP do Hindsight: o proprio Hermes lista, por plataforma, os servidores MCP e o filtro de ferramentas (hermes tools list); /v1/toolsets nao mostra MCP.
+$DC exec -T hermes hermes tools list --platform api_server >"$T/tools.txt" 2>&1
+grep -qE 'hindsight +\[include only: recall, reflect\]' "$T/tools.txt" && pass "MCP do Hindsight conectado so com recall e reflect (lista branca; nada que escreva ou apague)" || { fail "MCP do Hindsight ausente ou sem a lista branca"; tail -5 "$T/tools.txt"; }
+$DC exec -T hermes hermes mcp test hindsight >"$T/mcp.txt" 2>&1
+grep -q 'recall' "$T/mcp.txt" && pass "o servidor MCP do Hindsight responde e oferece recall (conexao de verdade, pela rede do Compose)" || { fail "o Hermes nao conseguiu falar com o MCP do Hindsight"; tail -5 "$T/mcp.txt" | cut -c1-200; }
 $DC logs hermes 2>&1 | grep -qi "unknown toolset\|invalid timezone\|Traceback" && fail "o Hermes reclamou do config (veja os logs)" || pass "o Hermes subiu sem reclamar do config (fuso e toolsets)"
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"
 [ "$FAIL" -eq 0 ]
