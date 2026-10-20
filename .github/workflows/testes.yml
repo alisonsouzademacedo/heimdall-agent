@@ -45,6 +45,12 @@ jobs:
         run: npm test
       - name: Higiene do repositorio
         run: sh tests/repo/check_higiene.sh
+      - name: Testes do listener (Baileys)
+        working-directory: apps/listener
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+          npx tsc --noEmit
       - name: Instalador - virtualizacao e WSL
         run: REQUIRE_PWSH=1 sh tests/instalar/check_ambiente_windows.sh
       - name: Instalador - assinatura digital (so roda no Windows)

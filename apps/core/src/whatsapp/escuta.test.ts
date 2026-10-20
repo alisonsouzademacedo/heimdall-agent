@@ -115,3 +115,41 @@ test('uma falha de gravacao numa mensagem desfaz SO aquela mensagem (savepoint) 
   const ids = (db.prepare('SELECT wa_msg_id FROM mensagens ORDER BY id').all() as { wa_msg_id: string }[]).map((x) => x.wa_msg_id);
   assert.deepEqual(ids, ['F1', 'F3'], 'a mensagem que falhou nao ficou pela metade');
 });
+
+// ---- contatos, mapeamentos PN<->LID e nomes de conversa (vem junto do historico: messaging-history.set) ----
+test('mapeamento PN<->LID liga as duas formas ao MESMO contato, mesmo antes de existir mensagem', () => {
+  const { db, escuta } = novo();
+  escuta.mapeamentos([{ pn: '5511999990003@s.whatsapp.net', lid: '555444333222111@lid' }]);
+  escuta.mensagens([m('M1', { conversation: 'pelo pn' }, { remoteJid: '5511999990003@s.whatsapp.net' }), m('M2', { conversation: 'pelo lid' }, { remoteJid: '555444333222111@lid' })], 'notify');
+  assert.equal((db.prepare("SELECT COUNT(*) AS n FROM conversas WHERE tipo = 'dm'").get() as { n: number }).n, 1, 'uma conversa so');
+  assert.equal(contar(db, 'contatos'), 1);
+  escuta.mapeamentos([{ pn: '5511999990003@s.whatsapp.net', lid: '555444333222111@lid' }]); // repetir nao muda
+  assert.equal(contar(db, 'contatos'), 1);
+});
+
+test('mapeamento invalido (jid quebrado, os dois PN) e ignorado sem erro', () => {
+  const { db, escuta } = novo();
+  escuta.mapeamentos([{ pn: 'lixo', lid: 'x@lid' }, { pn: '5511999990004@s.whatsapp.net', lid: '5511999990005@s.whatsapp.net' }, { pn: '', lid: '' }]);
+  assert.equal(contar(db, 'contatos'), 0);
+});
+
+test('nomes de contato do historico preenchem so quem ainda nao tem nome; nunca sobrescrevem o cadastro', () => {
+  const { db, escuta } = novo();
+  escuta.mensagens([m('N1', { conversation: 'oi' }, { remoteJid: '5511999990006@s.whatsapp.net' })], 'notify');
+  db.prepare("UPDATE contatos SET nome = NULL").run();
+  escuta.contatos([{ id: '5511999990006@s.whatsapp.net', name: 'Marina (agenda)', notify: 'Marina' }]);
+  assert.equal((db.prepare('SELECT nome FROM contatos').get() as { nome: string }).nome, 'Marina (agenda)');
+  db.prepare("UPDATE contatos SET nome = 'Nome do cadastro', papel_fonte = 'cadastro'").run();
+  escuta.contatos([{ id: '5511999990006@s.whatsapp.net', name: 'Outro nome' }]);
+  assert.equal((db.prepare('SELECT nome FROM contatos').get() as { nome: string }).nome, 'Nome do cadastro');
+  assert.equal(contar(db, 'contatos'), 1, 'contato desconhecido nao e criado so por constar na agenda');
+  escuta.contatos([{ id: '5511999990099@s.whatsapp.net', name: 'Sem conversa' }]);
+  assert.equal(contar(db, 'contatos'), 1);
+});
+
+test('nome de grupo vindo das conversas do historico', () => {
+  const { db, escuta } = novo();
+  escuta.mensagens([m('G1', { conversation: 'oi grupo' }, { remoteJid: '120363000000000009@g.us', participant: '5511999990007@s.whatsapp.net' })], 'notify');
+  escuta.conversas([{ id: '120363000000000009@g.us', name: 'Obra Fabrica Norte' }, { id: '5511999990007@s.whatsapp.net', name: 'nao e grupo' }]);
+  assert.equal((db.prepare("SELECT nome FROM conversas WHERE tipo = 'grupo'").get() as { nome: string }).nome, 'Obra Fabrica Norte');
+});

@@ -4,7 +4,8 @@
 import type { Banco } from '../db.ts';
 import type { IdentidadeDono } from '../envio.ts';
 import type { OrigemEvento } from '../ingestao.ts';
-import { registrarMensagem, registrarEdicao, registrarApagada, idDaMensagem } from '../ingestao.ts';
+import { registrarMensagem, registrarEdicao, registrarApagada, idDaMensagem, resolverContato } from '../ingestao.ts';
+import { normalizarJid, tipoDoJid } from '../jid.ts';
 import { traduzirMensagem, traduzirAtualizacao, type MensagemBaileys, type AtualizacaoBaileys, type Acao } from './traduzir.ts';
 
 export interface Resumo {
@@ -22,6 +23,12 @@ export interface Resumo {
 export interface Escuta {
   mensagens(msgs: MensagemBaileys[], origem: OrigemEvento, serializar?: (m: MensagemBaileys) => string): Resumo;
   atualizacoes(ups: AtualizacaoBaileys[]): Resumo;
+  /** Pares PN<->LID que o Baileys aprendeu (lid-mapping.update, messaging-history.set): ligam as duas formas ao MESMO contato. */
+  mapeamentos(pares: { pn?: string | null; lid?: string | null }[]): number;
+  /** Nomes da agenda/historico: preenchem so contatos que JA existem e ainda nao tem nome. */
+  contatos(lista: { id?: string | null; name?: string | null; notify?: string | null }[]): number;
+  /** Nomes de grupos (chats do historico). */
+  conversas(lista: { id?: string | null; name?: string | null }[]): number;
   totais(): Resumo;
 }
 
@@ -102,6 +109,39 @@ export function criarEscuta(db: Banco, dono: IdentidadeDono, opcoes: { agora?: (
     },
     atualizacoes(ups) {
       return lote((r) => { for (const u of ups) for (const a of traduzirAtualizacao(u)) aplicar(a, r); });
+    },
+    mapeamentos(pares) {
+      let ligados = 0;
+      for (const p of pares) {
+        const pn = p.pn ? normalizarJid(p.pn) : null;
+        const lid = p.lid ? normalizarJid(p.lid) : null;
+        if (!pn || !lid || tipoDoJid(pn) !== 'pn' || tipoDoJid(lid) !== 'lid') continue;
+        const r = vazio();
+        if (emSavepoint(r, () => resolverContato(db, lid, pn)) !== undefined) ligados++;
+      }
+      return ligados;
+    },
+    contatos(lista) {
+      let n2 = 0;
+      for (const c of lista) {
+        const jid = c.id ? normalizarJid(c.id) : null;
+        const nome = (c.name ?? c.notify ?? '').trim();
+        if (!jid || !nome) continue;
+        const r = db.prepare('UPDATE contatos SET nome = ? WHERE nome IS NULL AND id = (SELECT contato_id FROM contato_jids WHERE jid = ?)').run(nome, jid);
+        n2 += Number(r.changes);
+      }
+      return n2;
+    },
+    conversas(lista) {
+      let n2 = 0;
+      for (const c of lista) {
+        const jid = c.id ? normalizarJid(c.id) : null;
+        const nome = (c.name ?? '').trim();
+        if (!jid || !nome || tipoDoJid(jid) !== 'grupo') continue;
+        const r = db.prepare("UPDATE conversas SET nome = ? WHERE jid = ? AND tipo = 'grupo'").run(nome, jid);
+        n2 += Number(r.changes);
+      }
+      return n2;
     },
     totais() {
       return { ...acumulado, ignoradas: { total: acumulado.ignoradas.total, porMotivo: { ...acumulado.ignoradas.porMotivo } } };
