@@ -91,3 +91,36 @@ test('diario traz compromisso vencido (H1) e duvida aberta; a duvida aparece UMA
   assert.equal(textoAceitavel('# T\n\n## Hoje / atrasados\n- H1 x', 'diario', ['H1']), true);
   assert.equal(textoAceitavel('# T\n\n## Hoje / atrasados\n- H9 x', 'diario', ['H1']), false);
 });
+
+test('aviso dos 90 dias: entra no primeiro relatorio (diario ou semanal) depois que ha arquivo velho, ensina o comando e nao se repete antes de 7 dias', async () => {
+  const db = banco();
+  const c = db.prepare("INSERT INTO conversas (jid, tipo) VALUES ('y@s.whatsapp.net', 'dm')").run().lastInsertRowid;
+  const m = db.prepare("INSERT INTO mensagens (conversa_id, wa_msg_id, de_mim, tipo, enviada_em, origem_evento) VALUES (?, 'V1', 0, 'pdf', 1, 'notify')").run(c).lastInsertRowid;
+  db.prepare("INSERT INTO midias (mensagem_id, tipo, caminho, sha256, criada_em) VALUES (?, 'pdf', 'x', 'h', ?)").run(m, QUARTA_8H - 91 * 86_400_000);
+  assert.equal(await gerarRelatorioDoDia(db, semHermes, QUARTA_8H), 'diario');
+  assert.match(saidas(db)[0]!.texto, /1 arquivo.*90 dias/s);
+  assert.match(saidas(db)[0]!.texto, /apagar arquivos antigos/);
+  await gerarRelatorioDoDia(db, semHermes, QUARTA_8H + 86_400_000); // quinta
+  assert.doesNotMatch(saidas(db)[1]!.texto, /90 dias/, 'nao repete no dia seguinte');
+  await gerarRelatorioDoDia(db, semHermes, SEGUNDA_8H + 86_400_000 * 0); // segunda, 5 dias depois: ainda nao
+  assert.doesNotMatch(saidas(db)[2]!.texto, /90 dias/);
+  await gerarRelatorioDoDia(db, semHermes, QUARTA_8H + 7 * 86_400_000); // 7 dias depois (quarta): volta
+  assert.match(saidas(db)[3]!.texto, /90 dias/);
+});
+
+test('sem arquivo velho nao ha aviso', async () => {
+  const db = banco();
+  await gerarRelatorioDoDia(db, semHermes, QUARTA_8H);
+  assert.doesNotMatch(saidas(db)[0]!.texto, /90 dias/);
+});
+
+test('aviso dos 90 dias: texto do modelo que "esquece" o aviso e descartado (vale o deterministico, que o traz)', async () => {
+  const db = banco();
+  const c = db.prepare("INSERT INTO conversas (jid, tipo) VALUES ('z@s.whatsapp.net', 'dm')").run().lastInsertRowid;
+  const m = db.prepare("INSERT INTO mensagens (conversa_id, wa_msg_id, de_mim, tipo, enviada_em, origem_evento) VALUES (?, 'V2', 0, 'pdf', 1, 'notify')").run(c).lastInsertRowid;
+  db.prepare("INSERT INTO midias (mensagem_id, tipo, caminho, sha256, criada_em) VALUES (?, 'pdf', 'x', 'h', ?)").run(m, QUARTA_8H - 91 * 86_400_000);
+  const esquecido: PortasAgenda = { redator: async () => '# Diário\n\n## Aguardando você\n- A1 texto do modelo sem aviso', instrucoes: { comum: '', diario: '', semanal: '' } };
+  await gerarRelatorioDoDia(db, esquecido, QUARTA_8H);
+  assert.match(saidas(db)[0]!.texto, /apagar arquivos antigos/);
+  assert.doesNotMatch(saidas(db)[0]!.texto, /texto do modelo sem aviso/);
+});

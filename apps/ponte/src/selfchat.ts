@@ -3,7 +3,7 @@
 // o Hermes entra por uma porta. Cada mensagem e respondida uma vez (chave "resposta:<id>" na caixa de saida).
 import type { Banco } from '../../core/src/db.ts';
 import { ehMensagemNossa, enfileirarSaida } from '../../core/src/saida.ts';
-import { confirmarApagar } from '../../core/src/apagar.ts';
+import { confirmarApagar, proporLimparMidiasAntigasSeHouver, RETENCAO_MIDIAS_DIAS } from '../../core/src/apagar.ts';
 import { aplicarCorrecao, interpretarCorrecoes } from '../../core/src/aprendizado.ts';
 import { montarPacoteDiario, renderizarDiario } from '../../core/src/relatorio.ts';
 import { diaLocal } from '../../core/src/calendario.ts';
@@ -59,6 +59,12 @@ export async function processarSelfChat(db: Banco, portas: PortasSelfChat, agora
       resposta = `Apagado: ${apagar.arquivosApagados.length} arquivo(s) e os registros do escopo confirmado.`;
     } else if (apagar.motivo !== 'nao_e_comando') {
       resposta = MOTIVOS[apagar.motivo] ?? 'Não consegui apagar.';
+    } else if (/^apagar arquivos antigos$/i.test(texto)) {
+      // Etapa 1 do "apagar arquivos com mais de 90 dias": so mostra o escopo e a frase. Nada e apagado aqui; o texto e as transcricoes ficam.
+      const p = proporLimparMidiasAntigasSeHouver(db, agora);
+      resposta = p === null
+        ? `Nenhum arquivo de áudio ou PDF com mais de ${RETENCAO_MIDIAS_DIAS} dias.`
+        : `Vou apagar ${p.escopo.contagens.midias} arquivo(s) de áudio/PDF com mais de ${RETENCAO_MIDIAS_DIAS} dias. O texto das mensagens e as transcrições ficam. Para confirmar (vale 10 minutos), escreva exatamente: ${p.frase}`;
     } else {
       const dia = diaLocal(agora);
       const correcoes = interpretarCorrecoes(texto, dia);

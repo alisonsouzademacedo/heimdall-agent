@@ -3,7 +3,9 @@ import type { Banco } from '../../core/src/db.ts';
 import { processarSelfChat, type PortasSelfChat } from './selfchat.ts';
 import { gerarRelatorioDoDia, type PortasAgenda } from './agenda.ts';
 import { gravarServico } from '../../core/src/whatsapp/estado.ts';
-import { backupDoDia } from '../../core/src/backup-copia.ts';
+import { backupDoDia, lerBackup } from '../../core/src/backup-copia.ts';
+import { rodizioDeBackups } from '../../core/src/backup-rodizio.ts';
+import { diaLocal } from '../../core/src/calendario.ts';
 import { agendarExtracao, processarExtrair, type PortaExtracao } from '../../core/src/extracao.ts';
 import { pegarProximo } from '../../core/src/fila.ts';
 
@@ -19,6 +21,8 @@ export interface OpcoesPonte {
   extracao?: { porta: PortaExtracao; instrucoes: string };
   /** Pergunta ao Hermes se esta de pe; o resultado vai para a tabela de configuracao (a tela mostra no painel). */
   saudeHermes?: () => Promise<boolean>;
+  /** Apaga UM arquivo de backup (rodizio dos antigos e invalidos); sem isto o rodizio nao acontece. */
+  apagarBackup?: (pasta: string, nome: string) => void;
   agora?: () => number;
   esperar?: (ms: number) => Promise<void>;
   intervaloMs?: number;
@@ -43,7 +47,11 @@ export function iniciarPonte(o: OpcoesPonte): { parar(): void; terminou: Promise
           }
         } catch { /* idem */ }
       }
-      try { backupDoDia(o.banco, agora()); } catch { /* o erro fica anotado pelo proprio backupDoDia; o laco segue */ }
+      try {
+        const r = backupDoDia(o.banco, agora());
+        const destino = lerBackup(o.banco).destino;
+        if (r === 'feito' && destino && o.apagarBackup) { const apagar = o.apagarBackup; rodizioDeBackups(destino, diaLocal(agora()), (n) => apagar(destino, n)); }
+      } catch { /* o erro fica anotado pelo proprio backupDoDia; o laco segue */ }
       if (o.saudeHermes) { let ok = false; try { ok = await o.saudeHermes(); } catch { /* sem resposta */ } try { gravarServico(o.banco, 'hermes', ok, agora()); } catch { /* idem */ } }
       await esperar(o.intervaloMs ?? 5000);
     }

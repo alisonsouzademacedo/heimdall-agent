@@ -101,6 +101,11 @@ export function proporLimparMidiasAntigas(db: Banco, agora: number): Proposta {
   return { codigo, escopo, frase: `confirmo apagar ${codigo}` };
 }
 
+// Atalho do comando "apagar arquivos antigos": sem arquivo velho nao cria codigo nenhum.
+export function proporLimparMidiasAntigasSeHouver(db: Banco, agora: number): Proposta | null {
+  return (escopoMidiasAntigas(db, agora).escopo.contagens.midias ?? 0) === 0 ? null : proporLimparMidiasAntigas(db, agora);
+}
+
 export interface Origem {
   selfChat: boolean; // calculado por ehMensagemDoSelfChat(); NUNCA vindo do texto da mensagem
 }

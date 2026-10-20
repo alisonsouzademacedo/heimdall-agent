@@ -159,3 +159,19 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 **Não verificado:** modelo real em português (depende do login do ChatGPT no Hermes). Códigos H não aceitam correção por mensagem ("H1 resolvido") — só A, F e P; é informativo por ora.
 **Ainda aberto:** aviso dos 90 dias no relatório; rodízio de backups.
 
+## 2026-10-20 (7) — Rodízio de backups, aviso dos 90 dias e auditoria da documentação
+**Decisões do dono (2026-10-20):** (a) apagar backups **antigos e inválidos** pode ser automático; (b) o aviso dos 90 dias vem no relatório diário **ou** semanal, o que sair primeiro depois de existir arquivo velho.
+**Rodízio de backups** (`backup-rodizio.ts` decide; `apps/ponte/src/apagar-backup.ts` apaga): depois de o backup do dia ser feito, apaga na pasta de destino só `acervo-AAAA-MM-DD.sqlite` que (1) não abre / falha na checagem de integridade, ou (2) é válido mas tem **mais de 30 dias** (número escolhido por mim; o dono pode mudar em `RETENCAO_BACKUP_DIAS`). Nunca apaga o de hoje, nunca o último válido, nunca arquivo com outro nome (o dono pode guardar outras coisas na mesma pasta). Exceção nova no teste de arquitetura da ponte (`apagar-backup.ts`, nome travado) — explicada ao dono.
+**Aviso dos 90 dias:** quando há áudio/PDF com mais de 90 dias, o próximo relatório (diário ou semanal) traz a linha de aviso com o comando **`apagar arquivos antigos`**; repete no máximo 1x por semana. O comando mostra quantos arquivos e a frase de confirmação (duas etapas, vale 10 min, só self-chat); só os arquivos saem, texto e transcrições ficam. Texto do modelo que "esquece" o aviso é descartado (vale o texto determinístico).
+**Auditoria da documentação (todas as pastas de `docs/`):** todas as páginas "Leia primeiro" da tabela do `AGENTS.md` existem (agora conferido por `tests/docs/check_docs.sh`). Achados: o Hindsight tinha **16 páginas "Page Not Found"** da raspagem (removidas; a API está em `api-reference.md` e `developer/api/*`) e o índice mandava ler `sdks/mcp`, que não existe (corrigido para `developer/mcp-server`). Páginas vazias restantes: 97 do `sbx` do Docker (produto Docker Sandboxes, não usado), `hermes-agent/user-stories.md`, `faster-whisper/repo/benchmark_README.md` (sem uso).
+| Ferramenta | Versão fixada no projeto | O que a documentação diz | Situação |
+|---|---|---|---|
+| Hindsight | imagem `1.0.0-slim` (+ extra `local-onnx` 1.0.0) | `api-reference.md` é a API 1.0.0; texto de instalação cita `latest`/`0.4.9` | confere com a API; testado em `smoke_hindsight.sh` |
+| Hermes Agent | `nousresearch/hermes-agent:v0.22.2` | docs sem número de versão (citam `latest`) | **não dá para conferir a versão**; comportamento verificado em `smoke_hermes.sh` |
+| Baileys | `7.0.0-rc14` | `baileys.wiki` sem número de versão | **não dá para conferir**; testado só com dados sintéticos até o QR real |
+| faster-whisper / markitdown | `1.2.1` / `0.1.8` (`requirements.txt`) | READMEs do repositório | conferem com as opções usadas (`smoke_docker.sh`) |
+| Krayin | não usado ainda | 2.2 | fora do escopo desta fase |
+| Superpowers | commit `b739a8af…` (7.0.0) | cópia idêntica | conferido por `check_docs.sh` |
+**Como o Superpowers foi trazido (para registro honesto):** `git clone` do repositório oficial (leitura), **não** pelo Firecrawl; o clone dá o Markdown original, que o `AGENTS.md` prefere à raspagem. Regra para qualquer IA agora no `AGENTS.md` (seção Skills).
+**Não verificado:** rodízio com HD externo real no Windows (pasta desconectada: o rodízio simplesmente não roda); a versão exata de Hermes e Baileys contra a documentação.
+

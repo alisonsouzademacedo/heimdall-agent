@@ -96,3 +96,24 @@ test('a mensagem do dono nunca vira instrucao de envio a terceiros: o unico efei
   assert.ok(tabelas.includes('saida'));
   assert.equal(c.saidas().length, 1);
 });
+
+test('"apagar arquivos antigos": etapa 1 mostra quantos arquivos (mais de 90 dias) e a frase; nada e apagado; o Hermes nao e consultado; a frase confirma e apaga so o arquivo', async () => {
+  const c = cenario();
+  const msg = c.db.prepare("INSERT INTO conversas (jid, tipo) VALUES ('x@s.whatsapp.net', 'dm')").run().lastInsertRowid;
+  const m = c.db.prepare("INSERT INTO mensagens (conversa_id, wa_msg_id, de_mim, tipo, enviada_em, origem_evento) VALUES (?, 'A1', 0, 'audio', 1, 'notify')").run(msg).lastInsertRowid;
+  c.db.prepare("INSERT INTO midias (mensagem_id, tipo, caminho, sha256, criada_em) VALUES (?, 'audio', 'data/midias/" + 'a'.repeat(64) + ".ogg', 'h', ?)").run(m, T - 100 * 86_400_000);
+  c.dono('Apagar arquivos antigos');
+  await processarSelfChat(c.db, c.portas, T + 1000);
+  assert.equal(c.perguntas.length, 0);
+  const [r] = c.saidas();
+  assert.match(r!.texto, /1 arquivo/);
+  assert.match(r!.texto, /confirmo apagar [A-Z2-9]{6}/);
+  assert.equal((c.db.prepare('SELECT COUNT(*) AS n FROM midias').get() as { n: number }).n, 1, 'etapa 1 nao apaga');
+});
+
+test('"apagar arquivos antigos" sem nenhum arquivo velho: diz que nao ha nada e nao cria codigo', async () => {
+  const c = cenario(); c.dono('apagar arquivos antigos');
+  await processarSelfChat(c.db, c.portas, T + 1000);
+  assert.match(c.saidas()[0]!.texto, /nenhum arquivo/i);
+  assert.equal((c.db.prepare('SELECT COUNT(*) AS n FROM apagar_pendente').get() as { n: number }).n, 0);
+});

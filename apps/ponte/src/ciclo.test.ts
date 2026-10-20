@@ -91,3 +91,23 @@ test('laco: roda a extracao de compromissos (no maximo EXTRACOES_POR_GIRO por gi
   assert.ok(pedidos.every((s) => s.startsWith('heimdall:extracao:ext:')));
   assert.equal((db.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair'").get() as { n: number }).n, 3, 'falha nao perde o trabalho: ele volta para tentar depois');
 });
+
+test('laco: depois de fazer o backup do dia, apaga os backups invalidos e velhos da pasta de destino (e so eles)', async () => {
+  const { mkdtempSync, writeFileSync, readdirSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { definirDestinoDeBackup } = await import('../../core/src/backup-copia.ts');
+  const { apagarBackup } = await import('./apagar-backup.ts');
+  const pasta = mkdtempSync(join(tmpdir(), 'hd-ciclo-bk-'));
+  try {
+    const db = abrirBanco(); migrar(db);
+    assert.equal(definirDestinoDeBackup(db, pasta).ok, true);
+    writeFileSync(join(pasta, 'acervo-2026-10-01.sqlite'), 'lixo, nao e banco');
+    writeFileSync(join(pasta, 'meus-documentos.txt'), 'nao e nosso');
+    const QUARTA = Date.parse('2026-10-21T15:00:00Z');
+    const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, apagarBackup: (d, n) => { apagarBackup(d, n); }, agora: () => QUARTA, intervaloMs: 1, esperar: async () => p.parar() });
+    await p.terminou;
+    assert.deepEqual(readdirSync(pasta).sort(), ['acervo-2026-10-21.sqlite', 'meus-documentos.txt']);
+    db.close();
+  } finally { rmSync(pasta, { recursive: true, force: true }); }
+});

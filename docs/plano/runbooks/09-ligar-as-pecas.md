@@ -40,3 +40,9 @@ Servidor MCP próprio do Heimdall (adiado: ver `fase-1-mcp.md`, seção "Decisã
 
 ## Extração de compromissos e sinais (novo)
 A ponte, a cada giro, agenda os dias fechados de conversas de cliente que mudaram e processa até 2 trabalhos `extrair`, perguntando ao Hermes (sessão `heimdall:extracao:<ref>`) com as regras de `prompts/extracao/compromissos-e-sinais.md`. O código valida a resposta (ids de mensagem reais, confiança mínima 0,6, só o mesmo cliente) antes de gravar. **Não verificado:** a qualidade do modelo em português real; confira nos primeiros dias se os itens "H1…" e as dúvidas do diário fazem sentido e, se não, ajuste o prompt (não o código).
+
+## Backup, rodízio e aviso dos 90 dias (novo)
+- Depois do backup do dia, a ponte apaga da pasta de backup só `acervo-AAAA-MM-DD.sqlite` **inválido** ou **com mais de 30 dias** (nunca o de hoje nem o último válido; outros arquivos da pasta não são tocados).
+- O relatório (diário ou semanal) avisa quando há áudio/PDF com mais de 90 dias; para apagar só os arquivos, escreva no self-chat `apagar arquivos antigos` e depois a frase de confirmação que o Heimdall devolver.
+- **Armadilha:** se o HD externo estiver desconectado, o backup do dia não é feito e o rodízio não roda; o painel mostra o erro.
+

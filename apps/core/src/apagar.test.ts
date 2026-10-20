@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { abrirBanco, migrar, contar, type Banco } from './db.ts';
 import { registrarMensagem } from './ingestao.ts';
 import { ehMensagemDoSelfChat } from './envio.ts';
-import { proporApagarCliente, proporLimparMidiasAntigas, confirmarApagar, reaplicarEsquecimento, listaEsquecimento, VALIDADE_CODIGO_MS, RETENCAO_MIDIAS_DIAS } from './apagar.ts';
+import { proporApagarCliente, proporLimparMidiasAntigas, proporLimparMidiasAntigasSeHouver, confirmarApagar, reaplicarEsquecimento, listaEsquecimento, VALIDADE_CODIGO_MS, RETENCAO_MIDIAS_DIAS } from './apagar.ts';
 
 const DONO = { pn: '5555999990000:12@s.whatsapp.net', lid: '98765432100001:12@lid' };
 const DIA = 86_400_000;
@@ -271,4 +271,14 @@ test('extracao: duvidas e controle de extracao do cliente apagado saem (e nao qu
   assert.deepEqual((db.prepare('SELECT cliente_id AS c FROM duvidas').all() as { c: number }[]).map((r) => r.c), [2]);
   assert.deepEqual((db.prepare("SELECT referencia FROM sync_hindsight WHERE tipo = 'ext'").all() as { referencia: string }[]).map((r) => r.referencia), [`ext:${cB}:2026-10-10`]);
   assert.deepEqual((db.prepare("SELECT referencia FROM fila WHERE tipo = 'extrair'").all() as { referencia: string }[]).map((r) => r.referencia), [`ext:${cB}:2026-10-11`]);
+});
+
+test('proporLimparMidiasAntigasSeHouver: sem arquivo velho devolve null e nao cria codigo; com arquivo velho devolve a proposta', () => {
+  const db = novoBanco(); semear(db, 1, 'Alfa', ALFA, AGORA - (RETENCAO_MIDIAS_DIAS + 1) * DIA);
+  const limpo = novoBanco(); semear(limpo, 1, 'Alfa', ALFA, AGORA);
+  assert.equal(proporLimparMidiasAntigasSeHouver(limpo, AGORA), null);
+  assert.equal(contar(limpo, 'apagar_pendente'), 0);
+  const p = proporLimparMidiasAntigasSeHouver(db, AGORA)!;
+  assert.equal(p.escopo.contagens.midias, 1);
+  assert.equal(contar(db, 'apagar_pendente'), 1);
 });

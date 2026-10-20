@@ -6,6 +6,7 @@ import type { Banco } from '../../core/src/db.ts';
 import { diaLocal, relatorioDoDia, FUSO_PADRAO } from '../../core/src/calendario.ts';
 import { caberEmUmaTela, contarPalavras, montarPacoteDiario, renderizarDiario, ORDEM_SECOES, MAX_PALAVRAS_DIARIO, MAX_PALAVRAS_SEMANAL, type Item } from '../../core/src/relatorio.ts';
 import { caberSemanal, montarPacoteSemanal, renderizarSemanal } from '../../core/src/relatorio-semanal.ts';
+import { escopoMidiasAntigas, RETENCAO_MIDIAS_DIAS } from '../../core/src/apagar.ts';
 import { registrarItensDoRelatorio } from '../../core/src/aprendizado.ts';
 import { enfileirarSaida } from '../../core/src/saida.ts';
 
@@ -40,6 +41,20 @@ export function textoAceitavel(texto: string, tipo: 'diario' | 'semanal', codigo
   return true;
 }
 
+const INTERVALO_AVISO_MS = 7 * 86_400_000;
+const CHAVE_AVISO = 'aviso90.ultimo_em';
+
+// Aviso da retencao (decisao D16): ha audio/PDF com mais de 90 dias? Entra no PRIMEIRO relatorio (diario ou semanal) que sair depois disso e
+// volta no maximo uma vez por semana enquanto os arquivos continuarem la. So avisa; apagar e sob comando do dono ("apagar arquivos antigos").
+function avisoDeRetencao(db: Banco, agora: number): string | null {
+  const n = escopoMidiasAntigas(db, agora).escopo.contagens.midias ?? 0;
+  if (n === 0) return null;
+  const r = db.prepare('SELECT valor FROM configuracao WHERE chave = ?').get(CHAVE_AVISO) as { valor: string } | undefined;
+  const ultimo = r ? Number(JSON.parse(r.valor)) : null;
+  if (ultimo !== null && agora - ultimo < INTERVALO_AVISO_MS) return null;
+  return `Aviso: ${n} arquivo(s) de áudio/PDF com mais de ${RETENCAO_MIDIAS_DIAS} dias. Para apagar só os arquivos (o texto e as transcrições ficam), escreva: apagar arquivos antigos`;
+}
+
 export async function gerarRelatorioDoDia(db: Banco, portas: PortasAgenda, agora: number = Date.now(), fuso: string = FUSO_PADRAO): Promise<'diario' | 'semanal' | null> {
   const tipo = relatorioDoDia(agora, fuso);
   if (!tipo) return null;
@@ -49,7 +64,10 @@ export async function gerarRelatorioDoDia(db: Banco, portas: PortasAgenda, agora
   const chave = `relatorio:${tipo}:${dia}`;
   if (db.prepare('SELECT 1 AS x FROM saida WHERE chave = ?').get(chave)) return null;
 
-  const pacote = tipo === 'diario' ? caberEmUmaTela(montarPacoteDiario(db, agora)) : caberSemanal(montarPacoteSemanal(db, agora));
+  const aviso = avisoDeRetencao(db, agora);
+  const base = tipo === 'diario' ? montarPacoteDiario(db, agora) : montarPacoteSemanal(db, agora);
+  if (aviso) base.aprendizado = [aviso, ...base.aprendizado];
+  const pacote = tipo === 'diario' ? caberEmUmaTela(base as ReturnType<typeof montarPacoteDiario>) : caberSemanal(base as ReturnType<typeof montarPacoteSemanal>);
   const itens: Item[] = [...pacote.aguardando, ...(pacote.tipo === 'diario' ? pacote.hoje : []), ...pacote.potencial, ...('followups' in pacote ? pacote.followups : [])];
   const reconhecidos = itens.filter((i) => i.clienteId !== undefined).map((i) => ({ codigo: i.codigo, clienteId: i.clienteId! }));
   registrarItensDoRelatorio(db, dia, reconhecidos);
@@ -65,10 +83,11 @@ export async function gerarRelatorioDoDia(db: Banco, portas: PortasAgenda, agora
     ].join('\n\n');
     try {
       const candidato = await portas.redator(pedido);
-      if (textoAceitavel(candidato, tipo, itens.map((i) => i.codigo))) texto = candidato.trim();
+      if (textoAceitavel(candidato, tipo, itens.map((i) => i.codigo)) && (!aviso || candidato.includes('apagar arquivos antigos'))) texto = candidato.trim();
     } catch { /* sem Hermes ou sem cota: vale o texto deterministico */ }
   }
   enfileirarSaida(db, 'relatorio', texto, agora, chave);
+  if (aviso) db.prepare('INSERT INTO configuracao (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor').run(CHAVE_AVISO, JSON.stringify(agora));
   // Duvida mostrada uma vez nao volta (o dono responde no self-chat, que o Heimdall guarda como memoria).
   if ('duvidasIds' in pacote && pacote.duvidasIds) for (const id of pacote.duvidasIds) db.prepare("UPDATE duvidas SET estado = 'respondida' WHERE id = ?").run(id);
   return tipo;

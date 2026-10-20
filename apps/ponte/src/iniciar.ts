@@ -8,6 +8,7 @@ import { iniciarPonte, lerChaveDoEnv } from './ciclo.ts';
 import { criarClienteHermes } from './hermes.ts';
 import type { PortasAgenda } from './agenda.ts';
 import { criarApagadorDeMidia } from './apagar-arquivo.ts';
+import { apagarBackup } from './apagar-backup.ts';
 
 export function iniciar(raiz: string = process.cwd()) {
   const pastaDados = resolve(raiz, process.env.HEIMDALL_DATA ?? 'data');
@@ -26,7 +27,7 @@ export function iniciar(raiz: string = process.cwd()) {
   };
   const instrucoesExtracao = readFileSync(join(raiz, 'prompts', 'extracao', 'compromissos-e-sinais.md'), 'utf8');
   const extracao = { porta: { extrair: (pedido: string, sessao: string) => hermes.perguntar(pedido, { sessao }) }, instrucoes: instrucoesExtracao };
-  const p = iniciarPonte({ agenda, extracao, saudeHermes: () => hermes.saude(), banco, portas: { hermes, apagarArquivo: (c) => { criarApagadorDeMidia(pastaDados)(c); } } });
+  const p = iniciarPonte({ agenda, extracao, apagarBackup: (pasta, nome) => { apagarBackup(pasta, nome); }, saudeHermes: () => hermes.saude(), banco, portas: { hermes, apagarArquivo: (c) => { criarApagadorDeMidia(pastaDados)(c); } } });
   return { hermes, parar: async () => { p.parar(); await p.terminou; banco.close(); }, terminou: p.terminou };
 }
 

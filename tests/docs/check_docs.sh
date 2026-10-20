@@ -54,5 +54,24 @@ done
 grep -qF 'docs/superpowers' AGENTS.md && pass "AGENTS.md lista a pasta docs/superpowers na tabela" || fail "AGENTS.md nao lista docs/superpowers"
 grep -qiE 'AGENTS.md prevalece|prevalece sobre' AGENTS.md && pass "AGENTS.md diz que ele prevalece sobre as skills" || fail "AGENTS.md nao diz que prevalece sobre as skills"
 
+# Auditoria 2026-10-20: a raspagem do Hindsight trouxe 16 paginas "Page Not Found" e o INDEX mandava ler uma pagina que nao existe (sdks/mcp).
+for d in hindsight hermes-agent baileys whisper faster-whisper markitdown krayin openai-codex; do
+  NF=$(grep -rlE '^# Page Not Found|^Page Not Found' "docs/$d" --include='*.md' 2>/dev/null | grep -v INDEX.md | head -3)
+  [ -z "$NF" ] && pass "docs/$d sem paginas 'Page Not Found'" || { fail "paginas 404 em docs/$d:"; echo "$NF"; }
+done
+# Toda pagina "Leia primeiro" da tabela do AGENTS.md precisa existir (com .md ou .py ou como pasta).
+existe() { [ -e "docs/$1" ] || [ -e "docs/$1.md" ] || [ -e "docs/$1.py" ] || [ -d "docs/$1" ]; }
+for p in hermes-agent/getting-started/installation hermes-agent/user-guide/configuration hermes-agent/user-guide/features/cron hermes-agent/user-guide/features/mcp \
+  hermes-agent/user-guide/features/memory hermes-agent/user-guide/features/hooks hermes-agent/user-guide/features/api-server hermes-agent/user-guide/messaging/whatsapp \
+  hermes-agent/integrations/providers baileys/introduction baileys/quickstart baileys/faq baileys/concepts baileys/authentication baileys/messaging baileys/advanced baileys/migration \
+  hindsight/developer/installation hindsight/developer/configuration hindsight/developer/models hindsight/developer/retain hindsight/developer/retrieval hindsight/developer/mcp-server hindsight/developer/api \
+  openai-codex/docs/auth openai-codex/docs/sign-in-with-chatgpt openai-codex/docs/pricing openai-codex/docs/agent-configuration/agents-md \
+  whisper/repo/README faster-whisper/repo/README faster-whisper/source/transcribe faster-whisper/source/vad markitdown/repo/README markitdown/source/_pdf_converter krayin/INDEX \
+  docker/desktop/setup docker/engine/install docker/compose docker/desktop/troubleshoot-and-support claude-code/memory claude-code/best-practices claude-code/permissions \
+  claude-code/hooks-guide claude-code/settings claude-code/security antigravity/rules antigravity/getting-started antigravity/permissions antigravity/sandbox antigravity/mcp \
+  antigravity/cli/best-practices wsl/INDEX wsl/install-manual wsl/wsl-config; do
+  existe "$p" && pass "Leia primeiro existe: $p" || fail "Leia primeiro FALTA: docs/$p"
+done
+
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"
 [ "$FAIL" -eq 0 ]
