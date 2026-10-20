@@ -2,7 +2,7 @@
 # Fontes: runbooks 02, 03 e 06; docs/hindsight/compose-recipes/external-pg (receita oficial do banco); docs/hermes-agent/user-guide/docker.md.
 # Regras: versoes FIXAS; portas SO em 127.0.0.1 (R1); estado em volumes NOMEADOS (pasta do Windows corrompe bancos SQLite em modo WAL: R2);
 # o Hermes nao tem plataforma de mensagens (regra 1: nao ha caminho de envio); todo servico com limite de memoria (a VM do Docker tem teto de ~3,8 GB em 8 GB de RAM).
-# Uso:  docker compose --env-file infra/compose/.env -f infra/compose/docker-compose.yml up -d     (o .env fica fora do git; modelo em .env.example)
+# Uso:  docker compose --env-file infra/compose/.env -f infra/compose/docker-compose.yml up -d     (o .env fica fora do git; modelo em modelo.env)
 # Testado por tests/infra/check_infra.sh (estatico) e tests/infra/smoke_docker.sh (constroi e sobe de verdade).
 name: heimdall
 

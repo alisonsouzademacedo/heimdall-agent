@@ -12,7 +12,7 @@ HS=infra/hindsight/Dockerfile
 MW=apps/media-worker/Dockerfile
 REQ=apps/media-worker/requirements.txt
 DC=infra/compose/docker-compose.yml
-ENVX=infra/compose/.env.example
+ENVX=infra/compose/modelo.env
 for f in "$HS" "$MW" "$REQ" "$DC" "$ENVX"; do [ -s "$f" ] && pass "existe $f" || fail "falta $f"; done
 [ "$FAIL" -eq 0 ] || { echo "RESULTADO: $FAIL falha(s)"; exit 1; }
 
@@ -52,7 +52,7 @@ grep -qE 'hermes-data:/opt/data' "$DC" && grep -qE '^volumes:' "$DC" && grep -qE
 grep -qE 'pg_data:/var/lib/postgresql/18/docker' "$DC" && pass "Postgres 18 em volume nomeado, no caminho da receita oficial" || fail "Postgres fora do volume nomeado da receita"
 grep -qE 'internal:\s*true' "$DC" && pass "existe uma rede interna (sem internet) para o trabalhador de audio" || fail "sem rede interna"
 grep -qE 'profiles:' "$DC" && pass "o trabalhador de audio so roda sob demanda (profile), um audio por vez" || fail "trabalhador de audio sobe sozinho"
-grep -q 'ENV_EXEMPLO_SEM_SEGREDO' "$ENVX" && pass ".env.example so traz valores de mentira" || fail ".env.example sem a marca de valores de mentira"
+grep -q 'ENV_EXEMPLO_SEM_SEGREDO' "$ENVX" && pass "modelo.env so traz valores de mentira" || fail "modelo.env sem a marca de valores de mentira"
 
 # ---- Compose: o proprio Docker valida (portas, interpolacao, redes) ----
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
