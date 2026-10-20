@@ -50,3 +50,12 @@ test('laco: anota se o Hindsight responde (a tela mostra); erro ao checar vira "
   await m.terminou;
   assert.deepEqual(lerServicos(c.db), { hindsight: { ok: false, em: HOJE } });
 });
+
+test('rodarCiclo tambem executa os pedidos de "apagar memoria" (o cliente apagado e esquecido no Hindsight)', async () => {
+  const c = cenario();
+  c.db.prepare("INSERT INTO memoria_apagar (document_id, pedido_em) VALUES ('conv:7:2025-10-10', 1)").run();
+  const apagados: string[] = [];
+  const porta = { ...c.porta, apagarDocumento: async (id: string) => { apagados.push(id); return 'apagado' as const; } };
+  await rodarCiclo(c.db, porta, HOJE);
+  assert.deepEqual(apagados, ['conv:7:2025-10-10']);
+});

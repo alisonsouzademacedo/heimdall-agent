@@ -172,7 +172,7 @@ test('estado lista os 12 passos; so os passos com acao real estao prontos (lista
     const e = JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto);
     assert.equal(e.passos.length, 12);
     assert.deepEqual(e.passos.map((p: { id: string }) => p.id), PASSOS.map((p) => p.id));
-    assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'sincronizar', 'extrair', 'selfchat', 'agenda', 'pronto']);
+    assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'sincronizar', 'extrair', 'selfchat', 'agenda', 'backup', 'pronto']);
     assert.ok(e.passos.every((p: { estado: string }) => p.estado === 'pendente'));
     assert.equal(e.bugsAbertos, 0);
   } finally { await c.fim(); }
@@ -330,4 +330,25 @@ test('POST /api/agenda/testar gera diario e semanal de teste agora (so na caixa 
     assert.equal((c.banco.prepare("SELECT estado FROM onboarding_etapas WHERE passo = 'agenda'").get() as { estado: string }).estado, 'verde');
     assert.equal((c.banco.prepare("SELECT COUNT(*) AS n FROM saida WHERE tipo = 'relatorio'").get() as { n: number }).n, 2);
   } finally { await c.fim(); }
+});
+
+test('backup pela tela: escolhe o destino (validado), faz o primeiro backup agora e mostra no painel; destino ruim e recusado com o motivo', async () => {
+  const c = await subir();
+  const { mkdtempSync, existsSync } = await import('node:fs');
+  const pasta = mkdtempSync(join(tmpdir(), 'heimdall-tela-bk-'));
+  try {
+    const cookie = await entrar(c);
+    const h = { ...POST(cookie), Origin: `http://127.0.0.1:${c.s.porta}` };
+    const ruim = await req(c, 'POST', '/api/backup/destino', h, JSON.stringify({ pasta: join(pasta, 'nao-existe') }));
+    assert.equal(ruim.status, 400); assert.match(JSON.parse(ruim.texto).erro, /existe|pasta/i);
+    for (const corpo of [{}, { pasta: 5 }, { pasta: 'relativa/x' }]) assert.equal((await req(c, 'POST', '/api/backup/destino', h, JSON.stringify(corpo))).status, 400, JSON.stringify(corpo));
+    assert.equal((await req(c, 'POST', '/api/backup/agora', h, '{}')).status, 400, 'sem destino nao ha o que fazer');
+    assert.equal((await req(c, 'POST', '/api/backup/destino', h, JSON.stringify({ pasta }))).status, 200);
+    const r = JSON.parse((await req(c, 'POST', '/api/backup/agora', h, '{}')).texto);
+    assert.equal(r.resultado, 'feito');
+    assert.equal(existsSync(join(pasta, 'acervo-2026-10-19.sqlite')), true, 'o dia vem do relogio injetado da tela (19/10/2026 17:00 em SP)');
+    const painel = JSON.parse((await req(c, 'GET', '/api/painel', { Cookie: cookie })).texto);
+    assert.equal(painel.backup.destino, pasta); assert.ok(painel.backup.ultimoEm > 0);
+    assert.equal((c.banco.prepare("SELECT estado FROM onboarding_etapas WHERE passo = 'backup'").get() as { estado: string }).estado, 'verde');
+  } finally { await c.fim(); rmSync(pasta, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });

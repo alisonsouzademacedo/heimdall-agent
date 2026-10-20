@@ -90,3 +90,16 @@ test('saude: true quando /health responde 200, false caso contrario (nunca lanca
   try { assert.equal(await criarClienteHindsight({ url: s.url }).saude(), true); } finally { await s.fechar(); }
   assert.equal(await criarClienteHindsight({ url: s.url, tempoLimiteMs: 300 }).saude(), false);
 });
+
+test('apagarDocumento: DELETE so em /documents/<id>; 404 = nao existia; 5xx falha; id fora do formato e recusado antes de sair', async () => {
+  const s = await servidor((q, _b, res) => (q.url!.endsWith('conv%3A1%3A2025-10-11') ? json(res, 404, {}) : q.url!.endsWith('2025-10-12') ? json(res, 503, {}) : json(res, 200, { success: true, memory_units_deleted: 3 })));
+  try {
+    const c = criarClienteHindsight({ url: s.url, banco: 'heimdall' });
+    assert.equal(await c.apagarDocumento('conv:1:2025-10-10'), 'apagado');
+    assert.equal(await c.apagarDocumento('conv:1:2025-10-11'), 'nao_existia');
+    await assert.rejects(c.apagarDocumento('conv:1:2025-10-12'), /http_503/);
+    await assert.rejects(c.apagarDocumento('../banks/heimdall'), /invalido/);
+    await assert.rejects(c.apagarDocumento('conv:1:2025-10-10/../x'), /invalido/);
+    assert.deepEqual(s.pedidos.map((p) => [p.metodo, p.url]), [['DELETE', '/v1/default/banks/heimdall/documents/conv%3A1%3A2025-10-10'], ['DELETE', '/v1/default/banks/heimdall/documents/conv%3A1%3A2025-10-11'], ['DELETE', '/v1/default/banks/heimdall/documents/conv%3A1%3A2025-10-12']]);
+  } finally { await s.fechar(); }
+});

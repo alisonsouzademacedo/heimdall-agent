@@ -6,7 +6,7 @@ import { abrirBanco, migrar, contar } from './db.ts';
 import { criarEscuta } from './whatsapp/escuta.ts';
 import { pegarProximo, resumoDaFila, concluir } from './fila.ts';
 import { FalhaDefinitiva } from './midia.ts';
-import { agendarRetain, montarItem, processarRetain, type ItemRetain, type PortaMemoria } from './memoria.ts';
+import { agendarRetain, montarItem, processarRetain, processarApagarMemoria, type ItemRetain, type PortaMemoria } from './memoria.ts';
 
 const DONO = { pn: '5511900000000@s.whatsapp.net' };
 // 2025-10-10 12:00 em Sao Paulo (UTC-3) e 2025-10-11 12:00.
@@ -139,4 +139,29 @@ test('trabalho "retain" de um dia ja enviado e identico conclui sem chamar a por
   c.db.prepare("UPDATE fila SET estado = 'pendente', tentativas = 0, proximo_em = 0").run(); // o mesmo trabalho volta a fila sem o conteudo ter mudado
   assert.equal(await processarRetain(c.db, pegarProximo(c.db, ['retain'], HOJE + 5)!, c.porta, HOJE + 5), 'ok');
   assert.equal(c.enviados.length, 1, 'nada novo para enviar');
+});
+
+test('apagar memoria: documentos pedidos por apagar.ts sao apagados no Hindsight (404 = ja nao existe = feito); falha tenta de novo e desiste depois de 5', async () => {
+  const c = cenario();
+  const ins = c.db.prepare('INSERT INTO memoria_apagar (document_id, pedido_em) VALUES (?, 1)');
+  ins.run('conv:1:2025-10-10'); ins.run('conv:1:2025-10-11'); ins.run('conv:1:2025-10-12');
+  const chamados: string[] = [];
+  const porta = { apagarDocumento: async (id: string) => { chamados.push(id); if (id.endsWith('11')) throw new Error('hindsight_fora'); return id.endsWith('12') ? 'nao_existia' as const : 'apagado' as const; } };
+  assert.equal(await processarApagarMemoria(c.db, porta, 100), 2);
+  assert.deepEqual(chamados.sort(), ['conv:1:2025-10-10', 'conv:1:2025-10-11', 'conv:1:2025-10-12']);
+  const est = () => Object.fromEntries((c.db.prepare('SELECT document_id AS d, estado AS e, tentativas AS t FROM memoria_apagar').all() as { d: string; e: string; t: number }[]).map((r) => [r.d, `${r.e}/${r.t}`]));
+  assert.deepEqual(est(), { 'conv:1:2025-10-10': 'feito/1', 'conv:1:2025-10-11': 'pendente/1', 'conv:1:2025-10-12': 'feito/1' });
+  for (let i = 0; i < 6; i++) await processarApagarMemoria(c.db, porta, 100 + i);
+  assert.equal(est()['conv:1:2025-10-11'], 'pendente/5', 'depois de 5 tentativas para de insistir (fica visivel como pendente, sem sumir)');
+  assert.equal(await processarApagarMemoria(c.db, { apagarDocumento: async () => 'apagado' }, 999), 0, 'o que passou do limite nao e tentado de novo sozinho');
+  assert.equal((c.db.prepare("SELECT erro FROM memoria_apagar WHERE document_id = 'conv:1:2025-10-11'").get() as { erro: string }).erro, 'falha_ao_apagar_no_hindsight');
+});
+
+test('apagar memoria: id de documento fora do formato conv:<n>:<dia> nunca vai ao Hindsight', async () => {
+  const c = cenario();
+  c.db.prepare("INSERT INTO memoria_apagar (document_id, pedido_em) VALUES ('../banks/heimdall', 1), ('cadastro:usuario', 1)").run();
+  const chamados: string[] = [];
+  await processarApagarMemoria(c.db, { apagarDocumento: async (id) => { chamados.push(id); return 'apagado'; } }, 5);
+  assert.deepEqual(chamados, []);
+  assert.equal((c.db.prepare("SELECT COUNT(*) AS n FROM memoria_apagar WHERE estado = 'feito'").get() as { n: number }).n, 0);
 });

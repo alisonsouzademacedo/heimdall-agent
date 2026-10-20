@@ -19,6 +19,12 @@ export interface PortaMemoria {
   reter(item: ItemRetain): Promise<void>;
 }
 
+export interface PortaApagarMemoria {
+  /** Apaga o documento (e as memorias dele) no Hindsight. 'nao_existia' tambem conta como feito. */
+  apagarDocumento(documentId: string): Promise<'apagado' | 'nao_existia'>;
+}
+export const MAX_TENTATIVAS_APAGAR = 5;
+
 const ID = /^conv:(\d+):(\d{4}-\d{2}-\d{2})$/;
 const CONTEXTO = 'conversa de WhatsApp comercial de um SDR';
 
@@ -124,4 +130,21 @@ export async function processarRetain(db: Banco, job: Trabalho, porta: PortaMemo
   ).run(job.referencia, item.documentId, hash, agora);
   concluir(db, job.id, agora);
   return 'ok';
+}
+
+// Esquecer no Hindsight o que foi enviado sobre um cliente apagado (apagar.ts anota em "memoria_apagar"). So ids no formato que NOS criamos.
+export async function processarApagarMemoria(db: Banco, porta: PortaApagarMemoria, agora: number = Date.now()): Promise<number> {
+  const pedidos = db.prepare("SELECT document_id AS d FROM memoria_apagar WHERE estado = 'pendente' AND tentativas < ? ORDER BY pedido_em, document_id LIMIT 20").all(MAX_TENTATIVAS_APAGAR) as { d: string }[];
+  let feitos = 0;
+  for (const { d } of pedidos) {
+    if (!ID.test(d)) continue; // nunca manda ao Hindsight um id que nao seja um documento de conversa nosso
+    try {
+      await porta.apagarDocumento(d);
+      db.prepare("UPDATE memoria_apagar SET estado = 'feito', feito_em = ?, tentativas = tentativas + 1, erro = NULL WHERE document_id = ?").run(agora, d);
+      feitos++;
+    } catch {
+      db.prepare("UPDATE memoria_apagar SET tentativas = tentativas + 1, erro = 'falha_ao_apagar_no_hindsight' WHERE document_id = ?").run(d);
+    }
+  }
+  return feitos;
 }

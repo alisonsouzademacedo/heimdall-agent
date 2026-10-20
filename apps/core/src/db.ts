@@ -238,6 +238,22 @@ CREATE TABLE saida (
 CREATE INDEX idx_saida_pronta ON saida (estado, proximo_em, id);
 CREATE INDEX idx_saida_wa ON saida (wa_msg_id);
 `
+  },
+  {
+    versao: 7,
+    descricao: 'documentos do Hindsight a apagar quando um cliente e apagado',
+    sql: `
+-- Apagar um cliente tambem tem de esquecer o que foi enviado ao Hindsight (conversas por dia). apagar.ts anota aqui; o processo da memoria
+-- executa e marca "feito". Guarda so o id do documento (conv:<conversa>:<dia>), nunca texto.
+CREATE TABLE memoria_apagar (
+  document_id TEXT PRIMARY KEY,
+  pedido_em INTEGER NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','feito')),
+  tentativas INTEGER NOT NULL DEFAULT 0,
+  feito_em INTEGER,
+  erro TEXT
+);
+`
   }
 ];
 

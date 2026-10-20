@@ -3,7 +3,7 @@
 // nenhuma chamada que apague memoria. Erros: 5xx, 429 e queda de rede repetem; os demais 4xx sao definitivos; 409 de operation_id = ja entregue.
 import { createHash } from 'node:crypto';
 import { FalhaDefinitiva } from '../../core/src/midia.ts';
-import type { ItemRetain, PortaMemoria } from '../../core/src/memoria.ts';
+import type { ItemRetain, PortaApagarMemoria, PortaMemoria } from '../../core/src/memoria.ts';
 
 export interface OpcoesHindsight {
   url: string;
@@ -15,7 +15,7 @@ export interface OpcoesHindsight {
 export type TipoMemoria = 'world' | 'experience' | 'observation';
 export interface OpcoesLembrar { tipos?: TipoMemoria[]; maxTokens?: number; tags?: string[]; orcamento?: 'low' | 'mid' | 'high' }
 export interface Lembranca { id: string; texto: string; tipo: string; documento: string | null; quando: string | null }
-export interface ClienteHindsight extends PortaMemoria {
+export interface ClienteHindsight extends PortaMemoria, PortaApagarMemoria {
   lembrar(pergunta: string, opcoes?: OpcoesLembrar): Promise<Lembranca[]>;
   saude(): Promise<boolean>;
 }
@@ -37,7 +37,7 @@ export function criarClienteHindsight(o: OpcoesHindsight): ClienteHindsight {
   const f = o.fetchImpl ?? fetch;
   const limite = o.tempoLimiteMs ?? 60_000;
 
-  async function pedir(metodo: 'GET' | 'POST', caminho: string, corpo?: unknown): Promise<{ status: number; json: unknown }> {
+  async function pedir(metodo: 'GET' | 'POST' | 'DELETE', caminho: string, corpo?: unknown): Promise<{ status: number; json: unknown }> {
     const cab: Record<string, string> = {};
     if (corpo !== undefined) cab['content-type'] = 'application/json';
     if (o.chave) cab.authorization = `Bearer ${o.chave}`;
@@ -66,6 +66,14 @@ export function criarClienteHindsight(o: OpcoesHindsight): ClienteHindsight {
       if (r.status >= 400) throw new Error(`http_${r.status}`);
       const lista = ((r.json as { results?: Record<string, unknown>[] } | null)?.results ?? []);
       return lista.map((x) => ({ id: String(x.id), texto: String(x.text), tipo: String(x.type), documento: (x.document_id as string | null) ?? null, quando: (x.occurred_start as string | null) ?? null }));
+    },
+    // Unico DELETE do cliente: um documento de conversa nosso (conv:<n>:<AAAA-MM-DD>), para esquecer um cliente apagado. Nunca o banco inteiro.
+    async apagarDocumento(documentId) {
+      if (!/^conv:\d+:\d{4}-\d{2}-\d{2}$/.test(documentId)) throw new Error('documento invalido');
+      const r = await pedir('DELETE', `/v1/default/banks/${banco}/documents/${encodeURIComponent(documentId)}`);
+      if (r.status === 404) return 'nao_existia';
+      if (r.status >= 400) throw new Error(`http_${r.status}`);
+      return 'apagado';
     },
     async saude() {
       try { return (await pedir('GET', '/health')).status === 200; } catch { return false; }

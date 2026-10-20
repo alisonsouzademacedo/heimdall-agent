@@ -51,6 +51,10 @@ test('a tela local nao tem caminho para envio, apagamento nem aprendizado', () =
   }
 });
 
+test('backup-copia.ts so copia: nao importa o porteiro de apagar (e por isso a tela e a ponte podem usa-lo)', () => {
+  assert.doesNotMatch(codigo('backup-copia.ts'), /from '\.\/(apagar|envio|aprendizado|backup)\.ts'/);
+});
+
 test('DELETE FROM e DROP so aparecem em apagar.ts (apagar dados tem um unico porteiro)', () => {
   assert.deepEqual(arquivosCom(/\bDELETE\s+FROM\b/i), ['apagar.ts']);
   assert.deepEqual(arquivosCom(/\bDROP\s+(TABLE|INDEX|VIEW)\b/i), []);

@@ -24,8 +24,12 @@ test('hermes.ts so chama /v1/chat/completions (POST) e /health (GET)', () => {
 test('sem WhatsApp, sem envio direto (so a caixa de saida), sem programas externos', () => {
   for (const f of fontes) assert.doesNotMatch(codigo(f), /child_process|\bspawn\(|execSync|spawnSync|baileys|sendMessage|criarEnvio|criarTransporte/i, f);
 });
-test('a ponte nao apaga arquivos nem linhas por conta propria (apagar e do porteiro do nucleo)', () => {
-  for (const f of fontes) assert.doesNotMatch(codigo(f), /\bunlink|\brm(Sync)?\(|DELETE\s+FROM|DROP\s+TABLE|writeFile/i, f);
+test('a ponte nao apaga arquivos nem linhas por conta propria (apagar e do porteiro do nucleo); unica excecao: apagar-arquivo.ts, com nome travado', () => {
+  for (const f of fontes) if (f !== 'apagar-arquivo.ts') assert.doesNotMatch(codigo(f), /\bunlink|\brm(Sync)?\(|DELETE\s+FROM|DROP\s+TABLE|writeFile/i, f);
+  const c = codigo('apagar-arquivo.ts');
+  assert.doesNotMatch(c, /\brm(Sync)?\(|DELETE\s+FROM|DROP\s+TABLE|writeFile|readdir|\*/i, 'so unlink de UM arquivo, sem lista nem curinga');
+  assert.match(c, /\^data\\\/midias\\\/\(\[a-f0-9\]\{64\}/, 'o nome precisa ser o hash');
+  for (const f of fontes) if (f !== 'apagar-arquivo.ts' && f !== 'iniciar.ts') assert.doesNotMatch(codigo(f), /apagar-arquivo/, `${f}: so iniciar.ts liga o apagador`);
 });
 test('config do Hermes nunca ativa plataforma de mensagens', () => {
   const c = codigo('config-hermes.ts');

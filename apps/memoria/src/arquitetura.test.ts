@@ -15,11 +15,15 @@ test('ha fontes para conferir', () => assert.ok(fontes.length >= 3, fontes.join(
 test('rede (fetch) so em hindsight.ts', () => {
   for (const f of fontes) if (f !== 'hindsight.ts') assert.doesNotMatch(codigo(f), /\bfetch\b|node:http|node:https|node:net|WebSocket|XMLHttpRequest/, f);
 });
-test('hindsight.ts: so GET e POST, e o endereco e travado em 127.0.0.1/localhost', () => {
+test('hindsight.ts: so GET, POST e UM DELETE de documento, e o endereco e travado em 127.0.0.1/localhost', () => {
   const c = codigo('hindsight.ts');
-  assert.doesNotMatch(c, /['"](DELETE|PUT|PATCH)['"]/);
+  assert.doesNotMatch(c, /['"](PUT|PATCH)['"]/);
+  // Unico DELETE: UM documento de conversa nosso (conv:<n>:<dia>), para esquecer um cliente apagado; nada de memories, clear nem do banco inteiro.
+  assert.equal([...c.matchAll(/'DELETE'/g)].length, 2, 'o DELETE aparece so no tipo do metodo e na unica chamada');
+  assert.match(c, /pedir\('DELETE', `\/v1\/default\/banks\/\$\{banco\}\/documents\/\$\{encodeURIComponent\(documentId\)\}`\)/);
+  assert.match(c, /\^conv:\\d\+:\\d\{4\}-\\d\{2\}-\\d\{2\}\$/, 'o id do documento e validado antes de sair');
   assert.match(c, /\['127\.0\.0\.1', 'localhost'\]/);
-  assert.doesNotMatch(c, /\/memories\/\$\{|\/documents|\/clear|\/banks\/\$\{banco\}['"`]\s*[,)]/, 'nenhum caminho de apagar ou mexer em documento/banco');
+  assert.doesNotMatch(c, /\/memories\/\$\{|\/clear|\/banks\/\$\{banco\}['"`]\s*[,)]/, 'nenhum caminho de apagar memorias soltas ou o banco');
 });
 test('sem programas externos, sem WhatsApp, sem envio de mensagem', () => {
   for (const f of fontes) assert.doesNotMatch(codigo(f), /child_process|\bspawn\(|execSync|spawnSync|baileys|sendMessage|criarEnvio/i, f);

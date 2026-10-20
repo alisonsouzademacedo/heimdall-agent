@@ -29,6 +29,7 @@ h1{margin:0 0 2px;font-size:38px;line-height:1.1}
 button.acao{min-height:44px;border:0;border-radius:12px;padding:0 20px;font:600 16px system-ui;background:var(--gold);color:#0F172A;cursor:pointer}
 button.sec{min-height:44px;border:1px solid var(--line);border-radius:12px;padding:0 18px;background:transparent;color:var(--fg);font:inherit;cursor:pointer}
 button:focus-visible,textarea:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+input.txt{width:100%;max-width:520px;min-height:44px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit}
 textarea{width:100%;min-height:90px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit}
 .aviso{background:var(--muted);border:1px solid rgba(251,191,36,.35);border-radius:14px;padding:12px 16px;margin:16px 0;max-width:70ch}
 .estado{display:inline-block;border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600;border:1px solid var(--warn);color:var(--warn)}
@@ -151,7 +152,22 @@ export const JS = `
     s.appendChild(g);
     s.appendChild(el('div','det','Daqui em diante e automatico. Esta pagina so mostra o estado.'));
   }
-  var RENDER={whatsapp:whatsapp,sincronizar:sincronizar,extrair:extrair,selfchat:selfchat,agenda:agenda,pronto:pronto};
+  var msgBackup='';
+  function backup(s,d){
+    var b=d.backup;
+    s.appendChild(el('p','',b.destino?('Destino atual: '+b.destino):'Escolha onde guardar o backup: um HD externo, um segundo disco ou um pen drive (nao a mesma pasta do projeto).'));
+    var ent=el('input','txt');ent.type='text';ent.placeholder='Exemplo: E:\\Backup-Heimdall (a pasta precisa existir)';ent.setAttribute('aria-label','Pasta do backup');if(b.destino)ent.value=b.destino;s.appendChild(ent);
+    var linha=el('div');linha.style.marginTop='10px';
+    var ok=el('button','acao','Salvar destino');ok.type='button';
+    ok.addEventListener('click',function(){ok.disabled=true;api('POST','/api/backup/destino',{pasta:ent.value}).then(function(){msgBackup='Destino salvo.';return atualizarPainel()}).catch(function(e){msgBackup='Nao salvei: '+e.message;tudo()}).then(function(){ok.disabled=false})});
+    var ag=el('button','sec','Fazer backup agora');ag.type='button';ag.style.marginLeft='8px';
+    ag.addEventListener('click',function(){ag.disabled=true;api('POST','/api/backup/agora',{}).then(function(r){msgBackup=r.resultado==='feito'?'Backup feito.':r.resultado==='em_dia'?'O backup de hoje ja foi feito.':'Nao consegui: '+(r.erro||'erro');return atualizarPainel()}).catch(function(e){msgBackup=e.message;tudo()}).then(function(){ag.disabled=false})});
+    linha.appendChild(ok);linha.appendChild(ag);s.appendChild(linha);
+    if(msgBackup)s.appendChild(el('div','det',msgBackup));
+    s.appendChild(el('div','det',b.ultimoEm?('Ultimo backup: '+new Date(b.ultimoEm).toLocaleString('pt-BR')+(b.erro?' - ATENCAO: '+b.erro:'')):(b.erro?'Erro: '+b.erro:'Ainda nao ha backup.')));
+    s.appendChild(el('div','aviso','O backup e feito sozinho no primeiro uso de cada dia (uma copia do acervo com a data no nome). Para apagar dados de um cliente: voce pede no WhatsApp e confirma com um codigo de seis letras (duas etapas).'));
+  }
+  var RENDER={backup:backup,whatsapp:whatsapp,sincronizar:sincronizar,extrair:extrair,selfchat:selfchat,agenda:agenda,pronto:pronto};
   function atualizarPainel(){return api('GET','/api/painel').then(function(r){pn=r;return api('GET','/api/estado')}).then(function(r){passos=r.passos;tudo()}).catch(function(){})}
   function bug(s,id){
     var box=el('div','aviso');box.appendChild(el('div','','Algo deu errado ou estranho neste passo?'));
@@ -166,7 +182,7 @@ export const JS = `
   }
   function tudo(){lateral();painel()}
   function carregar(){return api('GET','/api/estado').then(function(r){passos=r.passos;if(!verifs.length)verifs=r.verificacoes||[];document.getElementById('bugs').textContent='relatorios de bug abertos: '+r.bugsAbertos;tudo()})}
-  setInterval(function(){var p=passos[atual];if(p&&p.pronto&&p.id!=='ambiente'&&p.id!=='cadastro'&&!document.hidden){atualizarPainel()}},3000);
+  setInterval(function(){var p=passos[atual];if(p&&p.pronto&&p.id!=='ambiente'&&p.id!=='cadastro'&&p.id!=='backup'&&!document.hidden){atualizarPainel()}},3000);
   carregar().then(atualizarPainel).then(function(){return api('POST','/api/ambiente/testar',{})}).then(function(r){verifs=r.verificacoes;perfilAtual=r.perfil||null;return carregar()}).catch(function(){});
 })();
 `;

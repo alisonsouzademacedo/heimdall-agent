@@ -54,3 +54,19 @@ test('laco: anota na tabela de configuracao se o Hermes responde (a tela mostra)
   await p.terminou;
   assert.deepEqual(lerServicos(db), { hermes: { ok: false, em: 5000 } });
 });
+
+test('laco: faz o backup do dia no destino escolhido (uma vez por dia) sem atrapalhar o resto', async () => {
+  const { mkdtempSync, readdirSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { definirDestinoDeBackup } = await import('../../core/src/backup-copia.ts');
+  const db = abrirBanco(); migrar(db);
+  const pasta = mkdtempSync(join(tmpdir(), 'heimdall-ponte-bk-'));
+  try {
+    assert.equal(definirDestinoDeBackup(db, pasta).ok, true);
+    let giros = 0;
+    const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, agora: () => Date.parse('2026-10-21T11:00:00Z'), intervaloMs: 1, esperar: async () => { if (++giros >= 3) p.parar(); } });
+    await p.terminou;
+    assert.deepEqual(readdirSync(pasta), ['acervo-2026-10-21.sqlite'], 'tres giros, um backup so');
+  } finally { rmSync(pasta, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
+});

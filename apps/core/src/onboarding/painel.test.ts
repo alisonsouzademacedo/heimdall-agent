@@ -7,6 +7,10 @@ import { criarEscuta } from '../whatsapp/escuta.ts';
 import { enfileirar } from '../fila.ts';
 import { enfileirarSaida, marcarEnviada } from '../saida.ts';
 import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas } from './painel.ts';
+import { definirDestinoDeBackup, backupDoDia } from '../backup-copia.ts';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const DONO = { pn: '5511900000000@s.whatsapp.net' };
 const novo = () => { const d = abrirBanco(); migrar(d); return d; };
@@ -19,6 +23,7 @@ test('painel vazio: tudo zerado, WhatsApp desconhecido, sem QR', () => {
   assert.deepEqual(p.saida, { pendente: 0, enviada: 0, abandonada: 0 });
   assert.deepEqual(p.acervo, { mensagens: 0, conversas: 0, audios: 0, pdfs: 0 });
   assert.equal(p.selfchat.teste, 'nao_feito'); assert.equal(p.relatorios.ultimo, null); assert.deepEqual(p.servicos, {});
+  assert.deepEqual(p.backup, { destino: null, ultimoEm: null, erro: null });
 });
 
 test('QR aparece so enquanto NAO ha conexao; conectado, nunca (nem se sobrou um desenho no banco)', () => {
@@ -121,4 +126,19 @@ test('etapa do WhatsApp: "reconectando" nao deixa o passo verde (so conectado de
   gravarEstado(db, { estado: 'reconectar', codigo: 515 }, 1);
   atualizarEtapas(db, montarPainel(db, T), T);
   assert.equal((db.prepare("SELECT estado FROM onboarding_etapas WHERE passo = 'whatsapp'").get() as { estado: string }).estado, 'pendente');
+});
+
+test('backup: o painel mostra destino, ultimo backup e erro; a etapa fica verde so com backup feito e sem erro', () => {
+  const db = novo(); db.prepare("INSERT OR IGNORE INTO onboarding_etapas (passo) VALUES ('backup')").run();
+  const pasta = mkdtempSync(join(tmpdir(), 'heimdall-painel-bk-'));
+  const etapa = () => (db.prepare("SELECT estado FROM onboarding_etapas WHERE passo = 'backup'").get() as { estado: string }).estado;
+  try {
+    atualizarEtapas(db, montarPainel(db, T), T); assert.equal(etapa(), 'pendente');
+    assert.equal(definirDestinoDeBackup(db, pasta).ok, true);
+    atualizarEtapas(db, montarPainel(db, T), T); assert.equal(etapa(), 'pendente', 'destino escolhido, mas ainda sem backup feito');
+    assert.equal(backupDoDia(db, T), 'feito');
+    const p = montarPainel(db, T);
+    assert.deepEqual(p.backup, { destino: pasta, ultimoEm: T, erro: null });
+    atualizarEtapas(db, p, T); assert.equal(etapa(), 'verde');
+  } finally { rmSync(pasta, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });

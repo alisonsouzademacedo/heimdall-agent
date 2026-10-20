@@ -86,3 +86,12 @@ test('v5: mensagem_midia liga varias mensagens ao MESMO arquivo (o mesmo PDF ree
   db.prepare('INSERT INTO mensagem_midia (mensagem_id, midia_id) VALUES (2, 1)').run();
   assert.throws(() => db.prepare('INSERT INTO mensagem_midia (mensagem_id, midia_id) VALUES (2, 1)').run(), /UNIQUE|PRIMARY/);
 });
+
+test('v7: memoria_apagar guarda so o id do documento, com estado e tentativas; id repetido nao duplica', () => {
+  const db = abrirBanco(); migrar(db);
+  db.prepare("INSERT INTO memoria_apagar (document_id, pedido_em) VALUES ('conv:1:2025-10-10', 1)").run();
+  assert.throws(() => db.prepare("INSERT INTO memoria_apagar (document_id, pedido_em) VALUES ('conv:1:2025-10-10', 2)").run(), /UNIQUE|PRIMARY/);
+  assert.throws(() => db.prepare("INSERT INTO memoria_apagar (document_id, pedido_em, estado) VALUES ('x', 1, 'talvez')").run(), /CHECK/);
+  const colunas = (db.prepare('PRAGMA table_info(memoria_apagar)').all() as { name: string }[]).map((c) => c.name);
+  assert.deepEqual(colunas.filter((c) => /texto|conteudo|nome|mensagem/i.test(c)), [], 'nenhum conteudo de conversa nesta tabela');
+});

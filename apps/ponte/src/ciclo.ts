@@ -3,6 +3,7 @@ import type { Banco } from '../../core/src/db.ts';
 import { processarSelfChat, type PortasSelfChat } from './selfchat.ts';
 import { gerarRelatorioDoDia, type PortasAgenda } from './agenda.ts';
 import { gravarServico } from '../../core/src/whatsapp/estado.ts';
+import { backupDoDia } from '../../core/src/backup-copia.ts';
 
 export interface OpcoesPonte {
   banco: Banco;
@@ -25,6 +26,7 @@ export function iniciarPonte(o: OpcoesPonte): { parar(): void; terminou: Promise
     while (!parado) {
       try { await processarSelfChat(o.banco, o.portas, agora()); } catch { /* erro inesperado nao derruba o laco: tenta no proximo giro */ }
       if (o.agenda) { try { await gerarRelatorioDoDia(o.banco, o.agenda, agora()); } catch { /* idem */ } }
+      try { backupDoDia(o.banco, agora()); } catch { /* o erro fica anotado pelo proprio backupDoDia; o laco segue */ }
       if (o.saudeHermes) { let ok = false; try { ok = await o.saudeHermes(); } catch { /* sem resposta */ } try { gravarServico(o.banco, 'hermes', ok, agora()); } catch { /* idem */ } }
       await esperar(o.intervaloMs ?? 5000);
     }

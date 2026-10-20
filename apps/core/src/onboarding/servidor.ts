@@ -12,6 +12,7 @@ import { PASSOS } from './passos.ts';
 import { resumoDeFalhas, type Verificacao } from './ambiente.ts';
 import type { Perfil } from './perfil.ts';
 import { CSS, JS, HTML } from './recursos.ts';
+import { definirDestinoDeBackup, backupDoDia, lerBackup } from '../backup-copia.ts';
 import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas } from './painel.ts';
 
 export interface OpcoesServidor {
@@ -139,6 +140,17 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
           const tudoCabe = relatorios.every((r) => r.cabe);
           op.banco.prepare("UPDATE onboarding_etapas SET estado = ?, fim = ?, erro = ? WHERE passo = 'agenda'").run(tudoCabe ? 'verde' : 'vermelho', agora(), tudoCabe ? null : 'um relatorio de teste passou do tamanho de uma tela');
           return json(res, 200, { relatorios });
+        }
+        if (url.pathname === '/api/backup/destino') {
+          const pasta = typeof dados.pasta === 'string' ? dados.pasta.trim() : '';
+          const r = pasta ? definirDestinoDeBackup(op.banco, pasta) : { ok: false as const, motivo: 'Informe a pasta do backup.' };
+          return r.ok ? json(res, 200, { ok: true }) : json(res, 400, { erro: r.motivo });
+        }
+        if (url.pathname === '/api/backup/agora') {
+          if (!lerBackup(op.banco).destino) return json(res, 400, { erro: 'Escolha primeiro a pasta do backup.' });
+          const resultado = backupDoDia(op.banco, agora());
+          const b = lerBackup(op.banco);
+          return json(res, 200, { resultado, ultimoEm: b.ultimoEm, erro: b.erro });
         }
         if (url.pathname === '/api/bug') {
           const etapa = typeof dados.etapa === 'string' ? dados.etapa : '';

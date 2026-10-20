@@ -1,11 +1,12 @@
 // O laco da memoria: de tempos em tempos agenda os dias fechados que mudaram e envia um trabalho "retain" por vez ao Hindsight.
 import type { Banco } from '../../core/src/db.ts';
 import { pegarProximo, recuperarTravados } from '../../core/src/fila.ts';
-import { agendarRetain, processarRetain, type PortaMemoria } from '../../core/src/memoria.ts';
+import { agendarRetain, processarApagarMemoria, processarRetain, type PortaApagarMemoria, type PortaMemoria } from '../../core/src/memoria.ts';
 import type { Resultado } from '../../core/src/midia.ts';
 import { gravarServico } from '../../core/src/whatsapp/estado.ts';
 
-export async function rodarCiclo(db: Banco, porta: PortaMemoria, agora: number = Date.now()): Promise<'vazio' | Resultado> {
+export async function rodarCiclo(db: Banco, porta: PortaMemoria & Partial<PortaApagarMemoria>, agora: number = Date.now()): Promise<'vazio' | Resultado> {
+  if (porta.apagarDocumento) await processarApagarMemoria(db, { apagarDocumento: porta.apagarDocumento.bind(porta) }, agora); // esquecer primeiro: nunca reenviar o que acabou de ser apagado
   agendarRetain(db, agora);
   const job = pegarProximo(db, ['retain'], agora);
   if (!job) return 'vazio';
@@ -14,7 +15,7 @@ export async function rodarCiclo(db: Banco, porta: PortaMemoria, agora: number =
 
 export interface OpcoesMemoria {
   banco: Banco;
-  porta: PortaMemoria;
+  porta: PortaMemoria & Partial<PortaApagarMemoria>;
   agora?: () => number;
   esperar?: (ms: number) => Promise<void>;
   intervaloMs?: number;

@@ -5,6 +5,7 @@ import type { Banco } from '../db.ts';
 import { lerEstado, lerQr, lerServicos, type EstadoLido } from '../whatsapp/estado.ts';
 import { resumoDaFila } from '../fila.ts';
 import { enfileirarSaida, ehMensagemNossa, resumoDaSaida } from '../saida.ts';
+import { lerBackup } from '../backup-copia.ts';
 import { caberEmUmaTela, contarPalavras, montarPacoteDiario, renderizarDiario, MAX_PALAVRAS_DIARIO, MAX_PALAVRAS_SEMANAL } from '../relatorio.ts';
 import { caberSemanal, montarPacoteSemanal, renderizarSemanal } from '../relatorio-semanal.ts';
 
@@ -19,6 +20,7 @@ export interface Painel {
   relatorios: { ultimo: { chave: string; criadaEm: number } | null };
   servicos: Record<string, { ok: boolean; ha: number }>;
   selfchat: { teste: EstadoTesteSelfChat };
+  backup: { destino: string | null; ultimoEm: number | null; erro: string | null };
 }
 
 const SVG_MAX = 100_000;
@@ -66,7 +68,8 @@ export function montarPainel(db: Banco, agora: number = Date.now()): Painel {
     memoria: { documentosEnviados: n('SELECT COUNT(*) AS n FROM sync_hindsight') },
     relatorios: { ultimo: ultimo ?? null },
     servicos,
-    selfchat: { teste: estadoDoTesteSelfChat(db) }
+    selfchat: { teste: estadoDoTesteSelfChat(db) },
+    backup: lerBackup(db)
   };
 }
 
@@ -102,5 +105,6 @@ export function atualizarEtapas(db: Banco, p: Painel, agora: number = Date.now()
   const baixar = p.fila.porTipo.baixar_midia ?? {};
   const semPendencia = (baixar.pendente ?? 0) === 0 && (baixar.em_andamento ?? 0) === 0;
   marca('extrair', w.estado === 'conectado' && w.historico?.ultima === true && p.acervo.mensagens > 0 && semPendencia ? 'verde' : null);
+  marca('backup', p.backup.destino !== null && p.backup.ultimoEm !== null && p.backup.erro === null ? 'verde' : null);
   marca('selfchat', p.selfchat.teste === 'ok' ? 'verde' : p.selfchat.teste === 'falhou' ? 'vermelho' : null);
 }

@@ -8,4 +8,5 @@ const saida: Record<string, unknown> = { saude: await c.saude() };
 const item = { documentId: 'conv:1:2025-10-10', content: 'Ana da Loja (2025-10-10T12:00:00-03:00): Quero o orçamento do plano anual.\nEu (2025-10-10T12:01:00-03:00): Envio hoje à tarde.', context: 'conversa de WhatsApp comercial de um SDR', timestamp: '2025-10-10T23:59:59-03:00', tags: ['conversa:1', 'chat:dm', 'tipo:conversa'] };
 try { await c.reter(item); saida.reter = 'aceito'; await c.reter(item); saida.reter_repetido = 'aceito'; } catch (e) { saida.reter = `erro: ${(e as Error).message}`; }
 try { saida.lembrar = (await c.lembrar('o que a Ana pediu?', { tipos: ['experience', 'observation'], maxTokens: 500, tags: ['conversa:1'] })).length >= 0 ? 'respondeu' : 'vazio'; } catch (e) { saida.lembrar = `erro: ${(e as Error).message}`; }
+try { saida.apagar = await c.apagarDocumento('conv:1:2025-10-10'); } catch (e) { saida.apagar = `erro: ${(e as Error).message}`; }
 console.log(JSON.stringify(saida));

@@ -200,3 +200,61 @@ test('se o banco falha no meio, nada e apagado (transacao) e nenhum arquivo e re
   assert.equal(contar(db, 'mensagens'), 3);
   assert.deepEqual(apagados, []);
 });
+
+// ---- apagar com a midia do pipeline novo (mensagem_midia, midias_origem), arquivo compartilhado e memoria no Hindsight ----
+function vincularMidia(db: Banco, waMsgId: string, sha: string, caminho: string): void {
+  const m = (db.prepare('SELECT id FROM mensagens WHERE wa_msg_id = ?').get(waMsgId) as { id: number }).id;
+  let midia = db.prepare('SELECT id FROM midias WHERE sha256 = ?').get(sha) as { id: number } | undefined;
+  if (!midia) midia = { id: Number(db.prepare("INSERT INTO midias (mensagem_id, tipo, caminho, sha256, bytes, criada_em) VALUES (?, 'audio', ?, ?, 10, ?)").run(m, caminho, sha, AGORA).lastInsertRowid) };
+  db.prepare('INSERT INTO mensagem_midia (mensagem_id, midia_id) VALUES (?, ?)').run(m, midia.id);
+  db.prepare('INSERT OR IGNORE INTO midias_origem (mensagem_id, descritor) VALUES (?, ?)').run(m, '{}');
+}
+
+test('apagar cliente cuja midia veio pelo pipeline novo (vinculo e descritor) funciona e remove o arquivo', () => {
+  const db = novoBanco(); semear(db, 1, 'Alfa', ALFA);
+  db.exec('DELETE FROM midias'); // a midia sintetica do helper nao e a do pipeline
+  vincularMidia(db, 'Alfa-3', 'sha-alfa', 'data/midias/sha-alfa.ogg');
+  const p = proporApagarCliente(db, 1, AGORA)!;
+  const apagados: string[] = [];
+  const r = confirmarApagar(db, p.frase, { selfChat: true }, AGORA + 1000, (c) => apagados.push(c));
+  assert.equal(r.ok, true);
+  assert.deepEqual(apagados, ['data/midias/sha-alfa.ogg']);
+  for (const t of ['mensagens', 'midias', 'mensagem_midia', 'midias_origem', 'clientes']) assert.equal(contar(db, t), 0, t);
+});
+
+test('arquivo compartilhado com OUTRO cliente: o arquivo e o registro ficam para o outro; so o vinculo do apagado some', () => {
+  const db = novoBanco(); semear(db, 1, 'Alfa', ALFA); semear(db, 2, 'Beta', BETA);
+  db.exec('DELETE FROM midias');
+  vincularMidia(db, 'Alfa-3', 'sha-comum', 'data/midias/sha-comum.ogg'); // o registro da midia nasce ligado a mensagem do Alfa
+  vincularMidia(db, 'Beta-3', 'sha-comum', 'data/midias/sha-comum.ogg');
+  const p = proporApagarCliente(db, 1, AGORA)!;
+  const apagados: string[] = [];
+  assert.equal(confirmarApagar(db, p.frase, { selfChat: true }, AGORA + 1000, (c) => apagados.push(c)).ok, true);
+  assert.deepEqual(apagados, [], 'o arquivo ainda e do Beta: nao pode ser apagado');
+  assert.equal(contar(db, 'midias'), 1);
+  const beta3 = (db.prepare("SELECT id FROM mensagens WHERE wa_msg_id = 'Beta-3'").get() as { id: number }).id;
+  assert.equal((db.prepare('SELECT mensagem_id AS m FROM midias').get() as { m: number }).m, beta3, 'o registro passa a pertencer a mensagem que sobrou');
+  assert.equal(contar(db, 'mensagem_midia'), 1);
+  // e quando o Beta tambem for apagado, ai sim o arquivo sai
+  const p2 = proporApagarCliente(db, 2, AGORA + 2000)!;
+  const apagados2: string[] = [];
+  confirmarApagar(db, p2.frase, { selfChat: true }, AGORA + 3000, (c) => apagados2.push(c));
+  assert.deepEqual(apagados2, ['data/midias/sha-comum.ogg']);
+  assert.equal(contar(db, 'midias'), 0);
+});
+
+test('memoria no Hindsight: os documentos do cliente apagado entram na lista de "apagar la tambem" e saem da sincronizacao e da fila', () => {
+  const db = novoBanco(); semear(db, 1, 'Alfa', ALFA); semear(db, 2, 'Beta', BETA);
+  const conv = (jid: string) => (db.prepare('SELECT id FROM conversas WHERE jid = ?').get(jid) as { id: number }).id;
+  const cA = conv(ALFA), cB = conv(BETA);
+  for (const [c, dia] of [[cA, '2026-10-10'], [cA, '2026-10-11'], [cB, '2026-10-10']] as const) {
+    db.prepare("INSERT INTO sync_hindsight (tipo, referencia, document_id, hash_conteudo, sincronizado_em) VALUES ('conv', ?, ?, 'h', 1)").run(`conv:${c}:${dia}`, `conv:${c}:${dia}`);
+  }
+  db.prepare("INSERT INTO fila (tipo, referencia, proximo_em, criado_em, atualizado_em) VALUES ('retain', ?, 0, 0, 0), ('retain', ?, 0, 0, 0)").run(`conv:${cA}:2026-10-12`, `conv:${cB}:2026-10-12`);
+  const p = proporApagarCliente(db, 1, AGORA)!;
+  assert.equal(confirmarApagar(db, p.frase, { selfChat: true }, AGORA + 1000, nada).ok, true);
+  const pendentes = (db.prepare("SELECT document_id AS d FROM memoria_apagar WHERE estado = 'pendente' ORDER BY document_id").all() as { d: string }[]).map((r) => r.d);
+  assert.deepEqual(pendentes, [`conv:${cA}:2026-10-10`, `conv:${cA}:2026-10-11`], 'so os documentos do Alfa');
+  assert.deepEqual((db.prepare('SELECT referencia FROM sync_hindsight').all() as { referencia: string }[]).map((r) => r.referencia), [`conv:${cB}:2026-10-10`], 'o do Beta segue sincronizado');
+  assert.deepEqual((db.prepare("SELECT referencia FROM fila WHERE tipo = 'retain'").all() as { referencia: string }[]).map((r) => r.referencia), [`conv:${cB}:2026-10-12`], 'nao reenvia ao Hindsight o que acabou de ser apagado');
+});

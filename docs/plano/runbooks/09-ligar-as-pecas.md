@@ -2,6 +2,9 @@
 
 Tudo abaixo já foi **testado na nuvem com dados sintéticos e com Docker real**; o que falta é validar com o **WhatsApp real, os logins e os dados do dono**. Faça nesta ordem, pare em cada "PARAR e pedir ao dono" (regra 4 do `AGENTS.md`) e registre a saída real em `../PROGRESS.md`.
 
+## Atalho: um comando só (`instalar\heimdall.ps1`)
+`powershell -NoProfile -ExecutionPolicy Bypass -File instalar\heimdall.ps1 -Acao iniciar` cria `infra\compose\.env` com senha e chave aleatórias (se não existir; nunca sobrescreve), sobe o Docker Compose, instala as dependências que faltarem (`npm ci`), inicia os 5 processos escondidos com registro em `data\logs\` e mostra o link da tela. Outras ações: `-Acao estado`, `-Acao parar` (`-ComDocker` para parar também os serviços), `-Acao config-hermes` (gera e grava o `config.yaml` do Hermes e o reinicia), e `-SomenteMostrar` mostra o plano sem fazer nada. **Não verificado no Windows real** (testado com `node` e `docker` falsos no PowerShell 7); a IA local deve rodar e, se algo falhar, abrir relatório em `data\bugs\`.
+
 ## Processos (cada um é uma janela do PowerShell; todos leem/gravam `data\acervo.sqlite`)
 | Processo | Comando (na raiz do projeto) | O que faz | Fala com |
 |---|---|---|---|

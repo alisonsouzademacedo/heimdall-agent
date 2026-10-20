@@ -30,6 +30,7 @@ if [ "$OK" = 1 ]; then
   echo "$SAIDA" | grep -q '"saude":true' && pass "cliente: saude() responde true" || fail "cliente: saude() nao respondeu ($SAIDA)"
   echo "$SAIDA" | grep -q '"reter":"aceito"' && pass "cliente: retain assincrono aceito pelo Hindsight real" || { fail "cliente: retain recusado ($SAIDA)"; head -3 "$T/err.txt"; }
   echo "$SAIDA" | grep -q '"reter_repetido":"aceito"' && pass "cliente: o mesmo retain repetido (mesmo operation_id) tambem e aceito" || fail "cliente: retain repetido recusado ($SAIDA)"
+  echo "$SAIDA" | grep -qE '"apagar":"(apagado|nao_existia)"' && pass "cliente: apagar um documento (esquecer cliente apagado) e aceito pelo Hindsight real" || fail "cliente: apagar documento falhou ($SAIDA)"
   echo "$SAIDA" | grep -q '"lembrar":"respondeu"' && pass "cliente: recall com tipos, orcamento e tags respondeu" || fail "cliente: recall falhou ($SAIDA)"
 fi
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"
