@@ -108,6 +108,11 @@ function acharMensagem(db: Banco, remoteJid: string, waMsgId: string): { id: num
     .get(waMsgId, jid, jid) as { id: number; estado: string; texto: string | null } | undefined;
 }
 
+// Id interno de uma mensagem ja gravada (usado para enfileirar midia e ligar descritores).
+export function idDaMensagem(db: Banco, remoteJid: string, waMsgId: string): number | undefined {
+  return acharMensagem(db, remoteJid, waMsgId)?.id;
+}
+
 // Edicao: guarda o texto original uma unica vez (a primeira versao) e passa a mostrar o novo.
 export function registrarEdicao(db: Banco, remoteJid: string, waMsgId: string, novoTexto: string): ResultadoAlteracao {
   const m = acharMensagem(db, remoteJid, waMsgId);

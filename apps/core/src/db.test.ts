@@ -61,3 +61,16 @@ test('contar recusa nome de tabela perigoso', () => {
   migrar(db);
   assert.throws(() => contar(db, 'clientes; DROP TABLE clientes'));
 });
+
+test('v4: fila durável, origem das mídias e sincronização com o Hindsight existem e são idempotentes', () => {
+  const db = abrirBanco(); migrar(db);
+  const t = (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]).map((r) => r.name);
+  for (const n of ['fila', 'midias_origem', 'sync_hindsight']) assert.ok(t.includes(n), n);
+  db.prepare("INSERT INTO fila (tipo, referencia, criado_em, atualizado_em, proximo_em) VALUES ('baixar_midia', '1', 1, 1, 1)").run();
+  assert.throws(() => db.prepare("INSERT INTO fila (tipo, referencia, criado_em, atualizado_em, proximo_em) VALUES ('baixar_midia', '1', 2, 2, 2)").run(), /UNIQUE/);
+  assert.throws(() => db.prepare("INSERT INTO fila (tipo, referencia, criado_em, atualizado_em, proximo_em) VALUES ('enviar_mensagem', '1', 1, 1, 1)").run(), /CHECK/, 'tipo desconhecido (inclusive "enviar") e recusado');
+  assert.throws(() => db.prepare("INSERT INTO fila (tipo, referencia, estado, criado_em, atualizado_em, proximo_em) VALUES ('extrair', '2', 'talvez', 1, 1, 1)").run(), /CHECK/);
+  db.prepare("INSERT INTO sync_hindsight (tipo, referencia, document_id, hash_conteudo, sincronizado_em) VALUES ('conversa', 'a', 'doc-a', 'h1', 1)").run();
+  assert.throws(() => db.prepare("INSERT INTO sync_hindsight (tipo, referencia, document_id, hash_conteudo, sincronizado_em) VALUES ('conversa', 'a', 'doc-a2', 'h2', 2)").run(), /UNIQUE/);
+  assert.equal(migrar(db), MIGRACOES.at(-1)!.versao, 'rodar de novo nao muda nada');
+});

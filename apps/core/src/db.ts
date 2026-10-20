@@ -169,6 +169,39 @@ CREATE TABLE criterios_versoes (
   ativa INTEGER NOT NULL DEFAULT 1 CHECK (ativa IN (0,1))
 );
 `
+  },
+  {
+    versao: 4,
+    descricao: 'fila duravel, origem das midias e sincronizacao com o Hindsight',
+    sql: `
+-- A escuta nunca espera o processamento: tudo que e pesado entra aqui (fase-1-modelo-de-dados.md). Nenhum tipo de "enviar": regra 1.
+CREATE TABLE fila (
+  id INTEGER PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('baixar_midia','transcrever','converter_pdf','extrair','retain')),
+  referencia TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','em_andamento','ok','erro','abandonada')),
+  tentativas INTEGER NOT NULL DEFAULT 0,
+  proximo_em INTEGER NOT NULL,
+  erro TEXT,
+  criado_em INTEGER NOT NULL,
+  atualizado_em INTEGER NOT NULL,
+  UNIQUE (tipo, referencia)
+);
+CREATE INDEX idx_fila_pronta ON fila (estado, proximo_em);
+-- Descritor da midia (JSON do Baileys com BufferJSON): o suficiente para baixar de novo se a primeira tentativa falhar ou a midia expirar.
+CREATE TABLE midias_origem (
+  mensagem_id INTEGER PRIMARY KEY REFERENCES mensagens(id),
+  descritor TEXT NOT NULL
+);
+CREATE TABLE sync_hindsight (
+  tipo TEXT NOT NULL,
+  referencia TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  hash_conteudo TEXT NOT NULL,
+  sincronizado_em INTEGER NOT NULL,
+  PRIMARY KEY (tipo, referencia)
+);
+`
   }
 ];
 

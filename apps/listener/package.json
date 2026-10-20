@@ -1,0 +1,19 @@
+{
+  "name": "heimdall-listener",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Escuta do WhatsApp (Baileys): so le e grava no acervo. O unico envio possivel e ao self-chat, pela trava do nucleo.",
+  "scripts": {
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": { "node": ">=22.18" },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}
