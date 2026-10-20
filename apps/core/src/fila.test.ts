@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { abrirBanco, migrar } from './db.ts';
-import { enfileirar, pegarProximo, concluir, falhar, recuperarTravados, resumoDaFila, ESPERAS_RETENTATIVA_MS, MAX_TENTATIVAS } from './fila.ts';
+import { enfileirar, reenfileirar, pegarProximo, concluir, falhar, recuperarTravados, resumoDaFila, ESPERAS_RETENTATIVA_MS, MAX_TENTATIVAS } from './fila.ts';
 
 const novo = () => { const db = abrirBanco(); migrar(db); return db; };
 const T0 = 1_760_000_000_000;
@@ -112,4 +112,20 @@ test('trabalho que trava a maquina toda vez (queda a cada tentativa) acaba aband
   }
   const r = db.prepare('SELECT estado, erro FROM fila').get() as { estado: string; erro: string };
   assert.deepEqual({ ...r }, { estado: 'abandonada', erro: 'travou_muitas_vezes' });
+});
+
+test('reenfileirar: trabalho concluido ou abandonado volta a pendente com tentativas zeradas; o que ja esta na fila nao muda', () => {
+  const db = abrirBanco(); migrar(db);
+  assert.equal(reenfileirar(db, 'retain', 'conv:1:2025-10-10', 1000), true, 'novo: entra');
+  const a = pegarProximo(db, ['retain'], 1000)!;
+  assert.equal(reenfileirar(db, 'retain', 'conv:1:2025-10-10', 1500), false, 'em andamento: nao mexe');
+  assert.equal(a.tentativas, 1);
+  concluir(db, a.id, 2000);
+  assert.equal(reenfileirar(db, 'retain', 'conv:1:2025-10-10', 3000), true, 'concluido: volta');
+  const b = pegarProximo(db, ['retain'], 3000)!;
+  assert.deepEqual({ id: b.id, tentativas: b.tentativas }, { id: a.id, tentativas: 1 }, 'mesma linha, contagem recomecou');
+  falhar(db, b.id, 'x', 3100, { definitiva: true });
+  assert.equal(reenfileirar(db, 'retain', 'conv:1:2025-10-10', 4000), true, 'abandonado: volta');
+  assert.equal(resumoDaFila(db).pendente, 1);
+  assert.equal(reenfileirar(db, 'retain', 'conv:1:2025-10-10', 4100), false, 'pendente: nao mexe');
 });

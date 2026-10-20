@@ -13,6 +13,14 @@ export function enfileirar(db: Banco, tipo: TipoTrabalho, referencia: string, ag
   return Number(r.changes) === 1;
 }
 
+// Para trabalho que se REPETE quando o conteudo muda (ex.: reenviar um documento ao Hindsight): concluido ou abandonado volta a pendente,
+// com a contagem de tentativas zerada; pendente ou em andamento fica como esta. Devolve true quando ha trabalho novo a fazer.
+export function reenfileirar(db: Banco, tipo: TipoTrabalho, referencia: string, agora: number = Date.now()): boolean {
+  if (enfileirar(db, tipo, referencia, agora)) return true;
+  const r = db.prepare("UPDATE fila SET estado = 'pendente', tentativas = 0, erro = NULL, proximo_em = ?, atualizado_em = ? WHERE tipo = ? AND referencia = ? AND estado IN ('ok','erro','abandonada')").run(agora, agora, tipo, referencia);
+  return Number(r.changes) === 1;
+}
+
 // Pega o trabalho pronto mais antigo dos tipos pedidos e o marca "em_andamento" na mesma instrucao (dois consumidores nunca pegam o mesmo).
 export function pegarProximo(db: Banco, tipos: readonly TipoTrabalho[], agora: number = Date.now()): Trabalho | null {
   if (tipos.length === 0) return null;
