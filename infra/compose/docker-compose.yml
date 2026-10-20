@@ -1,0 +1,92 @@
+# Servicos do Heimdall (Hindsight, PostgreSQL, Hermes e o trabalhador de audio/PDF). O nucleo (apps/core) roda no computador, nao aqui.
+# Fontes: runbooks 02, 03 e 06; docs/hindsight/compose-recipes/external-pg (receita oficial do banco); docs/hermes-agent/user-guide/docker.md.
+# Regras: versoes FIXAS; portas SO em 127.0.0.1 (R1); estado em volumes NOMEADOS (pasta do Windows corrompe bancos SQLite em modo WAL: R2);
+# o Hermes nao tem plataforma de mensagens (regra 1: nao ha caminho de envio); todo servico com limite de memoria (a VM do Docker tem teto de ~3,8 GB em 8 GB de RAM).
+# Uso:  docker compose --env-file infra/compose/.env -f infra/compose/docker-compose.yml up -d     (o .env fica fora do git; modelo em .env.example)
+# Testado por tests/infra/check_infra.sh (estatico) e tests/infra/smoke_docker.sh (constroi e sobe de verdade).
+name: heimdall
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hindsight
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: hindsight
+    volumes:
+      - pg_data:/var/lib/postgresql/18/docker
+    networks: [interna]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hindsight -d hindsight"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 1g
+
+  hindsight:
+    build: ../hindsight
+    image: heimdall-hindsight:1.0.0-onnx
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    shm_size: "1gb"
+    ports:
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:9999:9999"
+    environment:
+      HINDSIGHT_API_DATABASE_URL: postgresql://hindsight:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/hindsight
+      # LLM: "chatgpt" depois do login (runbooks/07-logins.md); "none" so guarda trechos e busca (sem reflexao nem observacoes).
+      HINDSIGHT_API_LLM_PROVIDER: ${HINDSIGHT_API_LLM_PROVIDER:?defina HINDSIGHT_API_LLM_PROVIDER no .env (none ou chatgpt)}
+      HINDSIGHT_API_LLM_CHATGPT_HOME: /home/hindsight/chatgpt
+      HINDSIGHT_API_WORKER_ID: heimdall-1
+      # Portugues ANTES de qualquer carga (trocar depois obriga a migrar o banco): fase-1-troca-de-provedor.md
+      HINDSIGHT_API_EMBEDDINGS_PROVIDER: onnx
+      HINDSIGHT_API_EMBEDDINGS_ONNX_MODEL_ID: intfloat/multilingual-e5-small
+      HINDSIGHT_API_RERANKER_PROVIDER: rrf
+      HINDSIGHT_API_TEXT_SEARCH_EXTENSION: native
+      HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE: portuguese
+    volumes:
+      - hindsight_chatgpt:/home/hindsight/chatgpt
+      - hindsight_modelos:/home/hindsight/.cache
+    networks: [interna]
+    mem_limit: 2g
+
+  hermes:
+    image: nousresearch/hermes-agent:v0.22.2
+    restart: unless-stopped
+    command: gateway run
+    depends_on: [hindsight]
+    ports:
+      - "127.0.0.1:8642:8642"
+    environment:
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: 0.0.0.0   # vale DENTRO do contêiner; no computador a porta fica em 127.0.0.1 (acima)
+      API_SERVER_KEY: ${API_SERVER_KEY:?defina API_SERVER_KEY no .env (openssl rand -hex 32)}
+    volumes:
+      - hermes-data:/opt/data
+    networks: [interna]
+    mem_limit: 1g
+
+  # Sob demanda, um audio ou PDF por vez:  docker compose run --rm media-worker <comando>   (nao sobe com "up")
+  media-worker:
+    build: ../../apps/media-worker
+    image: heimdall-media-worker:1.0.0
+    profiles: [trabalho]
+    volumes:
+      - ${HEIMDALL_DATA:-../../data}/midias:/entrada:ro
+      - ${HEIMDALL_DATA:-../../data}/md:/saida
+    networks: [isolada]
+    mem_limit: 2g
+
+networks:
+  interna: {}
+  isolada:
+    internal: true   # sem internet: processa PDFs e audios de terceiros
+
+volumes:
+  pg_data: {}
+  hindsight_chatgpt: {}
+  hindsight_modelos: {}
+  hermes-data: {}

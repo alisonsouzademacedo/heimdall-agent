@@ -23,6 +23,7 @@ Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (r
 |---|---|
 | `iniciar.cmd`, `instalar/` | Instalador de um clique e texto inicial para a IA |
 | `apps/core/` | Núcleo em TypeScript (sem dependências de execução) e a tela de onboarding |
+| `apps/media-worker/`, `infra/` | Imagem do trabalhador de áudio/PDF, imagem do Hindsight com embeddings em português e o Docker Compose (versões fixas, portas só em 127.0.0.1) |
 | `prompts/`, `templates/` | Personalidade, skills e modelos de cadastro |
 | `docs/plano/` | Planejamento, decisões (D1 a D29), roteiros (`runbooks/`), lições aprendidas, orçamento de memória e **perfis por tipo de computador** (`fase-1-perfis-de-computador.md`) |
 | `docs/<ferramenta>/` | Cópia da documentação oficial de cada ferramenta usada |
