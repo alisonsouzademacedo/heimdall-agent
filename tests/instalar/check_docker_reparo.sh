@@ -26,14 +26,16 @@ if grep -E "HEIMDALL_TESTE -ne '1'.*wsl(\.exe)? --shutdown" "$PS1" >/dev/null; t
 
 # ---- ligacao no instalador (sempre -SomenteMostrar: nada e instalado nem removido) ----
 T=$(mktemp -d); mkdir -p "$T/com" "$T/sem"; : > "$T/com/engine.sock"
-roda() { # roda <pasta-de-segredos>
-  HEIMDALL_TESTE=1 HEIMDALL_TESTE_VIRT=1 HEIMDALL_TESTE_WSL=1 HEIMDALL_TESTE_SECRETS_DIR="$1" "$PW" -NoProfile -File "$PS1" -SomenteMostrar -SemPausa -SemClipboard -SemTestes > "$T/saida.txt" 2>&1 < /dev/null; }
-roda "$T/com"
+roda() { # roda <pasta-de-segredos> <docker-rodando: 0|1>  (o estado do Docker e FIXADO: o teste nao pode depender do computador onde roda)
+  HEIMDALL_TESTE=1 HEIMDALL_TESTE_VIRT=1 HEIMDALL_TESTE_WSL=1 HEIMDALL_TESTE_DOCKER_RODANDO="$2" HEIMDALL_TESTE_SECRETS_DIR="$1" "$PW" -NoProfile -File "$PS1" -SomenteMostrar -SemPausa -SemClipboard -SemTestes > "$T/saida.txt" 2>&1 < /dev/null; }
+roda "$T/com" 0
 grep -E 'FALTA.*(preso|engine\.sock)' "$T/saida.txt" >/dev/null && pass "instalador aponta o arquivo preso do Docker" || fail "instalador nao apontou o arquivo preso"
 grep -q 'Secrets Engine' "$T/saida.txt" && pass "a mensagem cita o erro real (Secrets Engine) para o dono reconhecer" || fail "mensagem sem o nome do erro"
 [ -e "$T/com/engine.sock" ] && pass "-SomenteMostrar NAO removeu o arquivo" || fail "-SomenteMostrar removeu o arquivo"
-roda "$T/sem"
+roda "$T/sem" 0
 grep -qiE 'engine\.sock' "$T/saida.txt" && fail "apontou arquivo preso numa pasta limpa" || pass "pasta limpa: nada apontado"
+roda "$T/com" 1
+grep -qiE 'engine\.sock|Secrets Engine' "$T/saida.txt" && fail "com o Docker funcionando, apontou arquivo preso (nao deveria procurar)" || pass "Docker rodando: nao procura nem aponta arquivo preso"
 rm -rf "$T"
 
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"

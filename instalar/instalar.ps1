@@ -210,7 +210,9 @@ $bibReparo = Join-Path $PSScriptRoot 'docker-reparo.ps1'
 $pastaSegredos = $null
 if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_SECRETS_DIR) { $pastaSegredos = $env:HEIMDALL_TESTE_SECRETS_DIR }
 if ($ehWindows -and -not $pastaSegredos -and (Test-Path $bibReparo)) { . $bibReparo; $pastaSegredos = PastaSegredosDocker }
-if ($pastaSegredos -and (Test-Path $bibReparo) -and -not (DockerRodando)) {
+$dockerFunciona = DockerRodando
+if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_DOCKER_RODANDO) { $dockerFunciona = ($env:HEIMDALL_TESTE_DOCKER_RODANDO -eq '1') }   # so em teste: nao depender do Docker real do computador
+if ($pastaSegredos -and (Test-Path $bibReparo) -and -not $dockerFunciona) {
   . $bibReparo
   $presos = @(SocketsDockerObsoletos $pastaSegredos)
   if ($presos.Count -gt 0) {
