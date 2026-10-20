@@ -163,3 +163,12 @@ test('referencia que nao existe mais (cliente apagado): conclui sem chamar o mod
   assert.equal(await processarExtrair(db, pegarProximo(db, ['extrair'], 5)!, ia, instr, 5), 'ok');
   assert.equal(ia.pedidos.length, 0);
 });
+
+test('sinal ligado a mensagem DO DONO (M2) e descartado: sinal de potencial so vale quando o cliente o produz', async () => {
+  const { db } = cenario();
+  agendarExtracao(db, HOJE);
+  const s = saidaBase(db);
+  s.sinais_potencial = [{ tipo: 'pediu_proposta', mensagem_origem: id(db, 'M2'), confianca: 0.9, motivo: 'foi o dono quem falou' }] as never;
+  await processarExtrair(db, pegarProximo(db, ['extrair'], HOJE)!, porta(s), instr, HOJE);
+  assert.equal((db.prepare('SELECT COUNT(*) AS n FROM sinais_potencial').get() as { n: number }).n, 0);
+});
