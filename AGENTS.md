@@ -35,6 +35,7 @@ A documentação das ferramentas está em `docs/` (cópias `.md` oficiais). **El
 | Antigravity | `docs/antigravity/` | `rules`, `getting-started`, `permissions`, `sandbox`, `mcp`, `cli/best-practices` |
 | WSL 2 (Windows) | `docs/wsl/` | `INDEX.md`, `install-manual`, `wsl-config` |
 | Strix (testes de segurança; **não adotado por ora**, custa por uso) | `docs/strix/` | `INDEX.md`, `usage/cli`, `advanced/configuration`, `usage/scan-modes` |
+| Superpowers (skills de método; 5 instaladas em `.claude/skills/`) | `docs/superpowers/` | `INDEX.md`, `skills/{test-driven-development,systematic-debugging,verification-before-completion}/SKILL.md` |
 
 **Ferramenta ou repositório novo:** antes de usar, traga a documentação para `docs/<ferramenta>/` (Firecrawl), **prefira o Markdown original do site** (muitos servem a página com `.md` no fim do endereço) e **confira o resultado**: a raspagem "só conteúdo principal" já perdeu nomes de opções. Crie o `INDEX.md` da pasta, acrescente a linha na tabela acima e rode `tests/docs/check_docs.sh`. Registre o que foi lido em `docs/plano/PROGRESS.md`.
 
@@ -70,6 +71,9 @@ Nenhum erro é "só corrigido". Para **cada erro**, faça os seis passos, nesta 
 
 ## Bugs de instalação (relatórios em `data/bugs/`)
 Ao começar, e sempre que o dono disser que algo falhou, liste `data\bugs\*.md` com `estado: aberto`. Cada arquivo é um erro real da máquina do dono (o instalador e a tela os criam, **já sem segredos**). Trate cada um pelos seis passos da seção anterior: **teste que falha primeiro** (em `tests/` ou `apps/core/src`; se depender de hardware, login ou WhatsApp real, escreva o passo em `runbooks/08-testes-de-fumaca.md`), correção, instruções, `LICOES.md`; depois troque `estado: aberto` por `estado: resolvido` no arquivo (anote o teste e o commit) e faça o commit. Os relatórios ficam fora do git (`data/`); o teste e a lição vão. Para enviar ao GitHub confira `git remote -v` (o instalador liga a pasta ao repositório); o primeiro envio pede o login do dono (regra 4): pare e peça. Nunca copie conteúdo de conversa para relatório, teste ou commit.
+
+## Skills (Superpowers)
+As skills de `.claude/skills/` (lista e motivos em `docs/superpowers/INDEX.md`) ajudam no método de trabalho. **Este `AGENTS.md` prevalece sobre qualquer skill**; skill que mande disparar agentes em paralelo, fazer push/merge ou instalar algo não vale sem pedido do dono (regras 4 e 6). Skill nova só entra com revisão, cópia em `docs/` e teste (`tests/docs/check_docs.sh`).
 
 ## Contexto longo e sessão compactada (prevenção de alucinação)
 Depois de uma compactação, ou ao retomar o trabalho: **releia `AGENTS.md` e `docs/plano/PROGRESS.md`** antes de agir. Resumos perdem detalhes; só vale o que está em arquivo do repositório ou no que você executou. Qualquer fato sobre ferramenta que você só "lembra" deve ser relido na página de `docs/` (inteira) ou marcado "não verificado". Registre decisões do dono em `docs/plano/` na mesma hora, para não dependerem da memória da conversa.
