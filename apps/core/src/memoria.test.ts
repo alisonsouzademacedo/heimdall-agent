@@ -121,3 +121,22 @@ test('o conteudo da conversa nunca aparece no erro guardado na fila (regra 2)', 
   assert.equal(erro.includes('segredo-do-cliente-123'), false);
   void concluir;
 });
+
+test('o self-chat nunca vira documento, nem se um trabalho "retain" for enfileirado por engano para ele', async () => {
+  const c = cenario();
+  c.texto('S', D10, 'nota para mim mesmo', true, DONO.pn); // conversa 1 = self
+  assert.equal(montarItem(c.db, 'conv:1:2025-10-10'), null);
+  c.db.prepare("INSERT INTO fila (tipo, referencia, proximo_em, criado_em, atualizado_em) VALUES ('retain','conv:1:2025-10-10',0,0,0)").run();
+  assert.equal(await processarRetain(c.db, pegarProximo(c.db, ['retain'], 5)!, c.porta, 5), 'ok');
+  assert.equal(c.enviados.length, 0);
+});
+
+test('trabalho "retain" de um dia ja enviado e identico conclui sem chamar a porta (nao reenvia por engano)', async () => {
+  const c = cenario(); c.texto('A', D10, 'oi');
+  agendarRetain(c.db, HOJE);
+  await processarRetain(c.db, pegarProximo(c.db, ['retain'], HOJE)!, c.porta, HOJE);
+  assert.equal(c.enviados.length, 1);
+  c.db.prepare("UPDATE fila SET estado = 'pendente', tentativas = 0, proximo_em = 0").run(); // o mesmo trabalho volta a fila sem o conteudo ter mudado
+  assert.equal(await processarRetain(c.db, pegarProximo(c.db, ['retain'], HOJE + 5)!, c.porta, HOJE + 5), 'ok');
+  assert.equal(c.enviados.length, 1, 'nada novo para enviar');
+});
