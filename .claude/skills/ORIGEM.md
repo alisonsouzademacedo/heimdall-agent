@@ -1,0 +1,2 @@
+# Origem destas skills
+As cinco skills desta pasta vêm do Superpowers (https://github.com/obra/superpowers, licença MIT, commit `b739a8af570e10a95898f2bdf6cec97467fa6c12`) e são cópias **idênticas** do original (conferido por `tests/docs/check_docs.sh`). Por que só estas e o que ficou de fora: `docs/superpowers/INDEX.md`. Não edite aqui: para mudar, atualize a cópia em `docs/superpowers/` e este diretório juntos.

@@ -169,6 +169,106 @@ CREATE TABLE criterios_versoes (
   ativa INTEGER NOT NULL DEFAULT 1 CHECK (ativa IN (0,1))
 );
 `
+  },
+  {
+    versao: 4,
+    descricao: 'fila duravel, origem das midias e sincronizacao com o Hindsight',
+    sql: `
+-- A escuta nunca espera o processamento: tudo que e pesado entra aqui (fase-1-modelo-de-dados.md). Nenhum tipo de "enviar": regra 1.
+CREATE TABLE fila (
+  id INTEGER PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('baixar_midia','transcrever','converter_pdf','extrair','retain')),
+  referencia TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','em_andamento','ok','erro','abandonada')),
+  tentativas INTEGER NOT NULL DEFAULT 0,
+  proximo_em INTEGER NOT NULL,
+  erro TEXT,
+  criado_em INTEGER NOT NULL,
+  atualizado_em INTEGER NOT NULL,
+  UNIQUE (tipo, referencia)
+);
+CREATE INDEX idx_fila_pronta ON fila (estado, proximo_em);
+-- Descritor da midia (JSON do Baileys com BufferJSON): o suficiente para baixar de novo se a primeira tentativa falhar ou a midia expirar.
+CREATE TABLE midias_origem (
+  mensagem_id INTEGER PRIMARY KEY REFERENCES mensagens(id),
+  descritor TEXT NOT NULL
+);
+CREATE TABLE sync_hindsight (
+  tipo TEXT NOT NULL,
+  referencia TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  hash_conteudo TEXT NOT NULL,
+  sincronizado_em INTEGER NOT NULL,
+  PRIMARY KEY (tipo, referencia)
+);
+`
+  },
+  {
+    versao: 5,
+    descricao: 'varias mensagens podem apontar para o mesmo arquivo de midia',
+    sql: `
+-- "midias" tem UM registro por arquivo (sha256 unico). O mesmo PDF ou audio reenviado em outras conversas e processado uma vez e todas
+-- as mensagens recebem o texto: cada mensagem aponta para o arquivo por aqui. (Sem DROP/DELETE: so apagar.ts apaga dados.)
+CREATE TABLE mensagem_midia (
+  mensagem_id INTEGER PRIMARY KEY REFERENCES mensagens(id),
+  midia_id INTEGER NOT NULL REFERENCES midias(id)
+);
+CREATE INDEX idx_mensagem_midia_midia ON mensagem_midia (midia_id);
+`
+  },
+  {
+    versao: 6,
+    descricao: 'caixa de saida para o dono (sem coluna de destino: so existe o self-chat)',
+    sql: `
+-- Todo texto que o Heimdall escreve para o dono passa por aqui e e entregue pelo listener, que so envia ao self-chat (regra 1).
+-- Proposital: NAO existe coluna de destino. "chave" evita gerar o mesmo relatorio duas vezes.
+CREATE TABLE saida (
+  id INTEGER PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('resposta','relatorio','aviso')),
+  texto TEXT NOT NULL,
+  chave TEXT UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','enviada','abandonada')),
+  tentativas INTEGER NOT NULL DEFAULT 0,
+  proximo_em INTEGER NOT NULL DEFAULT 0,
+  wa_msg_id TEXT,
+  erro TEXT,
+  criada_em INTEGER NOT NULL,
+  enviada_em INTEGER
+);
+CREATE INDEX idx_saida_pronta ON saida (estado, proximo_em, id);
+CREATE INDEX idx_saida_wa ON saida (wa_msg_id);
+`
+  },
+  {
+    versao: 7,
+    descricao: 'documentos do Hindsight a apagar quando um cliente e apagado',
+    sql: `
+-- Apagar um cliente tambem tem de esquecer o que foi enviado ao Hindsight (conversas por dia). apagar.ts anota aqui; o processo da memoria
+-- executa e marca "feito". Guarda so o id do documento (conv:<conversa>:<dia>), nunca texto.
+CREATE TABLE memoria_apagar (
+  document_id TEXT PRIMARY KEY,
+  pedido_em INTEGER NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','feito')),
+  tentativas INTEGER NOT NULL DEFAULT 0,
+  feito_em INTEGER,
+  erro TEXT
+);
+`
+  },
+  {
+    versao: 8,
+    descricao: 'duvidas do Heimdall para o dono (extracao com pouca confianca)',
+    sql: `
+-- Quando o modelo nao tem certeza (audio ruim, data ambigua) a pergunta vai ao dono no relatorio seguinte. So a pergunta curta; sem texto da conversa.
+CREATE TABLE duvidas (
+  id INTEGER PRIMARY KEY,
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id),
+  texto TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'aberta' CHECK (estado IN ('aberta','respondida')),
+  criada_em INTEGER NOT NULL,
+  UNIQUE (cliente_id, texto)
+);
+`
   }
 ];
 

@@ -101,6 +101,11 @@ export function proporLimparMidiasAntigas(db: Banco, agora: number): Proposta {
   return { codigo, escopo, frase: `confirmo apagar ${codigo}` };
 }
 
+// Atalho do comando "apagar arquivos antigos": sem arquivo velho nao cria codigo nenhum.
+export function proporLimparMidiasAntigasSeHouver(db: Banco, agora: number): Proposta | null {
+  return (escopoMidiasAntigas(db, agora).escopo.contagens.midias ?? 0) === 0 ? null : proporLimparMidiasAntigas(db, agora);
+}
+
 export interface Origem {
   selfChat: boolean; // calculado por ehMensagemDoSelfChat(); NUNCA vindo do texto da mensagem
 }
@@ -150,8 +155,21 @@ function executarCliente(db: Banco, clienteId: number, agora: number, apagarArqu
   try {
     if (msgs.length) {
       const lista = msgs.join(',');
-      for (const r of db.prepare(`SELECT caminho FROM midias WHERE mensagem_id IN (${lista})`).all() as { caminho: string }[]) caminhos.push(r.caminho);
-      db.exec(`DELETE FROM midias WHERE mensagem_id IN (${lista})`);
+      // Midia deduplicada por hash: o MESMO arquivo pode estar ligado a mensagens de outros clientes. So sai (registro e arquivo) o que nenhuma
+      // outra mensagem usa; se alguem ainda usa, o registro passa a pertencer a uma mensagem que fica.
+      const midiaIds = (db.prepare(`SELECT midia_id AS id FROM mensagem_midia WHERE mensagem_id IN (${lista}) UNION SELECT id FROM midias WHERE mensagem_id IN (${lista})`).all() as { id: number }[]).map((r) => r.id);
+      db.exec(`DELETE FROM mensagem_midia WHERE mensagem_id IN (${lista})`);
+      db.exec(`DELETE FROM midias_origem WHERE mensagem_id IN (${lista})`);
+      for (const id of midiaIds) {
+        const resta = db.prepare('SELECT mensagem_id AS m FROM mensagem_midia WHERE midia_id = ? ORDER BY mensagem_id LIMIT 1').get(id) as { m: number } | undefined;
+        if (resta) {
+          db.prepare('UPDATE midias SET mensagem_id = ? WHERE id = ? AND mensagem_id IN (SELECT id FROM mensagens WHERE id IN (' + lista + '))').run(resta.m, id);
+        } else {
+          const m = db.prepare('SELECT caminho FROM midias WHERE id = ?').get(id) as { caminho: string } | undefined;
+          if (m && m.caminho !== '') caminhos.push(m.caminho);
+          db.prepare('DELETE FROM midias WHERE id = ?').run(id);
+        }
+      }
       db.exec(`DELETE FROM compromissos WHERE origem_mensagem_id IN (${lista})`);
       db.exec(`DELETE FROM sinais_potencial WHERE mensagem_id IN (${lista})`);
     }
@@ -159,11 +177,24 @@ function executarCliente(db: Banco, clienteId: number, agora: number, apagarArqu
     db.prepare('DELETE FROM sinais_potencial WHERE cliente_id = ?').run(clienteId);
     db.prepare('DELETE FROM ajustes_cliente WHERE cliente_id = ?').run(clienteId);
     db.prepare('DELETE FROM feedback WHERE cliente_id = ?').run(clienteId);
+    db.prepare('DELETE FROM duvidas WHERE cliente_id = ?').run(clienteId);
     if (msgs.length) db.exec(`DELETE FROM mensagens WHERE id IN (${msgs.join(',')})`);
-    // Conversas DM do cliente que ficaram vazias.
+    // Conversas DM do cliente que ficaram vazias. O que foi enviado ao Hindsight sobre elas tambem tem de ser esquecido la (processo da memoria).
+    const candidatas = (db.prepare(`SELECT id FROM conversas WHERE tipo = 'dm' AND jid IN (${DO_CLIENTE.jids})`).all(clienteId) as { id: number }[]).map((r) => r.id);
     db.prepare(
       `DELETE FROM conversas WHERE tipo = 'dm' AND jid IN (${DO_CLIENTE.jids}) AND id NOT IN (SELECT DISTINCT conversa_id FROM mensagens)`
     ).run(clienteId);
+    for (const id of candidatas) {
+      if (db.prepare('SELECT 1 AS x FROM conversas WHERE id = ?').get(id)) continue; // ainda existe (tem mensagens de outra pessoa): fica
+      for (const d of db.prepare("SELECT document_id AS d FROM sync_hindsight WHERE tipo = 'conv' AND referencia LIKE ?").all(`conv:${id}:%`) as { d: string }[]) {
+        db.prepare('INSERT OR IGNORE INTO memoria_apagar (document_id, pedido_em) VALUES (?, ?)').run(d.d, agora);
+      }
+      db.prepare("DELETE FROM sync_hindsight WHERE tipo = 'conv' AND referencia LIKE ?").run(`conv:${id}:%`);
+      db.prepare("DELETE FROM fila WHERE tipo = 'retain' AND referencia LIKE ?").run(`conv:${id}:%`);
+      // Controle da extracao (nada disso vive no Hindsight): sai junto, para nao reprocessar conversa que nao existe mais.
+      db.prepare("DELETE FROM sync_hindsight WHERE tipo = 'ext' AND referencia LIKE ?").run(`ext:${id}:%`);
+      db.prepare("DELETE FROM fila WHERE tipo = 'extrair' AND referencia LIKE ?").run(`ext:${id}:%`);
+    }
     db.prepare(`DELETE FROM contato_jids WHERE contato_id IN (${DO_CLIENTE.contatos})`).run(clienteId);
     db.prepare('DELETE FROM contatos WHERE cliente_id = ?').run(clienteId);
     db.prepare('DELETE FROM clientes WHERE id = ?').run(clienteId);

@@ -34,6 +34,7 @@ Parear por QR (usuário); ver `connection: open`; receber uma mensagem de teste 
 ## Armadilhas
 - Mensagens recebidas com o núcleo desligado e histórico chegam como `append`; guardar ambos e deduplicar por `key.id`.
 - O Baileys **não reconecta sozinho** (`troubleshooting.md`).
+- Todo processo com banco aberto precisa de `parar()` que **espera** o laço terminar e fecha o banco antes de devolver; no Windows um arquivo SQLite aberto impede apagar a pasta (EBUSY) e os testes só ficam vermelhos lá.
 - Risco de restrição da conta por usar cliente não oficial (decisão do usuário: aceito).
 
 ## Não verificado

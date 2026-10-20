@@ -1,22 +1,10 @@
 # Hindsight docs — índice
 
-Fonte: https://hindsight.vectorize.io (núcleo via llms-full.txt + SDKs/integrações, cookbook, api-reference, security e changelog via Firecrawl). Páginas: 152.
+Fonte: https://hindsight.vectorize.io (núcleo via llms-full.txt + SDKs/integrações, cookbook, api-reference, security e changelog via Firecrawl). Páginas: 136 (em 2026-10-20 foram removidas 16 páginas "Page Not Found" da raspagem — `api-reference/*`, `security/*`, `configuration.md`, `memory-banks.md` —; a API está em `api-reference.md` e `developer/api/*`).
 Não incluído: blog, guides, tags, changelog/integrations, versões antigas (0.7–0.10), enterprise, cloud, zh.
-Leia primeiro: developer/index, developer/api/quickstart, developer/retain, developer/retrieval, developer/reflect, developer/configuration, sdks/mcp.
+Leia primeiro: developer/index, developer/api/quickstart, developer/retain, developer/retrieval, developer/reflect, developer/configuration, developer/mcp-server.
 
-## api-reference (11)
 
-- [Page Not Found](api-reference/create-bank.md) — 0 KB
-- [Page Not Found](api-reference/create-directive.md) — 0 KB
-- [Page Not Found](api-reference/create-or-update-bank.md) — 0 KB
-- [Page Not Found](api-reference/create-scoped-api-key-v-1-api-keys-scoped-post.md) — 0 KB
-- [Page Not Found](api-reference/file-retain.md) — 0 KB
-- [Page Not Found](api-reference/get-document.md) — 0 KB
-- [Page Not Found](api-reference/hindsight-cloud-api.md) — 0 KB
-- [Page Not Found](api-reference/recall-memories.md) — 0 KB
-- [Page Not Found](api-reference/reflect.md) — 0 KB
-- [Page Not Found](api-reference/retain-memories.md) — 0 KB
-- [Page Not Found](api-reference/retain.md) — 0 KB
 
 ## api-reference.md (1)
 
@@ -34,7 +22,6 @@ Leia primeiro: developer/index, developer/api/quickstart, developer/retain, deve
 
 ## configuration.md (1)
 
-- [Page Not Found](configuration.md) — 0 KB
 
 ## cookbook (27)
 
@@ -106,7 +93,6 @@ Leia primeiro: developer/index, developer/api/quickstart, developer/retain, deve
 
 ## memory-banks.md (1)
 
-- [Page Not Found](memory-banks.md) — 0 KB
 
 ## sdks (69)
 
@@ -182,9 +168,6 @@ Leia primeiro: developer/index, developer/api/quickstart, developer/retain, deve
 
 ## security (3)
 
-- [Page Not Found](security/detectors.md) — 0 KB
-- [Page Not Found](security/policies.md) — 0 KB
-- [Page Not Found](security/webhooks-siem.md) — 0 KB
 
 
 ## Receitas de Docker Compose (do repositório, não do site)

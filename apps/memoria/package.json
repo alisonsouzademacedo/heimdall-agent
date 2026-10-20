@@ -1,0 +1,16 @@
+{
+  "name": "heimdall-memoria",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Envia as conversas ao Hindsight (memória de longo prazo) e consulta a memória. Fala só com o Hindsight local (127.0.0.1); sem WhatsApp e sem processos externos.",
+  "scripts": {
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": { "node": ">=22.18" },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}

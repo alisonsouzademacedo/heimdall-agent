@@ -12,6 +12,7 @@ export interface Item {
   texto: string;
   motivo: string; // toda recomendacao traz o dado que a sustenta
   rascunho?: string;
+  clienteId?: number; // para as correcoes por codigo (A1, F2, P1) saberem de qual cliente se fala; nao aparece no texto
 }
 
 export interface PacoteDiario {
@@ -26,6 +27,8 @@ export interface PacoteDiario {
   pedro: string[];
   novos: string[];
   aprendizado: string[];
+  /** Duvidas abertas citadas em 'aprendizado' (viram respondidas quando o relatorio e entregue, para nao se repetirem). */
+  duvidasIds?: number[];
   numeros: { mensagens: number; audios: number; pdfs: number; falhas: number };
   semNovidade: number;
 }
@@ -120,7 +123,8 @@ export function montarPacoteDiario(db: Banco, agora: number, cfg: ConfigAcompanh
   const aguardando: (Item & { desde: number })[] = [];
   const followups: Item[] = [];
   const potencial: Item[] = [];
-  let a = 0, f = 0, pot = 0, semNovidade = 0;
+  const hojeItens: Item[] = [];
+  let a = 0, f = 0, pot = 0, h = 0, semNovidade = 0;
 
   for (const c of clientes) {
     const msgs = mensagensParaAcompanhamento(db, c.id);
@@ -128,31 +132,38 @@ export function montarPacoteDiario(db: Banco, agora: number, cfg: ConfigAcompanh
     const ajustes = (db.prepare('SELECT tipo, ate_dia AS ateDia, criado_em AS criadoEm FROM ajustes_cliente WHERE cliente_id = ?').all(c.id) as unknown as Ajuste[]);
     const estado = aplicarAjustes(r.estado, r.ultimaRespostaClienteEm, ajustes, hoje);
     if (estado === 'oculto') continue;
+    // Compromissos marcados (pelo dono ou extraidos das conversas) que vencem hoje ou ja venceram; data so com o dia importa aqui.
+    for (const k of db.prepare("SELECT tipo, titulo, data_hora AS dh FROM compromissos WHERE cliente_id = ? AND estado = 'marcado' AND data_hora IS NOT NULL AND substr(data_hora, 1, 10) <= ? ORDER BY data_hora, id").all(c.id, hoje) as { tipo: string; titulo: string; dh: string }[]) {
+      h++;
+      const dia = k.dh.slice(0, 10);
+      hojeItens.push({ codigo: `H${h}`, clienteId: c.id, cliente: c.nome, texto: `${k.tipo}: ${k.titulo}`, motivo: dia === hoje ? 'combinado para hoje' : `combinado para ${dia} e ainda marcado` });
+    }
     if (estado === 'aguardando_usuario') {
       const dias = Math.max(0, diasEntre(diaLocal(r.aguardandoUsuarioDesde!, cfg.fuso), hoje)); // dias corridos, no fuso do dono
-      aguardando.push({ codigo: '', cliente: c.nome, texto: `espera há ${dias} ${dias === 1 ? 'dia' : 'dias'}`, motivo: `última mensagem do cliente em ${diaLocal(r.aguardandoUsuarioDesde!, cfg.fuso)} sem resposta sua`, desde: r.aguardandoUsuarioDesde! });
+      aguardando.push({ codigo: '', clienteId: c.id, cliente: c.nome, texto: `espera há ${dias} ${dias === 1 ? 'dia' : 'dias'}`, motivo: `última mensagem do cliente em ${diaLocal(r.aguardandoUsuarioDesde!, cfg.fuso)} sem resposta sua`, desde: r.aguardandoUsuarioDesde! });
     } else if (estado === 'follow_up_devido') {
       f++;
-      followups.push({ codigo: `F${f}`, cliente: c.nome, texto: `tentativa ${r.tentativas} de ${cfg.maxTentativas}`, motivo: `seu último contato foi em ${diaLocal(r.ultimaMensagemMinhaEm!, cfg.fuso)} e venceu o prazo de ${cfg.intervaloDiasUteis} dias úteis` });
+      followups.push({ codigo: `F${f}`, clienteId: c.id, cliente: c.nome, texto: `tentativa ${r.tentativas} de ${cfg.maxTentativas}`, motivo: `seu último contato foi em ${diaLocal(r.ultimaMensagemMinhaEm!, cfg.fuso)} e venceu o prazo de ${cfg.intervaloDiasUteis} dias úteis` });
     } else if (estado === 'ativo' || estado === 'sem_resposta_nunca' || estado === 'desconsiderado') {
       semNovidade++;
     }
     const sinais = db.prepare('SELECT tipo FROM sinais_potencial WHERE cliente_id = ? AND em BETWEEN ? AND ?').all(c.id, janela.inicio, janela.fim) as { tipo: string }[];
     if (sinais.length) {
       pot++;
-      potencial.push({ codigo: `P${pot}`, cliente: c.nome, texto: sinais[0]!.tipo.replaceAll('_', ' '), motivo: 'sinal registrado no dia anterior' });
+      potencial.push({ codigo: `P${pot}`, clienteId: c.id, cliente: c.nome, texto: sinais[0]!.tipo.replaceAll('_', ' '), motivo: 'sinal registrado no dia anterior' });
     }
   }
   aguardando.sort((x, y) => x.desde - y.desde);
   aguardando.forEach((x) => { a++; x.codigo = `A${a}`; });
 
+  const duvidas = db.prepare("SELECT d.id, d.texto, cl.nome FROM duvidas d JOIN clientes cl ON cl.id = d.cliente_id WHERE d.estado = 'aberta' ORDER BY d.id LIMIT 3").all() as { id: number; texto: string; nome: string }[];
   const n = (sql: string) => (db.prepare(sql).get(janela.inicio, janela.fim) as { n: number }).n;
   return {
     tipo: 'diario',
     titulo: tituloDiario(agora, cfg.fuso),
     resumo: aguardando.length ? `${aguardando.length} cliente(s) aguardam resposta sua. Comece por ${aguardando[0]!.cliente}.` : 'Nenhum cliente aguardando resposta sua.',
     aguardando: aguardando.map(({ desde: _d, ...i }) => i),
-    hoje: [], followups, potencial, reunioes: [], pedro: [], novos: [], aprendizado: [],
+    hoje: hojeItens, followups, potencial, reunioes: [], pedro: [], novos: [], aprendizado: duvidas.map((d) => `Dúvida sobre ${d.nome}: ${d.texto}`), duvidasIds: duvidas.map((d) => d.id),
     numeros: {
       mensagens: n("SELECT COUNT(*) AS n FROM mensagens WHERE tipo != 'ignorada' AND enviada_em BETWEEN ? AND ?"),
       audios: n("SELECT COUNT(*) AS n FROM mensagens WHERE tipo = 'audio' AND enviada_em BETWEEN ? AND ?"),

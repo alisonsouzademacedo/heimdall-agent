@@ -46,9 +46,13 @@ test('processos externos: so ambiente.ts (comandos fixos); nunca eval', () => {
 });
 
 test('a tela local nao tem caminho para envio, apagamento nem aprendizado', () => {
-  for (const f of ['onboarding/servidor.ts', 'onboarding/ambiente.ts', 'onboarding/recursos.ts', 'onboarding/passos.ts']) {
+  for (const f of ['onboarding/servidor.ts', 'onboarding/ambiente.ts', 'onboarding/recursos.ts', 'onboarding/passos.ts', 'onboarding/painel.ts']) {
     assert.doesNotMatch(codigo(f), /from '\.\.?\/(\.\.\/)?(envio|apagar|aprendizado|backup)\.ts'/, f);
   }
+});
+
+test('backup-copia.ts so copia: nao importa o porteiro de apagar (e por isso a tela e a ponte podem usa-lo)', () => {
+  assert.doesNotMatch(codigo('backup-copia.ts'), /from '\.\/(apagar|envio|aprendizado|backup)\.ts'/);
 });
 
 test('DELETE FROM e DROP so aparecem em apagar.ts (apagar dados tem um unico porteiro)', () => {

@@ -12,6 +12,8 @@ export async function principal(raiz: string = process.cwd()): Promise<void> {
   const dados = join(raiz, 'data');
   mkdirSync(dados, { recursive: true });
   const banco = abrirBanco(join(dados, 'acervo.sqlite'));
+  // A tela, o listener e os outros processos usam o MESMO arquivo: WAL e espera por trava (como em apps/listener/src/iniciar.ts).
+  banco.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
   migrar(banco);
   const codigo = randomBytes(12).toString('base64url');
   const preferida = Number(process.env.HEIMDALL_PORTA ?? 8765);

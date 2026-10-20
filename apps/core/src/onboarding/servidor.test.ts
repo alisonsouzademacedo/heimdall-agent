@@ -165,14 +165,14 @@ test('metodos estranhos e rotas inexistentes', async () => {
   } finally { await c.fim(); }
 });
 
-test('estado lista os 12 passos; so o ambiente esta pronto; persiste no banco', async () => {
+test('estado lista os 12 passos; so os passos com acao real estao prontos (lista exata, atualizada a cada passo ligado); persiste no banco', async () => {
   const c = await subir();
   try {
     const cookie = await entrar(c);
     const e = JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto);
     assert.equal(e.passos.length, 12);
     assert.deepEqual(e.passos.map((p: { id: string }) => p.id), PASSOS.map((p) => p.id));
-    assert.equal(PASSOS.filter((p) => p.pronto).length, 1);
+    assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'sincronizar', 'extrair', 'selfchat', 'agenda', 'backup', 'pronto']);
     assert.ok(e.passos.every((p: { estado: string }) => p.estado === 'pendente'));
     assert.equal(e.bugsAbertos, 0);
   } finally { await c.fim(); }
@@ -282,4 +282,73 @@ test('a pagina nao carrega o codigo nem a sessao', async () => {
     const home = (await req(c, 'GET', '/', { Cookie: cookie })).texto + (await req(c, 'GET', '/app.js', { Cookie: cookie })).texto;
     assert.ok(!home.includes(CODIGO) && !home.includes(cookie.split('=')[1]!));
   } finally { await c.fim(); }
+});
+
+// ---- painel e acoes dos passos (QR, progresso, self-chat, agenda) ----
+test('sem sessao, o painel e as acoes novas sao recusados', async () => {
+  const c = await subir();
+  try {
+    assert.equal((await req(c, 'GET', '/api/painel')).status, 401);
+    for (const p of ['/api/selfchat/testar', '/api/agenda/testar']) assert.equal((await req(c, 'POST', p, POST('hm=' + 'a'.repeat(64)), '{}')).status, 401, p);
+  } finally { await c.fim(); }
+});
+
+test('GET /api/painel devolve o QR (so como desenho seguro), o progresso e a fila; o numero do dono nunca sai inteiro', async () => {
+  const c = await subir();
+  try {
+    const cookie = await entrar(c);
+    const { gravarQr, gravarHistorico } = await import('../whatsapp/estado.ts');
+    gravarQr(c.banco, 'QR', 1, '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>');
+    gravarHistorico(c.banco, { progresso: 42, ultima: false }, 2);
+    const r = await req(c, 'GET', '/api/painel', { Cookie: cookie });
+    assert.equal(r.status, 200);
+    const j = JSON.parse(r.texto);
+    assert.match(j.whatsapp.qrSvg, /^<svg/); assert.equal(j.whatsapp.historico.progresso, 42);
+    assert.equal(r.texto.includes('"qr":'), false, 'o texto bruto do QR (que e um acesso a conta) nunca sai; so o desenho');
+  } finally { await c.fim(); }
+});
+
+test('POST /api/selfchat/testar enfileira UMA mensagem de teste na caixa de saida; repetir enquanto aguarda nao duplica', async () => {
+  const c = await subir();
+  try {
+    const cookie = await entrar(c);
+    const h = { ...POST(cookie), Origin: `http://127.0.0.1:${c.s.porta}` };
+    assert.deepEqual(JSON.parse((await req(c, 'POST', '/api/selfchat/testar', h, '{}')).texto), { pedido: true });
+    assert.deepEqual(JSON.parse((await req(c, 'POST', '/api/selfchat/testar', h, '{}')).texto), { pedido: false });
+    assert.equal((c.banco.prepare("SELECT COUNT(*) AS n FROM saida WHERE chave LIKE 'teste:selfchat:%'").get() as { n: number }).n, 1);
+  } finally { await c.fim(); }
+});
+
+test('POST /api/agenda/testar gera diario e semanal de teste agora (so na caixa de saida) e marca o passo "agenda" verde se cabem em uma tela', async () => {
+  const c = await subir();
+  try {
+    const cookie = await entrar(c);
+    const h = { ...POST(cookie), Origin: `http://127.0.0.1:${c.s.porta}` };
+    const r = await req(c, 'POST', '/api/agenda/testar', h, '{}');
+    assert.equal(r.status, 200);
+    assert.deepEqual(JSON.parse(r.texto).relatorios.map((x: { tipo: string; cabe: boolean }) => [x.tipo, x.cabe]), [['diario', true], ['semanal', true]]);
+    assert.equal((c.banco.prepare("SELECT estado FROM onboarding_etapas WHERE passo = 'agenda'").get() as { estado: string }).estado, 'verde');
+    assert.equal((c.banco.prepare("SELECT COUNT(*) AS n FROM saida WHERE tipo = 'relatorio'").get() as { n: number }).n, 2);
+  } finally { await c.fim(); }
+});
+
+test('backup pela tela: escolhe o destino (validado), faz o primeiro backup agora e mostra no painel; destino ruim e recusado com o motivo', async () => {
+  const c = await subir();
+  const { mkdtempSync, existsSync } = await import('node:fs');
+  const pasta = mkdtempSync(join(tmpdir(), 'heimdall-tela-bk-'));
+  try {
+    const cookie = await entrar(c);
+    const h = { ...POST(cookie), Origin: `http://127.0.0.1:${c.s.porta}` };
+    const ruim = await req(c, 'POST', '/api/backup/destino', h, JSON.stringify({ pasta: join(pasta, 'nao-existe') }));
+    assert.equal(ruim.status, 400); assert.match(JSON.parse(ruim.texto).erro, /existe|pasta/i);
+    for (const corpo of [{}, { pasta: 5 }, { pasta: 'relativa/x' }]) assert.equal((await req(c, 'POST', '/api/backup/destino', h, JSON.stringify(corpo))).status, 400, JSON.stringify(corpo));
+    assert.equal((await req(c, 'POST', '/api/backup/agora', h, '{}')).status, 400, 'sem destino nao ha o que fazer');
+    assert.equal((await req(c, 'POST', '/api/backup/destino', h, JSON.stringify({ pasta }))).status, 200);
+    const r = JSON.parse((await req(c, 'POST', '/api/backup/agora', h, '{}')).texto);
+    assert.equal(r.resultado, 'feito');
+    assert.equal(existsSync(join(pasta, 'acervo-2026-10-19.sqlite')), true, 'o dia vem do relogio injetado da tela (19/10/2026 17:00 em SP)');
+    const painel = JSON.parse((await req(c, 'GET', '/api/painel', { Cookie: cookie })).texto);
+    assert.equal(painel.backup.destino, pasta); assert.ok(painel.backup.ultimoEm > 0);
+    assert.equal((c.banco.prepare("SELECT estado FROM onboarding_etapas WHERE passo = 'backup'").get() as { estado: string }).estado, 'verde');
+  } finally { await c.fim(); rmSync(pasta, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });
