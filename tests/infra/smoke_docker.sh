@@ -13,8 +13,13 @@ fail() { echo "  [FALHOU] $1"; FAIL=$((FAIL+1)); }
 if ! docker info >/dev/null 2>&1; then
   echo "  [NAO EXECUTADO] Docker nao esta rodando"; [ "${REQUIRE_DOCKER:-0}" = 1 ] && exit 1; exit 0
 fi
+# Python 3 de verdade (no Windows "python3" costuma ser o atalho falso da Loja: usa o primeiro que RODA; LICOES.md, 2026-10-19)
+PY=""; for c in python3 python py; do if "$c" -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)" >/dev/null 2>&1; then PY="$c"; break; fi; done
+[ -n "$PY" ] || { echo "  [NAO EXECUTADO] Python 3 nao encontrado"; [ "${REQUIRE_DOCKER:-0}" = 1 ] && exit 1; exit 0; }
 for porta in 8888 9999; do
-  if (exec 3<>/dev/tcp/127.0.0.1/$porta) 2>/dev/null; then echo "  [NAO EXECUTADO] porta $porta ocupada (instalacao real rodando?): nao vou interferir"; exit 0; fi
+  if "$PY" -I -c "import socket,sys; s=socket.socket(); s.settimeout(2)
+try: s.connect(('127.0.0.1', $porta)); sys.exit(0)
+except OSError: sys.exit(1)"; then echo "  [NAO EXECUTADO] porta $porta ocupada (instalacao real rodando?): nao vou interferir"; exit 0; fi
 done
 
 T=$(mktemp -d)
@@ -90,18 +95,18 @@ SERV="postgres hindsight"; [ "${SMOKE_HERMES:-0}" = 1 ] && SERV="$SERV hermes"
 docker compose -p "$PROJ" --env-file "$ENVF" -f infra/compose/docker-compose.yml up -d --no-build $SERV >"$T/up.txt" 2>&1 && pass "docker compose up ($SERV)" || { fail "docker compose up falhou"; tail -8 "$T/up.txt"; }
 OK=0; i=0
 while [ $i -lt 60 ]; do
-  if python3 -I -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8888/health', timeout=5).status == 200 else 1)" 2>/dev/null; then OK=1; break; fi
+  if "$PY" -I -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8888/health', timeout=5).status == 200 else 1)" 2>/dev/null; then OK=1; break; fi
   i=$((i+1)); sleep 5
 done
 [ "$OK" = 1 ] && pass "Hindsight respondeu /health em 127.0.0.1:8888 (baixou e carregou o modelo multilingue)" || { fail "Hindsight nao ficou saudavel em 5 min"; docker compose -p "$PROJ" --env-file "$ENVF" -f infra/compose/docker-compose.yml logs --tail 15 hindsight 2>&1 | cut -c1-200; }
 # a porta publicada so atende no loopback: tentar pelo IP da rede deve ser recusado
-IPREDE=$(python3 -I -c "
+IPREDE=$("$PY" -I -c "
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 try: s.connect(('192.0.2.1', 9)); print(s.getsockname()[0])
 except OSError: pass")
 if [ -n "$IPREDE" ] && [ "$IPREDE" != "127.0.0.1" ]; then
-  python3 -I -c "
+  "$PY" -I -c "
 import socket,sys
 s = socket.socket(); s.settimeout(3)
 try: s.connect(('$IPREDE', 8888)); sys.exit(1)
@@ -111,7 +116,7 @@ docker compose -p "$PROJ" --env-file "$ENVF" -f infra/compose/docker-compose.yml
 docker compose -p "$PROJ" --env-file "$ENVF" -f infra/compose/docker-compose.yml exec -T hindsight sh -c 'touch /home/hindsight/chatgpt/t && touch /home/hindsight/.cache/t' >/dev/null 2>&1 && pass "volumes do login e do cache de modelos sao gravaveis pelo usuario do Hindsight" || fail "volume nao gravavel (o login do ChatGPT e o download do modelo falhariam)"
 if [ "${SMOKE_HERMES:-0}" = 1 ]; then
   KEY=$(grep '^API_SERVER_KEY=' "$ENVF" | cut -d= -f2)
-  OKH=0; i=0; while [ $i -lt 36 ]; do python3 -I -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8642/health', timeout=5).status == 200 else 1)" 2>/dev/null && { OKH=1; break; }; i=$((i+1)); sleep 5; done
+  OKH=0; i=0; while [ $i -lt 36 ]; do "$PY" -I -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8642/health', timeout=5).status == 200 else 1)" 2>/dev/null && { OKH=1; break; }; i=$((i+1)); sleep 5; done
   [ "$OKH" = 1 ] && pass "Hermes respondeu /health em 127.0.0.1:8642" || fail "Hermes nao respondeu /health"
   : "$KEY"
 fi

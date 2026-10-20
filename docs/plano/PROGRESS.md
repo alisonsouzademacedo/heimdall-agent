@@ -3,18 +3,17 @@
 Memória do projeto para qualquer IA que continue o trabalho. **Atualize ao fim de cada passo.** Não apague entradas antigas.
 
 ## Estado atual (2026-10-20)
-- Fase: **planejamento quase completo**; nenhum código de produto escrito; spike não iniciado.
-- Decisões: `docs/plano/README.md` (D1 a D28), riscos e pendências no mesmo arquivo.
-- Documentação em `docs/` (cada pasta tem `INDEX.md`): hermes-agent, baileys, openai-codex (inclui `siwc/`), hindsight (inclui `compose-recipes/`), whisper, faster-whisper, markitdown, krayin, docker, claude-code, antigravity.
-- Regras para IAs: `AGENTS.md` e `CLAUDE.md` (importa o `AGENTS.md`). Erros resolvidos: `docs/plano/LICOES.md`.
-- Roteiros de instalação (documentados, **não executados**): `docs/plano/runbooks/` (8 arquivos + testes de fumaça).
-- Verificador de ambiente: `spike/preflight/` (`.sh` validado no Linux; `.ps1` e macOS **não validados**; mínimo de disco 30 GB, recomendado 50 GB).
-- Modelos de cadastro: `templates/cadastro/` (o cadastro real será por formulário na tela de onboarding).
-- Branch de trabalho: `claude/affectionate-albattani-rtz8mu`. O repositório remoto **não tem branch `main`**, então não há PR aberto.
+- Fase: **spike em andamento no Windows do dono.** Núcleo em TypeScript (`apps/core`) com testes, instalador de um clique, tela de configuração (só o passo "Ambiente" funciona), perfis por tipo de computador, imagens e Compose do Heimdall (`infra/`, `apps/media-worker/`). Docker Desktop funciona na máquina do dono (WSL ativado pelo caminho manual, `docs/wsl/`). Memória medida em 8 GB (`fase-1-orcamento-de-memoria.md`, seção 5d).
+- **Onde roda (D30):** primeiro no Windows, até validar (relatório diário e semanal gerados, tudo o que o Baileys puxar absorvido, aprendizado em andamento); depois migra para a VPS já contextualizado (`fase-2-migracao-para-vps.md`).
+- Decisões: `docs/plano/README.md` (D1 a D30), riscos e pendências no mesmo arquivo.
+- Documentação em `docs/` (cada pasta tem `INDEX.md`): hermes-agent, baileys, openai-codex, hindsight, whisper, faster-whisper, markitdown, krayin, docker, wsl, claude-code, antigravity, strix.
+- Regras para IAs: `AGENTS.md` e `CLAUDE.md`. Erros resolvidos: `docs/plano/LICOES.md`.
+- Testes: `sh tests/run-all.sh` (conjuntos de shell), `cd apps/core && npm test`, `python tests/core/mutacao.py` (quebras propositais), `tests/infra/smoke_docker.sh` (Docker real, pesado, manual).
+- Ramo de revisão aberto: PR em rascunho (sem merge até o dono pedir); `main` tem o instalador, a tela e os ajustes do PR nº 4.
 
 ## Próximo passo
-**Item 2 do planejamento: prompts e personalidade do Heimdall** (`SOUL.md` de assessor, modelos dos relatórios diário e semanal, extração de compromissos e sinais de potencial, catálogo de objeções, skills iniciais). **Decisão de 2026-10-20:** não pedir exemplos de fala ao usuário; o Heimdall aprende o jeito dele e cria a própria personalidade ao processar o conteúdo (ver `docs/plano/fase-1-personalidade-e-prompts.md`). Escrever o `SOUL.md` mínimo, o perfil de voz aprendido e o passo de calibração com aprovação no self-chat.
-Depois, na ordem: 3 aprendizado (como as correções viram melhoria); 4 backup, restauração e rotina dos 90 dias; 5 atualização de versões; 6 testes e integração contínua; 7 troca de provedor para a versão comercial (chave de API do cliente). Então o spike.
+**Validar no Windows do dono (a IA local, passo a passo, parando antes do que exige o dono):** (1) confirmar `infra/` com `tests/infra/smoke_docker.sh` no Windows (runbook 08, itens 18 a 20); (2) subir o Compose com um `.env` feito de `infra/compose/modelo.env`; (3) logins (ChatGPT no Hermes e no Hindsight) e QR do WhatsApp; (4) construir os passos 2 a 12 da tela; (5) carga inicial do Baileys; (6) relatório diário e semanal (o semanal ainda não existe no código); (7) aprendizado. Só então a migração para a VPS.
+**Decisão do dono ainda pendente:** limites dos perfis (8/12/24 GB, 30 GB de disco); como ganhar folga em 8 GB.
 
 ## Pendências do usuário
 - ~~Fornecer PDFs de exemplo e áudios de teste~~: **dispensado pelo dono (2026-10-19)**; o teste usa PDFs e áudios reais já extraídos do WhatsApp dele, pela tela de onboarding.
@@ -59,6 +58,13 @@ Depois, na ordem: 3 aprendizado (como as correções viram melhoria); 4 backup, 
 |---|---|---|---|---|
 | typescript | 5.9.3 (`^5.6.0`) | `apps/core`, só desenvolvimento | verificar tipos (`tsc --noEmit`); o Node 22.18+ executa TypeScript sozinho | Apache-2.0 |
 | @types/node | 22.20.5 (`^22.0.0`) | `apps/core`, só desenvolvimento | tipos do Node | MIT |
+| faster-whisper | 1.2.1 | `apps/media-worker` (imagem Docker) | transcrição de áudio em CPU | MIT (conferido no pacote instalado) |
+| av (PyAV) | 16.1.0 | `apps/media-worker` | decodificar áudio; a versão 19 quebra o faster-whisper 1.2.1 | BSD-3-Clause (conferido) |
+| markitdown | 0.1.8 (`[pdf]`) | `apps/media-worker` | PDF para .md | MIT (conferido) |
+| demais pacotes do trabalhador de áudio | exatos em `apps/media-worker/requirements.txt` (42 linhas) | idem | dependências transitivas fixadas | não conferidas uma a uma |
+| hindsight-api-slim `[local-onnx]` | 1.0.0 | `infra/hindsight` | embeddings ONNX multilíngues no Hindsight | MIT (conferido) |
+| transformers / safetensors | 5.15.1 / 0.8.0 | `infra/hindsight` | exigidos pelo extra `local-onnx` | Apache-2.0 (transformers, conferido); safetensors: metadado vazio, **não verificado** |
+| imagens Docker | `ghcr.io/vectorize-io/hindsight:1.0.0-slim`, `pgvector/pgvector:pg18`, `nousresearch/hermes-agent:v0.22.2`, `python:3.12-slim` | `infra/`, `apps/media-worker` | serviços do Heimdall | licenças das imagens do pgvector e do Hermes **não verificadas** |
 Sem dependências de execução no núcleo (teste em `tests/core/check_core.sh`). Usa recursos embutidos do Node: `node:test`, `node:sqlite` (marcado como experimental pelo Node), `node:crypto`. Ferramentas externas só no ambiente de teste, nunca no produto: skill UI UX Pro Max (MIT, só no scratchpad), Strix (a instalar no notebook com confirmação do dono).
 
 ## Divergências entre documentação e realidade
