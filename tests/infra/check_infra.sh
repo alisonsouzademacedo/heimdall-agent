@@ -61,6 +61,17 @@ grep -qE 'HINDSIGHT_API_TEXT_SEARCH_EXTENSION_NATIVE_LANGUAGE:\s*portuguese' "$D
 grep -qE 'HINDSIGHT_API_RERANKER_PROVIDER:\s*rrf' "$DC" && pass "reranker rrf (sem modelo; qualidade em portugues nao medida)" || fail "reranker nao e rrf"
 grep -qE 'HINDSIGHT_API_LLM_PROVIDER:\s*\$\{HINDSIGHT_API_LLM_PROVIDER:\?' "$DC" && pass "provedor de LLM do Hindsight sempre explicito (nao fica 'none' por esquecimento)" || fail "provedor de LLM do Hindsight nao e obrigatorio"
 grep -qE 'API_SERVER_ENABLED:\s*"?true' "$DC" && grep -qE 'command:\s*gateway run' "$DC" && pass "Hermes com gateway run e API ligada" || fail "Hermes sem gateway run/API"
+# O Hermes so liga o MCP do Hindsight na partida; se o Hindsight ainda estiver carregando o modelo, o servidor MCP fica "estacionado" e nao volta (descoberto no smoke_hermes.sh, 2026-10-20).
+python3 -I - "$DC" <<'PY' && pass "o Hermes espera o Hindsight ficar SAUDAVEL (healthcheck + depends_on service_healthy)" || fail "o Hermes nao espera o Hindsight ficar saudavel (o MCP da memoria fica estacionado)"
+import re, sys
+t = open(sys.argv[1], encoding='utf-8').read()
+def bloco(nome):
+    m = re.search(r'^  %s:\n(.*?)(?=^  \S|\Z)' % nome, t, re.S | re.M)
+    return m.group(1) if m else ''
+h, r = bloco('hindsight'), bloco('hermes')
+ok = 'healthcheck:' in h and '/health' in h and re.search(r'depends_on:\s*\n\s+hindsight:\s*\n\s+condition:\s*service_healthy', r) is not None
+sys.exit(0 if ok else 1)
+PY
 grep -qE 'hermes-data:/opt/data' "$DC" && grep -qE '^volumes:' "$DC" && grep -qE '^\s+hermes-data:' "$DC" && pass "estado do Hermes em volume NOMEADO (nao pasta do Windows: corrompe o state.db)" || fail "estado do Hermes nao esta em volume nomeado"
 grep -qE 'pg_data:/var/lib/postgresql/18/docker' "$DC" && pass "Postgres 18 em volume nomeado, no caminho da receita oficial" || fail "Postgres fora do volume nomeado da receita"
 grep -qE 'internal:\s*true' "$DC" && pass "existe uma rede interna (sem internet) para o trabalhador de audio" || fail "sem rede interna"

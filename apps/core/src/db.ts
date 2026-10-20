@@ -215,6 +215,29 @@ CREATE TABLE mensagem_midia (
 );
 CREATE INDEX idx_mensagem_midia_midia ON mensagem_midia (midia_id);
 `
+  },
+  {
+    versao: 6,
+    descricao: 'caixa de saida para o dono (sem coluna de destino: so existe o self-chat)',
+    sql: `
+-- Todo texto que o Heimdall escreve para o dono passa por aqui e e entregue pelo listener, que so envia ao self-chat (regra 1).
+-- Proposital: NAO existe coluna de destino. "chave" evita gerar o mesmo relatorio duas vezes.
+CREATE TABLE saida (
+  id INTEGER PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('resposta','relatorio','aviso')),
+  texto TEXT NOT NULL,
+  chave TEXT UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','enviada','abandonada')),
+  tentativas INTEGER NOT NULL DEFAULT 0,
+  proximo_em INTEGER NOT NULL DEFAULT 0,
+  wa_msg_id TEXT,
+  erro TEXT,
+  criada_em INTEGER NOT NULL,
+  enviada_em INTEGER
+);
+CREATE INDEX idx_saida_pronta ON saida (estado, proximo_em, id);
+CREATE INDEX idx_saida_wa ON saida (wa_msg_id);
+`
   }
 ];
 

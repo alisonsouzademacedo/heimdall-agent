@@ -1,0 +1,30 @@
+// Processo da ponte: responde ao dono no self-chat usando o Hermes local. Uso: node apps/ponte/src/iniciar.ts
+// Variaveis: HERMES_URL (padrao http://127.0.0.1:8642), HERMES_API_KEY (ou API_SERVER_KEY em infra/compose/.env), HEIMDALL_DATA.
+import { readFileSync, existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { abrirBanco, migrar } from '../../core/src/db.ts';
+import { iniciarPonte, lerChaveDoEnv } from './ciclo.ts';
+import { criarClienteHermes } from './hermes.ts';
+
+export function iniciar(raiz: string = process.cwd()) {
+  const pastaDados = resolve(raiz, process.env.HEIMDALL_DATA ?? 'data');
+  const banco = abrirBanco(join(pastaDados, 'acervo.sqlite'));
+  banco.prepare('PRAGMA journal_mode = WAL').get();
+  banco.prepare('PRAGMA busy_timeout = 5000').get();
+  migrar(banco);
+  const envArquivo = join(raiz, 'infra', 'compose', '.env');
+  const chave = process.env.HERMES_API_KEY ?? (existsSync(envArquivo) ? lerChaveDoEnv(readFileSync(envArquivo, 'utf8')) : null);
+  if (!chave) throw new Error('Falta a chave da API do Hermes (HERMES_API_KEY ou API_SERVER_KEY em infra/compose/.env)');
+  const hermes = criarClienteHermes({ url: process.env.HERMES_URL ?? 'http://127.0.0.1:8642', chave });
+  const p = iniciarPonte({ banco, portas: { hermes, apagarArquivo: () => { /* o apagamento de arquivos reais entra com o gravador de midia (passo da tela) */ } } });
+  return { hermes, parar: async () => { p.parar(); await p.terminou; banco.close(); }, terminou: p.terminou };
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const p = iniciar();
+  console.log('Heimdall: ponte do self-chat ligada (so responde ao dono; fala so com o Hermes local).');
+  const sair = () => { void p.parar().then(() => process.exit(0)); };
+  process.on('SIGINT', sair);
+  process.on('SIGTERM', sair);
+}

@@ -99,3 +99,24 @@ test('sem conexao o laco espera: a midia fica na fila, sem gastar tentativa', as
     ver.close(); await l.parar();
   } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });
+
+test('caixa de saida: o texto pendente sai pelo Envio so quando ha conexao, vai so ao dono e fica marcado como enviado com o id do WhatsApp', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'heimdall-listener-'));
+  try {
+    const f = conexaoFalsa();
+    const l = await iniciarListener({ pastaDados: dir, abrir: async () => ({ sock: f.sock as never, salvarCreds: async () => {} }), esperar: async () => {}, intervaloEntregaMs: 10, intervaloBaixarMs: 10 });
+    const ver = abrirBanco(join(dir, 'acervo.sqlite'));
+    ver.exec('PRAGMA busy_timeout = 5000');
+    const { enfileirarSaida, MARCA } = await import('../../core/src/saida.ts');
+    enfileirarSaida(ver, 'relatorio', 'bom dia, dono');
+    await new Promise((r) => setTimeout(r, 120));
+    assert.deepEqual(f.enviados, [], 'sem conexao nada sai');
+    await f.emitir({ 'connection.update': { connection: 'open' } });
+    for (let i = 0; i < 50 && f.enviados.length === 0; i++) await new Promise((r) => setTimeout(r, 40));
+    assert.deepEqual(f.enviados, [{ jid: '5511900000000@s.whatsapp.net', c: { text: `${MARCA}bom dia, dono` } }]);
+    for (let i = 0; i < 50 && (ver.prepare("SELECT estado FROM saida").get() as { estado: string }).estado !== 'enviada'; i++) await new Promise((r) => setTimeout(r, 40));
+    assert.deepEqual({ ...(ver.prepare('SELECT estado, wa_msg_id FROM saida').get() as Record<string, string>) }, { estado: 'enviada', wa_msg_id: 'E1' });
+    ver.close();
+    await l.parar();
+  } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
+});

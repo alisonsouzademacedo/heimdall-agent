@@ -51,13 +51,22 @@ services:
       - hindsight_chatgpt:/home/hindsight/chatgpt
       - hindsight_modelos:/home/hindsight/.cache
     networks: [interna]
+    # O Hermes so conecta o MCP da memoria na partida: o Hindsight precisa estar PRONTO antes (carregar o modelo de embeddings leva minutos).
+    healthcheck:
+      test: ["CMD", "/app/api/.venv/bin/python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8888/health', timeout=5).status == 200 else 1)"]
+      interval: 10s
+      timeout: 8s
+      retries: 40
+      start_period: 120s
     mem_limit: 2g
 
   hermes:
     image: nousresearch/hermes-agent:v0.22.2
     restart: unless-stopped
     command: gateway run
-    depends_on: [hindsight]
+    depends_on:
+      hindsight:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8642:8642"
     environment:

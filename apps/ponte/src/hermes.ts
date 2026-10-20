@@ -1,0 +1,60 @@
+// Cliente da API local do Hermes (OpenAI-compativel): POST /v1/chat/completions com Bearer e X-Hermes-Session-Key
+// (docs/hermes-agent/user-guide/features/api-server.md). Unica ponta de rede da ponte para o Hermes. So 127.0.0.1/localhost, so texto.
+// O corpo de erro do servidor NUNCA entra na mensagem de erro (pode repetir conteudo de conversa).
+
+export class RespostaVazia extends Error {
+  constructor() { super('hermes_resposta_vazia'); this.name = 'RespostaVazia'; }
+}
+
+export interface OpcoesHermes { url: string; chave: string; tempoLimiteMs?: number; fetchImpl?: typeof fetch }
+export interface OpcoesPergunta { sessao: string; sistema?: string }
+export interface ClienteHermes {
+  perguntar(texto: string, opcoes: OpcoesPergunta): Promise<string>;
+  saude(): Promise<boolean>;
+}
+
+const LOCAL = new Set(['127.0.0.1', 'localhost']);
+
+export function criarClienteHermes(o: OpcoesHermes): ClienteHermes {
+  let base: URL;
+  try { base = new URL(o.url); } catch { throw new Error('Endereco do Hermes invalido'); }
+  if (base.protocol !== 'http:') throw new Error('O Hermes local usa http (nao https)');
+  if (!LOCAL.has(base.hostname)) throw new Error('O Hermes so pode ser local (127.0.0.1 ou localhost)');
+  if (typeof o.chave !== 'string' || o.chave.length < 8) throw new Error('A chave da API do Hermes precisa de pelo menos 8 caracteres');
+  const f = o.fetchImpl ?? fetch;
+  const limite = o.tempoLimiteMs ?? 5 * 60_000;
+  const cab = { authorization: `Bearer ${o.chave}` };
+
+  return {
+    async perguntar(texto, op) {
+      if (op.sessao.length === 0 || op.sessao.length > 256 || /[\r\n\0]/.test(op.sessao)) throw new Error('chave de sessao invalida (1 a 256 caracteres, sem quebra de linha)');
+      const messages: { role: string; content: string }[] = [];
+      if (op.sistema) messages.push({ role: 'system', content: op.sistema });
+      messages.push({ role: 'user', content: texto });
+      let r: Response;
+      try {
+        r = await f(new URL('/v1/chat/completions', base), {
+          method: 'POST',
+          headers: { ...cab, 'content-type': 'application/json', 'x-hermes-session-key': op.sessao },
+          body: JSON.stringify({ model: 'hermes-agent', stream: false, messages }),
+          signal: AbortSignal.timeout(limite)
+        });
+      } catch {
+        throw new Error('hermes_sem_resposta');
+      }
+      if (!r.ok) throw new Error(`hermes_http_${r.status}`);
+      type Corpo = { choices?: { message?: { content?: unknown }; finish_reason?: string }[] };
+      let j: Corpo;
+      try { j = (await r.json()) as Corpo; } catch { throw new Error('hermes_resposta_ilegivel'); }
+      const escolha = j?.choices?.[0];
+      // "cancelled" (turno interrompido) e "error" (falha) nao sao respostas: nada disso vai ao dono.
+      if (escolha?.finish_reason === 'error' || escolha?.finish_reason === 'cancelled') throw new Error(`hermes_${escolha.finish_reason}`);
+      const conteudo = escolha?.message?.content;
+      if (typeof conteudo !== 'string' || conteudo.trim() === '') throw new RespostaVazia();
+      return conteudo.trim();
+    },
+    async saude() {
+      try { return (await f(new URL('/health', base), { headers: cab, signal: AbortSignal.timeout(Math.min(limite, 10_000)) })).ok; } catch { return false; }
+    }
+  };
+}

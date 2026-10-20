@@ -27,6 +27,7 @@ echo "$JOB" | grep -q 'tests/instalar/check_docker_reparo.sh' && pass "roda chec
 echo "$JOB" | grep -q 'working-directory: apps/listener' && pass "o job do Windows testa o listener (Baileys instala e roda no Windows)" || fail "o job do Windows nao testa o listener"
 echo "$JOB" | grep -q 'working-directory: apps/trabalhos' && pass "o job do Windows testa o executor (trabalhos)" || fail "o job do Windows nao testa o executor"
 echo "$JOB" | grep -q 'working-directory: apps/memoria' && pass "o job do Windows testa a memoria (Hindsight)" || fail "o job do Windows nao testa a memoria"
+echo "$JOB" | grep -q 'working-directory: apps/ponte' && pass "o job do Windows testa a ponte (Hermes)" || fail "o job do Windows nao testa a ponte"
 echo "$JOB" | grep -q 'fail-fast: false' && pass "uma versao de Node falhar nao esconde a outra (fail-fast: false)" || fail "fail-fast nao desligado"
 # O dono recebe os arquivos em LF (ZIP do GitHub): o runner nao deve converter para CRLF antes do checkout
 echo "$JOB" | grep -q 'core.autocrlf false' && pass "autocrlf desligado antes do checkout (arquivos em LF, como no ZIP do dono)" || fail "autocrlf nao desligado antes do checkout"

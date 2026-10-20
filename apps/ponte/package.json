@@ -1,0 +1,16 @@
+{
+  "name": "heimdall-ponte",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Ponte entre o self-chat do dono e o Hermes (API local 127.0.0.1:8642), geração da configuração do Hermes e agendamento dos relatórios. Sem WhatsApp, sem processos externos.",
+  "scripts": {
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": { "node": ">=22.18" },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}

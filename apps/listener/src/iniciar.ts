@@ -11,6 +11,7 @@ import { ligarEventos, type SocketMinimo } from './ligar.ts';
 import { criarTransporte, type SocketEnvio } from './transporte.ts';
 import { supervisionar } from './supervisor.ts';
 import { iniciarBaixador } from './ciclo.ts';
+import { iniciarEntregador } from './entrega.ts';
 import { criarGravadorMidia } from './arquivos.ts';
 import type { PortasBaixar } from '../../core/src/midia.ts';
 import type { MensagemBaileys } from '../../core/src/whatsapp/traduzir.ts';
@@ -28,6 +29,7 @@ export interface OpcoesListener {
   /** Como baixar uma midia a partir do descritor (padrao: a funcao do Baileys, baixar.ts). */
   baixador?: (c: ConexaoAberta) => (descritor: string) => Promise<Uint8Array>;
   intervaloBaixarMs?: number;
+  intervaloEntregaMs?: number;
   /** Espera propria do laco de download (nao reutiliza a do supervisor). */
   esperarBaixar?: (ms: number) => Promise<void>;
 }
@@ -49,6 +51,7 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
   let conexaoAberta: ConexaoAberta | null = null; // so existe enquanto o estado e "conectado": e quando o laco de midia pode trabalhar
   // Mensagens que NOS enviamos (so ao dono): guardadas para o reenvio pedido pelo WhatsApp (getMessage).
   const enviadas = new Map<string, unknown>();
+  let ultimoIdEnviado: string | null = null;
   const getMessage = async (key: { id?: string | null }) => (key.id ? (enviadas.get(key.id) as { message?: unknown } | undefined)?.message : undefined);
 
   const supervisor = supervisionar({
@@ -71,6 +74,7 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
             envio = criarEnvio(e.dono, criarTransporte(c.sock, e.dono, {
               aoEnviar: (r) => {
                 const id = (r as { key?: { id?: string } } | undefined)?.key?.id;
+                ultimoIdEnviado = id ?? null;
                 if (id) { enviadas.set(id, r); if (enviadas.size > 200) enviadas.delete(enviadas.keys().next().value!); }
               }
             }));
@@ -102,10 +106,11 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
       return { baixar: b, gravarMidia };
     }
   });
+  const entregador = iniciarEntregador({ banco, envio: () => envio, ultimoId: () => ultimoIdEnviado, intervaloMs: o.intervaloEntregaMs });
   await supervisor.iniciar();
   return {
     envio: () => envio,
-    parar: async () => { baixador.parar(); supervisor.parar(); envio = null; conexaoAberta = null; await baixador.terminou; banco.close(); },
+    parar: async () => { baixador.parar(); entregador.parar(); supervisor.parar(); envio = null; conexaoAberta = null; await Promise.all([baixador.terminou, entregador.terminou]); banco.close(); },
     banco
   };
 }
