@@ -37,7 +37,9 @@ after(async () => {
     filho.kill();
     await Promise.race([morreu, new Promise((r) => setTimeout(r, 10_000))]);
   }
-  if (pasta) rmSync(pasta, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
+  // Limpeza da pasta temporaria e "melhor esforco": no Windows o antivirus ou o proprio sistema podem segurar o arquivo por alguns segundos
+  // (EBUSY/EPERM) mesmo com o processo morto, e isso nao tem nada a ver com o que o teste verifica (as afirmacoes ja passaram). O sistema limpa a pasta temporaria depois.
+  if (pasta) { try { rmSync(pasta, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 }); } catch { /* pasta temporaria: fica para o sistema */ } }
 });
 
 // O inicio do instalador tambem mostra o PERFIL ideal deste computador (a mesma funcao da tela: perfil.ts), antes do endereco da tela.
