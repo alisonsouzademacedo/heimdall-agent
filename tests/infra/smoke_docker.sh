@@ -13,9 +13,7 @@ fail() { echo "  [FALHOU] $1"; FAIL=$((FAIL+1)); }
 if ! docker info >/dev/null 2>&1; then
   echo "  [NAO EXECUTADO] Docker nao esta rodando"; [ "${REQUIRE_DOCKER:-0}" = 1 ] && exit 1; exit 0
 fi
-# Python 3 de verdade (no Windows "python3" costuma ser o atalho falso da Loja: usa o primeiro que RODA; LICOES.md, 2026-10-19)
-PY=""; for c in python3 python py; do if "$c" -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)" >/dev/null 2>&1; then PY="$c"; break; fi; done
-[ -n "$PY" ] || { echo "  [NAO EXECUTADO] Python 3 nao encontrado"; [ "${REQUIRE_DOCKER:-0}" = 1 ] && exit 1; exit 0; }
+. tests/infra/lib_docker.sh
 for porta in 8888 9999; do
   if "$PY" -I -c "import socket,sys; s=socket.socket(); s.settimeout(2)
 try: s.connect(('127.0.0.1', $porta)); sys.exit(0)
@@ -34,20 +32,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# ---- construcao (com certificado extra SO quando a rede inspeciona TLS) ----
-build() { # build <contexto> <tag> <imagem-base>
-  ctx="$1"; tag="$2"; base="$3"
-  if [ -n "${HEIMDALL_CA_PEM:-}" ] && [ -r "$HEIMDALL_CA_PEM" ]; then
-    mkdir -p "$T/ca" && cp "$HEIMDALL_CA_PEM" "$T/ca/ca.crt"
-    printf 'FROM %s\nUSER root\nCOPY ca.crt /usr/local/share/ca-certificates/ca.crt\nRUN cat /usr/local/share/ca-certificates/ca.crt >> /etc/ssl/certs/ca-certificates.crt\nENV UV_SYSTEM_CERTS=1 SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt PIP_CERT=/etc/ssl/certs/ca-certificates.crt\n' "$base" > "$T/ca/Dockerfile"
-    docker build -q -t "smoke-base-$(echo "$tag" | tr ':/' '__')" "$T/ca" >/dev/null || return 1
-    docker buildx build --load --build-context "$base=docker-image://smoke-base-$(echo "$tag" | tr ':/' '__')" -t "$tag" "$ctx" >"$T/build.txt" 2>&1
-  else
-    docker build -t "$tag" "$ctx" >"$T/build.txt" 2>&1
-  fi
-}
-build infra/hindsight heimdall-hindsight:1.0.0-onnx ghcr.io/vectorize-io/hindsight:1.0.0-slim && pass "imagem do Hindsight construida (slim + local-onnx)" || { fail "imagem do Hindsight nao construiu"; tail -5 "$T/build.txt"; }
-build apps/media-worker heimdall-media-worker:1.0.0 python:3.12-slim && pass "imagem do trabalhador de audio construida (modelo small embutido)" || { fail "imagem do trabalhador de audio nao construiu"; tail -5 "$T/build.txt"; }
+construir infra/hindsight heimdall-hindsight:1.0.0-onnx ghcr.io/vectorize-io/hindsight:1.0.0-slim && pass "imagem do Hindsight construida (slim + local-onnx)" || { fail "imagem do Hindsight nao construiu"; tail -5 "$T/build.txt"; }
+construir apps/media-worker heimdall-media-worker:1.0.0 python:3.12-slim && pass "imagem do trabalhador de audio construida (modelo small embutido)" || { fail "imagem do trabalhador de audio nao construiu"; tail -5 "$T/build.txt"; }
 
 # ---- Hindsight: o que o runbook 02 descobriu ----
 docker run --rm heimdall-hindsight:1.0.0-onnx /app/api/.venv/bin/python -c "import onnxruntime, transformers, safetensors" >/dev/null 2>&1 && pass "Hindsight: onnxruntime, transformers e safetensors importam (o provedor onnx pode subir)" || fail "Hindsight: faltam pacotes do onnx"

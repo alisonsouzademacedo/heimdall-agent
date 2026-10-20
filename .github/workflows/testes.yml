@@ -51,6 +51,12 @@ jobs:
           npm ci --no-audit --no-fund
           npm test
           npx tsc --noEmit
+      - name: Testes do executor (trabalhos)
+        working-directory: apps/trabalhos
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+          npx tsc --noEmit
       - name: Instalador - virtualizacao e WSL
         run: REQUIRE_PWSH=1 sh tests/instalar/check_ambiente_windows.sh
       - name: Instalador - assinatura digital (so roda no Windows)

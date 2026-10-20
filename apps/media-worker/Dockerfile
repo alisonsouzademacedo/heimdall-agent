@@ -9,7 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 ARG MODELO_WHISPER=small
 RUN python -c "from faster_whisper.utils import download_model; download_model('${MODELO_WHISPER}', output_dir='/modelos/${MODELO_WHISPER}')" \
  && chown -R trabalhador:trabalhador /modelos
+COPY transcrever.py converter_pdf.py /app/
 USER trabalhador
 # Nada de internet em tempo de execucao: o modelo vem do disco da imagem.
 ENV HF_HUB_OFFLINE=1 HEIMDALL_MODELO_WHISPER=/modelos/${MODELO_WHISPER}
-CMD ["python", "-c", "print('trabalhador de audio pronto: use docker compose run --rm media-worker <comando>')"]
+# Uso (um arquivo por vez): docker compose run --rm media-worker python /app/transcrever.py /entrada/<arquivo>   ou   .../converter_pdf.py
+CMD ["python", "-c", "print('trabalhador de audio pronto: use docker compose run --rm media-worker python /app/transcrever.py /entrada/<arquivo>')"]

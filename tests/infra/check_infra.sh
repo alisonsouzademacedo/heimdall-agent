@@ -36,6 +36,19 @@ grep -qE 'pip install .*-r +requirements\.txt|pip install .*--requirement' "$MW"
 grep -qE 'download_model' "$MW" && pass "o modelo do Whisper e baixado na construcao da imagem (a rede interna nao tera internet)" || fail "modelo do Whisper nao embutido na imagem"
 grep -qE '^USER ' "$MW" && ! grep -E '^USER ' "$MW" | tail -1 | grep -qE 'root' && pass "trabalhador de audio roda sem root" || fail "trabalhador de audio roda como root"
 
+# ---- comandos do trabalhador de audio e PDF (apps/media-worker) ----
+TR=apps/media-worker/transcrever.py
+CP=apps/media-worker/converter_pdf.py
+[ -s "$TR" ] && [ -s "$CP" ] && pass "existem transcrever.py e converter_pdf.py" || fail "faltam transcrever.py e/ou converter_pdf.py"
+grep -qE '^COPY .*transcrever\.py.*converter_pdf\.py|^COPY .*converter_pdf\.py.*transcrever\.py' "$MW" && pass "a imagem leva os dois comandos" || fail "a imagem nao copia os comandos"
+grep -q 'local_files_only=True' "$TR" && pass "transcrever: modelo so do disco (local_files_only=True), nunca da internet" || fail "transcrever pode baixar modelo da internet"
+grep -qE "language=['\"]pt['\"]" "$TR" && grep -q 'vad_filter=True' "$TR" && grep -q 'condition_on_previous_text=False' "$TR" && pass "transcrever: portugues, filtro de silencio e sem repeticao em cadeia" || fail "transcrever sem os parametros combinados (language, vad_filter, condition_on_previous_text)"
+grep -q 'convert_local' "$CP" && ! grep -qE '\.convert\(' "$CP" && pass "PDF: so convert_local (a forma estreita que o README manda; nunca convert() com URL)" || fail "PDF usa convert() em vez de convert_local()"
+grep -q '%PDF-' "$CP" && pass "PDF: confere o cabecalho %PDF- (um arquivo qualquer com nome .pdf nao vira \"texto\")" || fail "PDF: nao confere o cabecalho %PDF-"
+grep -q 'enable_plugins=False' "$CP" && pass "PDF: plugins desligados" || fail "PDF com plugins ligados"
+grep -q "/entrada/" "$TR" && grep -q "/entrada/" "$CP" && pass "os dois comandos so aceitam arquivos dentro de /entrada" || fail "comando aceita caminho fora de /entrada"
+! grep -qE '^import (requests|urllib|http|socket)|^from (requests|urllib|http|socket)' "$TR" "$CP" && pass "os comandos nao importam bibliotecas de rede" || fail "comando importa biblioteca de rede"
+
 # ---- Compose: leitura do arquivo ----
 grep -qE '^\s*privileged:\s*true' "$DC" && fail "container privilegiado" || pass "nenhum container privilegiado"
 grep -qE 'network_mode:\s*host' "$DC" && fail "network_mode: host" || pass "nenhum network_mode: host"

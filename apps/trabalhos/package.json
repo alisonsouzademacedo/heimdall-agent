@@ -1,0 +1,16 @@
+{
+  "name": "heimdall-trabalhos",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Executor dos trabalhos pesados (transcrever audio, converter PDF) pelo contêiner media-worker. Sem internet e sem WhatsApp.",
+  "scripts": {
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": { "node": ">=22.18" },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}

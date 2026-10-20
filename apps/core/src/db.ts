@@ -202,6 +202,19 @@ CREATE TABLE sync_hindsight (
   PRIMARY KEY (tipo, referencia)
 );
 `
+  },
+  {
+    versao: 5,
+    descricao: 'varias mensagens podem apontar para o mesmo arquivo de midia',
+    sql: `
+-- "midias" tem UM registro por arquivo (sha256 unico). O mesmo PDF ou audio reenviado em outras conversas e processado uma vez e todas
+-- as mensagens recebem o texto: cada mensagem aponta para o arquivo por aqui. (Sem DROP/DELETE: so apagar.ts apaga dados.)
+CREATE TABLE mensagem_midia (
+  mensagem_id INTEGER PRIMARY KEY REFERENCES mensagens(id),
+  midia_id INTEGER NOT NULL REFERENCES midias(id)
+);
+CREATE INDEX idx_mensagem_midia_midia ON mensagem_midia (midia_id);
+`
   }
 ];
 

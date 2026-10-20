@@ -92,3 +92,16 @@ Sem dependências de execução no núcleo (teste em `tests/core/check_core.sh`)
 
 ## 2026-10-20 — Token do Strix revogado
 O token de API do Strix que o dono colou na conversa (nome "Claude", todos os escopos) foi **revogado** via `strix cloud tokens revoke` (resposta `success`; chamada seguinte: "Token revoked"). Nada foi gravado no repositório. O aplicativo do Strix no GitHub continua instalado até o dono removê-lo (Settings do repositório). Strix segue **não adotado**.
+
+## 2026-10-20 — Código que liga as peças: escuta do WhatsApp, fila de mídia e executor (feito na nuvem, sem WhatsApp real)
+**O que foi feito (tudo com teste):**
+- `apps/core/src/whatsapp/` (traduzir, escuta, identidade, estado): traduz o que o Baileys entrega em ações do acervo (registrar, editar, apagar com marca, ignorar), sem enviar nada.
+- `apps/core/src/fila.ts` e `midia.ts`: fila durável no banco (migrações v4 e v5), 5 tentativas com espera crescente, recuperação do que travou, mídia repetida guardada uma vez (hash).
+- `apps/listener/` (Baileys 7.0.0-rc14): ligação dos eventos, supervisor de reconexão, transporte que só aceita o self-chat do dono, baixar mídia (tenta de novo em 404/410 e confere o hash), gravar em `data/midias/`.
+- `apps/trabalhos/`: executor que roda o trabalhador de áudio/PDF no Docker (sem rede, sem root, pasta de entrada somente leitura, sem shell).
+- Testes novos: `tests/listener/check_listener.sh`, `tests/trabalhos/check_trabalhos.sh`; mutações do WhatsApp em `tests/core/mutacao.py`; CI do Windows roda listener e executor.
+**Testes:** núcleo 275 passam; listener 54 passam (tsc limpo); executor 28 passam (tsc limpo); `smoke_midia.sh` (Docker real) tudo passou.
+**Dependências novas (pinadas):** `@whiskeysockets/baileys` 7.0.0-rc14 (MIT; **versão release candidate**, risco registrado), `pino` 9.14.0 (MIT), mais cerca de 70 pacotes transitivos no `package-lock.json` do listener; `@types/node` no executor (só desenvolvimento).
+**Documentação lida (inteira):** `docs/baileys/` (introduction, quickstart, faq, concepts, authentication, messaging, advanced, migration) e o código instalado `lib/Utils/process-message.js` para revogar/editar.
+**Não verificado (precisa do dono e do WhatsApp real):** QR, sincronização real do histórico, áudio real, apagar/editar ao vivo, instalação das dependências do Baileys no Windows (CI vai mostrar), `smoke_*.sh` no Windows.
+**Próximo passo:** cliente do Hindsight, configuração e ponte do Hermes, relatório semanal, servidor MCP e passos 2 a 12 da tela.

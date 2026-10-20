@@ -10,10 +10,13 @@ import { gravarEstado, gravarQr, gravarHistorico, gravarContagem } from '../../c
 import { ligarEventos, type SocketMinimo } from './ligar.ts';
 import { criarTransporte, type SocketEnvio } from './transporte.ts';
 import { supervisionar } from './supervisor.ts';
+import { iniciarBaixador } from './ciclo.ts';
+import { criarGravadorMidia } from './arquivos.ts';
+import type { PortasBaixar } from '../../core/src/midia.ts';
 import type { MensagemBaileys } from '../../core/src/whatsapp/traduzir.ts';
 
 export interface ConexaoAberta {
-  sock: SocketMinimo & SocketEnvio & { end(erro?: Error): void };
+  sock: SocketMinimo & SocketEnvio & { end(erro?: Error): void; updateMediaMessage(msg: unknown): Promise<unknown> };
   salvarCreds: () => Promise<void>;
 }
 
@@ -22,6 +25,11 @@ export interface OpcoesListener {
   abrir?: (pastaAuth: string, getMessage: (key: { id?: string | null; remoteJid?: string | null }) => Promise<unknown>) => Promise<ConexaoAberta>;
   serializar?: (m: MensagemBaileys) => string;
   esperar?: (ms: number) => Promise<void>;
+  /** Como baixar uma midia a partir do descritor (padrao: a funcao do Baileys, baixar.ts). */
+  baixador?: (c: ConexaoAberta) => (descritor: string) => Promise<Uint8Array>;
+  intervaloBaixarMs?: number;
+  /** Espera propria do laco de download (nao reutiliza a do supervisor). */
+  esperarBaixar?: (ms: number) => Promise<void>;
 }
 
 export function abrirAcervo(pastaDados: string): Banco {
@@ -38,6 +46,7 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
   const abrir = o.abrir ?? (await import('./conectar.ts')).abrirConexao as NonNullable<OpcoesListener['abrir']>;
   const serializar = o.serializar ?? (o.abrir ? undefined : (await import('./conectar.ts')).serializarMensagem);
   let envio: Envio | null = null;
+  let conexaoAberta: ConexaoAberta | null = null; // so existe enquanto o estado e "conectado": e quando o laco de midia pode trabalhar
   // Mensagens que NOS enviamos (so ao dono): guardadas para o reenvio pedido pelo WhatsApp (getMessage).
   const enviadas = new Map<string, unknown>();
   const getMessage = async (key: { id?: string | null }) => (key.id ? (enviadas.get(key.id) as { message?: unknown } | undefined)?.message : undefined);
@@ -58,21 +67,47 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
         aoEstado: (e) => {
           gravarEstado(banco, e);
           if (e.estado === 'conectado') {
+            conexaoAberta = c;
             envio = criarEnvio(e.dono, criarTransporte(c.sock, e.dono, {
               aoEnviar: (r) => {
                 const id = (r as { key?: { id?: string } } | undefined)?.key?.id;
                 if (id) { enviadas.set(id, r); if (enviadas.size > 200) enviadas.delete(enviadas.keys().next().value!); }
               }
             }));
-          } else if (e.estado !== 'aviso') envio = null;
+          } else if (e.estado !== 'aviso') { envio = null; conexaoAberta = null; }
           aoEstadoSup(e);
         }
       });
       return { encerrar: () => { try { c.sock.end(undefined); } catch { /* ja fechado */ } } };
     }
   });
+  const gravarMidia = criarGravadorMidia(o.pastaDados);
+  const criarBaixadorPadrao = async (c: ConexaoAberta) => {
+    const { criarBaixador } = await import('./baixar.ts');
+    return criarBaixador({ reuploadRequest: (m) => c.sock.updateMediaMessage(m as never) as never });
+  };
+  const baixadores = new WeakMap<ConexaoAberta, (d: string) => Promise<Uint8Array>>();
+  const baixador = iniciarBaixador({
+    banco,
+    intervaloMs: o.intervaloBaixarMs,
+    esperar: o.esperarBaixar,
+    portas: (): PortasBaixar | null => {
+      const c = conexaoAberta;
+      if (!c) return null;
+      let b = baixadores.get(c);
+      if (!b) {
+        b = o.baixador ? o.baixador(c) : (d) => criarBaixadorPadrao(c).then((f) => f(d));
+        baixadores.set(c, b);
+      }
+      return { baixar: b, gravarMidia };
+    }
+  });
   await supervisor.iniciar();
-  return { envio: () => envio, parar: () => { supervisor.parar(); envio = null; banco.close(); }, banco };
+  return {
+    envio: () => envio,
+    parar: () => { baixador.parar(); supervisor.parar(); envio = null; conexaoAberta = null; void baixador.terminou.then(() => banco.close()); },
+    banco
+  };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

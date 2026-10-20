@@ -74,3 +74,15 @@ test('v4: fila durável, origem das mídias e sincronização com o Hindsight ex
   assert.throws(() => db.prepare("INSERT INTO sync_hindsight (tipo, referencia, document_id, hash_conteudo, sincronizado_em) VALUES ('conversa', 'a', 'doc-a2', 'h2', 2)").run(), /UNIQUE/);
   assert.equal(migrar(db), MIGRACOES.at(-1)!.versao, 'rodar de novo nao muda nada');
 });
+
+test('v5: mensagem_midia liga varias mensagens ao MESMO arquivo (o mesmo PDF reenviado a varios clientes e processado uma vez)', () => {
+  const db = abrirBanco(); migrar(db);
+  const t = (db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]).map((r) => r.name);
+  assert.ok(t.includes('mensagem_midia'));
+  db.exec("INSERT INTO conversas (jid, tipo) VALUES ('a@s.whatsapp.net','dm')");
+  for (const id of ['m1', 'm2']) db.prepare("INSERT INTO mensagens (conversa_id, wa_msg_id, de_mim, enviada_em, tipo, origem_evento) VALUES (1, ?, 0, 1, 'pdf', 'notify')").run(id);
+  db.prepare("INSERT INTO midias (mensagem_id, tipo, caminho, sha256, bytes, criada_em) VALUES (1, 'pdf', 'data/midias/aa.pdf', 'aa', 10, 1)").run();
+  db.prepare('INSERT INTO mensagem_midia (mensagem_id, midia_id) VALUES (1, 1)').run();
+  db.prepare('INSERT INTO mensagem_midia (mensagem_id, midia_id) VALUES (2, 1)').run();
+  assert.throws(() => db.prepare('INSERT INTO mensagem_midia (mensagem_id, midia_id) VALUES (2, 1)').run(), /UNIQUE|PRIMARY/);
+});
