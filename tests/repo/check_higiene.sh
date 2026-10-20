@@ -28,6 +28,24 @@ for par in 'tests/run-all.sh:lf' 'iniciar.cmd:crlf'; do
   if [ "$atual" = "$esperado" ]; then pass ".gitattributes fixa eol=$esperado em $arq"; else fail ".gitattributes nao fixa eol=$esperado em $arq (esta: $atual)"; fi
 done
 
+# 2d. Texto do projeto sem caracteres de controle nem UTF-8 invalido. Caso real (2026-10-20): o PowerShell comeu "`v" e "`0" dentro de aspas
+# duplas ao gravar docs/plano/runbooks/08-testes-de-fumaca.md ("vmmemWSL" virou "<VT>mmemWSL"; "runbooks/0" virou <NUL>) e o Git passou a tratar o arquivo como binario.
+# Vale para o que e nosso (nao para docs/<ferramenta>/, que sao copias de terceiros).
+CTRL=$(git ls-files -- . ':!docs/antigravity' ':!docs/baileys' ':!docs/claude-code' ':!docs/docker' ':!docs/faster-whisper' ':!docs/hermes-agent' ':!docs/hindsight' ':!docs/krayin' ':!docs/markitdown' ':!docs/openai-codex' ':!docs/strix' ':!docs/whisper' ':!docs/wsl' | python3 -I -c "
+import sys,re
+bad=[]
+for p in sys.stdin.read().split('\n'):
+    if not p or p.endswith(('.png','.jpg','.ico','.gif','.lock')): continue
+    try: b=open(p,'rb').read()
+    except OSError: continue
+    try: t=b.decode('utf-8')
+    except UnicodeDecodeError: bad.append(p+' (UTF-8 invalido)'); continue
+    for n,l in enumerate(t.split('\n'),1):
+        if re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f]',l): bad.append('%s:%d'%(p,n))
+print('\n'.join(bad[:10]))
+")
+if [ -z "$CTRL" ]; then pass "nenhum caractere de controle nem UTF-8 invalido nos arquivos do projeto"; else fail "caractere de controle ou UTF-8 invalido:"; echo "$CTRL"; fi
+
 # 3. Padroes de chave nos arquivos versionados (fora de docs/, que sao copias de terceiros)
 PAT='sk-[A-Za-z0-9_-]{20,}|fc-[a-f0-9]{24,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(API_KEY|TOKEN|SECRET)=[A-Za-z0-9]{20,}'
 HITS=$(git ls-files | grep -v '^docs/' | grep -v '^tests/repo/' | xargs grep -lE "$PAT" 2>/dev/null)
