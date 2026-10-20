@@ -172,6 +172,7 @@ function executarCliente(db: Banco, clienteId: number, agora: number, apagarArqu
     db.prepare('DELETE FROM sinais_potencial WHERE cliente_id = ?').run(clienteId);
     db.prepare('DELETE FROM ajustes_cliente WHERE cliente_id = ?').run(clienteId);
     db.prepare('DELETE FROM feedback WHERE cliente_id = ?').run(clienteId);
+    db.prepare('DELETE FROM duvidas WHERE cliente_id = ?').run(clienteId);
     if (msgs.length) db.exec(`DELETE FROM mensagens WHERE id IN (${msgs.join(',')})`);
     // Conversas DM do cliente que ficaram vazias. O que foi enviado ao Hindsight sobre elas tambem tem de ser esquecido la (processo da memoria).
     const candidatas = (db.prepare(`SELECT id FROM conversas WHERE tipo = 'dm' AND jid IN (${DO_CLIENTE.jids})`).all(clienteId) as { id: number }[]).map((r) => r.id);
@@ -185,6 +186,9 @@ function executarCliente(db: Banco, clienteId: number, agora: number, apagarArqu
       }
       db.prepare("DELETE FROM sync_hindsight WHERE tipo = 'conv' AND referencia LIKE ?").run(`conv:${id}:%`);
       db.prepare("DELETE FROM fila WHERE tipo = 'retain' AND referencia LIKE ?").run(`conv:${id}:%`);
+      // Controle da extracao (nada disso vive no Hindsight): sai junto, para nao reprocessar conversa que nao existe mais.
+      db.prepare("DELETE FROM sync_hindsight WHERE tipo = 'ext' AND referencia LIKE ?").run(`ext:${id}:%`);
+      db.prepare("DELETE FROM fila WHERE tipo = 'extrair' AND referencia LIKE ?").run(`ext:${id}:%`);
     }
     db.prepare(`DELETE FROM contato_jids WHERE contato_id IN (${DO_CLIENTE.contatos})`).run(clienteId);
     db.prepare('DELETE FROM contatos WHERE cliente_id = ?').run(clienteId);

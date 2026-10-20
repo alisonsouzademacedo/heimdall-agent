@@ -76,3 +76,18 @@ test('textoAceitavel: funcao pura (titulo, limite de palavras, codigos conhecido
   assert.equal(textoAceitavel(ok, 'diario', ['A1']), false, 'P1 nao existe no pacote');
   assert.equal(textoAceitavel('# T\n\n## Potencial\n- x\n\n## Aguardando você\n- y', 'diario', []), false, 'secoes fora da ordem');
 });
+
+test('diario traz compromisso vencido (H1) e duvida aberta; a duvida aparece UMA vez so (nao se repete no dia seguinte); modelo que cita H1 e aceito, H9 inventado nao', async () => {
+  const db = banco();
+  db.prepare("INSERT INTO compromissos (cliente_id, tipo, titulo, data_hora, estado) VALUES (1, 'proposta', 'Enviar proposta', '2026-10-20', 'marcado')").run();
+  db.prepare("INSERT INTO duvidas (cliente_id, texto, criada_em) VALUES (1, 'O prazo era 30 dias?', 1)").run();
+  assert.equal(await gerarRelatorioDoDia(db, semHermes, QUARTA_8H), 'diario');
+  const [s] = saidas(db);
+  assert.match(s!.texto, /\*\*H1\*\* Alfa/);
+  assert.match(s!.texto, /O prazo era 30 dias\?/);
+  assert.equal((db.prepare("SELECT estado FROM duvidas").get() as { estado: string }).estado, 'respondida');
+  await gerarRelatorioDoDia(db, semHermes, QUARTA_8H + 86_400_000);
+  assert.doesNotMatch(saidas(db)[1]!.texto, /O prazo era 30 dias/);
+  assert.equal(textoAceitavel('# T\n\n## Hoje / atrasados\n- H1 x', 'diario', ['H1']), true);
+  assert.equal(textoAceitavel('# T\n\n## Hoje / atrasados\n- H9 x', 'diario', ['H1']), false);
+});

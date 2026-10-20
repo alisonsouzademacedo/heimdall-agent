@@ -188,3 +188,26 @@ test('o corte nunca deixa menos de 3 itens em "Aguardando você", mesmo que a te
   assert.deepEqual(curto.aguardando.map((x) => x.codigo), ['A1', 'A2', 'A3']);
   assert.equal(curto.semNovidade, 2);
 });
+
+test('pacote: compromissos vencidos ou de hoje viram "Hoje / atrasados" (H1...), os futuros e os cancelados ficam de fora; duvidas abertas viram "Aprendizado"', () => {
+  const db = abrirBanco(); migrar(db);
+  db.prepare("INSERT INTO clientes (id, nome) VALUES (1, 'Alfa'), (2, 'Beta')").run();
+  db.prepare("UPDATE contatos SET cliente_id = 0 WHERE 0").run();
+  for (const [i, id] of [1, 2].entries()) {
+    db.prepare("INSERT INTO contatos (id, cliente_id, papel) VALUES (?, ?, 'cliente')").run(i + 1, id);
+  }
+  const ins = db.prepare('INSERT INTO compromissos (cliente_id, tipo, titulo, data_hora, estado) VALUES (?, ?, ?, ?, ?)');
+  ins.run(1, 'proposta', 'Enviar proposta', '2026-10-20', 'marcado');       // atrasado
+  ins.run(1, 'reuniao', 'Reuniao', '2026-10-21T14:00', 'marcado');          // hoje
+  ins.run(2, 'retorno', 'Retornar', '2026-10-25', 'marcado');               // futuro
+  ins.run(2, 'proposta', 'Cancelada', '2026-10-20', 'cancelado');           // cancelado
+  ins.run(2, 'proposta', 'Cumprida', '2026-10-20', 'cumprido');             // cumprido
+  for (const t of ['d1', 'd2', 'd3', 'd4']) db.prepare('INSERT INTO duvidas (cliente_id, texto, criada_em) VALUES (1, ?, 1)').run(t);
+  db.prepare("INSERT INTO duvidas (cliente_id, texto, estado, criada_em) VALUES (2, 'ja respondida', 'respondida', 1)").run();
+  const p = montarPacoteDiario(db, AGORA);
+  assert.deepEqual(p.hoje.map((i) => [i.codigo, i.cliente, i.clienteId]), [['H1', 'Alfa', 1], ['H2', 'Alfa', 1]]);
+  assert.match(p.hoje[0]!.texto, /Enviar proposta/);
+  assert.match(p.hoje[0]!.motivo, /20\/10|2026-10-20/);
+  assert.equal(p.aprendizado.length, 3, 'no maximo 3 duvidas por relatorio');
+  assert.ok(p.aprendizado.every((x) => x.includes('Alfa')));
+});

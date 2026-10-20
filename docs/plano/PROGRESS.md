@@ -151,3 +151,11 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 **Revisão de segurança (regra 1):** `sendMessage` só existe em `apps/listener/src/transporte.ts`; nenhum outro processo importa o Baileys; a caixa de saída não tem destino; o Hermes só tem `memory`, `session_search` e o MCP do Hindsight com `recall`/`reflect`; a ponte só apaga arquivo no formato exato das mídias. Pendente por decisão: o `DELETE` de documento é a única chamada de apagar do cliente do Hindsight (teste de arquitetura trava o formato do id).
 **Testes:** núcleo 333 · ponte 38 · memória 18 · listener 62 · executor 28; launcher 20+ verificações; `smoke_hindsight.sh` passou com o `DELETE` de documento.
 **Ainda aberto:** extração de compromissos e sinais por modelo (fila `extrair` sem produtor/consumidor): sem ela as seções "Hoje", "Reuniões" e "Potencial" dos relatórios ficam vazias; aviso dos 90 dias no relatório; botão de restaurar backup (o módulo existe, mas é só pela IA local, de propósito).
+
+## 2026-10-20 (6) — Extração de compromissos e sinais por modelo
+**O que foi feito:** `apps/core/src/extracao.ts` (agenda os dias fechados de conversa de cliente; monta o pedido com as mensagens como DADO; valida a saída do modelo por código; grava compromissos, sinais, "aguardando resposta" e dúvidas; conversa igual não chama o modelo de novo). Migração v8 (`duvidas`). A ponte liga o laço (2 trabalhos por giro, falha do modelo volta para a fila). O diário passou a mostrar **Hoje / atrasados (H1…)** com compromissos vencidos e até 3 **dúvidas** (cada dúvida aparece uma vez). Bug achado pelo teste: apagar um cliente com dúvidas quebrava por chave estrangeira; `apagar.ts` agora também limpa dúvidas e controle da extração.
+**Arquivos lidos:** `AGENTS.md`, `prompts/extracao/compromissos-e-sinais.md`, `.claude/skills/verification-before-completion/SKILL.md` e o código existente de `memoria.ts`/`apagar.ts`/`relatorio.ts`/`agenda.ts`.
+**Testes:** núcleo 345 · ponte 40 (resultado final de todas as checagens no item abaixo). Mutações novas para extração, apagar e relatório.
+**Não verificado:** modelo real em português (depende do login do ChatGPT no Hermes). Códigos H não aceitam correção por mensagem ("H1 resolvido") — só A, F e P; é informativo por ora.
+**Ainda aberto:** aviso dos 90 dias no relatório; rodízio de backups.
+

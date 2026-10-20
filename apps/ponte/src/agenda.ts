@@ -29,7 +29,7 @@ export function textoAceitavel(texto: string, tipo: 'diario' | 'semanal', codigo
   if (typeof texto !== 'string' || !texto.trimStart().startsWith('# ')) return false;
   if (contarPalavras(texto) > (tipo === 'diario' ? MAX_PALAVRAS_DIARIO : MAX_PALAVRAS_SEMANAL)) return false;
   const conhecidos = new Set(codigos);
-  for (const m of texto.matchAll(/\b([AFP]\d{1,3})\b/g)) if (!conhecidos.has(m[1]!)) return false;
+  for (const m of texto.matchAll(/\b([AFPH]\d{1,3})\b/g)) if (!conhecidos.has(m[1]!)) return false;
   const ordem = tipo === 'diario' ? ORDEM_SECOES : ORDEM_SEMANAL;
   let ultimo = -1;
   for (const m of texto.matchAll(/^## (.+)$/gm)) {
@@ -50,7 +50,7 @@ export async function gerarRelatorioDoDia(db: Banco, portas: PortasAgenda, agora
   if (db.prepare('SELECT 1 AS x FROM saida WHERE chave = ?').get(chave)) return null;
 
   const pacote = tipo === 'diario' ? caberEmUmaTela(montarPacoteDiario(db, agora)) : caberSemanal(montarPacoteSemanal(db, agora));
-  const itens: Item[] = [...pacote.aguardando, ...pacote.potencial, ...('followups' in pacote ? pacote.followups : [])];
+  const itens: Item[] = [...pacote.aguardando, ...(pacote.tipo === 'diario' ? pacote.hoje : []), ...pacote.potencial, ...('followups' in pacote ? pacote.followups : [])];
   const reconhecidos = itens.filter((i) => i.clienteId !== undefined).map((i) => ({ codigo: i.codigo, clienteId: i.clienteId! }));
   registrarItensDoRelatorio(db, dia, reconhecidos);
   const deterministico = tipo === 'diario' ? renderizarDiario(pacote as Parameters<typeof renderizarDiario>[0]) : renderizarSemanal(pacote as Parameters<typeof renderizarSemanal>[0]);
@@ -69,5 +69,7 @@ export async function gerarRelatorioDoDia(db: Banco, portas: PortasAgenda, agora
     } catch { /* sem Hermes ou sem cota: vale o texto deterministico */ }
   }
   enfileirarSaida(db, 'relatorio', texto, agora, chave);
+  // Duvida mostrada uma vez nao volta (o dono responde no self-chat, que o Heimdall guarda como memoria).
+  if ('duvidasIds' in pacote && pacote.duvidasIds) for (const id of pacote.duvidasIds) db.prepare("UPDATE duvidas SET estado = 'respondida' WHERE id = ?").run(id);
   return tipo;
 }

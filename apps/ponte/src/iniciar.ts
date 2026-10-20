@@ -24,7 +24,9 @@ export function iniciar(raiz: string = process.cwd()) {
     redator: (pedido) => hermes.perguntar(pedido, { sessao: 'heimdall:relatorios' }),
     instrucoes: { comum: ler('comum.md'), diario: ler('diario.md'), semanal: ler('semanal.md') }
   };
-  const p = iniciarPonte({ agenda, saudeHermes: () => hermes.saude(), banco, portas: { hermes, apagarArquivo: (c) => { criarApagadorDeMidia(pastaDados)(c); } } });
+  const instrucoesExtracao = readFileSync(join(raiz, 'prompts', 'extracao', 'compromissos-e-sinais.md'), 'utf8');
+  const extracao = { porta: { extrair: (pedido: string, sessao: string) => hermes.perguntar(pedido, { sessao }) }, instrucoes: instrucoesExtracao };
+  const p = iniciarPonte({ agenda, extracao, saudeHermes: () => hermes.saude(), banco, portas: { hermes, apagarArquivo: (c) => { criarApagadorDeMidia(pastaDados)(c); } } });
   return { hermes, parar: async () => { p.parar(); await p.terminou; banco.close(); }, terminou: p.terminou };
 }
 

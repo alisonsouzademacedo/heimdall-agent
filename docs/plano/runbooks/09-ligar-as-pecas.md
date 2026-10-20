@@ -36,4 +36,7 @@ Antes de subir os serviços: gerar o `config.yaml` do Hermes e gravá-lo no volu
 - A API do Hermes dá acesso a todas as ferramentas se o config não for aplicado: conferir sempre `smoke_hermes.sh` depois de mudar o config.
 
 ## Não implementado ainda (ver `PROGRESS.md`)
-Servidor MCP próprio do Heimdall (adiado: ver `fase-1-mcp.md`, seção "Decisão de 2026-10-20"), extração de compromissos/sinais por modelo (fila `extrair`), relatórios como arquivo `.md` anexo (hoje saem como texto), os passos Cadastro, Conectar o modelo, Processar, Voz e Backup da tela (os demais passos e o painel já funcionam: QR, progresso, teste do self-chat, relatório de teste, painel).
+Servidor MCP próprio do Heimdall (adiado: ver `fase-1-mcp.md`, seção "Decisão de 2026-10-20"), relatórios como arquivo `.md` anexo (hoje saem como texto), os passos Cadastro, Conectar o modelo, Processar, Voz e Backup da tela (os demais passos e o painel já funcionam: QR, progresso, teste do self-chat, relatório de teste, painel).
+
+## Extração de compromissos e sinais (novo)
+A ponte, a cada giro, agenda os dias fechados de conversas de cliente que mudaram e processa até 2 trabalhos `extrair`, perguntando ao Hermes (sessão `heimdall:extracao:<ref>`) com as regras de `prompts/extracao/compromissos-e-sinais.md`. O código valida a resposta (ids de mensagem reais, confiança mínima 0,6, só o mesmo cliente) antes de gravar. **Não verificado:** a qualidade do modelo em português real; confira nos primeiros dias se os itens "H1…" e as dúvidas do diário fazem sentido e, se não, ajuste o prompt (não o código).

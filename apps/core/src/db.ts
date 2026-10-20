@@ -254,6 +254,21 @@ CREATE TABLE memoria_apagar (
   erro TEXT
 );
 `
+  },
+  {
+    versao: 8,
+    descricao: 'duvidas do Heimdall para o dono (extracao com pouca confianca)',
+    sql: `
+-- Quando o modelo nao tem certeza (audio ruim, data ambigua) a pergunta vai ao dono no relatorio seguinte. So a pergunta curta; sem texto da conversa.
+CREATE TABLE duvidas (
+  id INTEGER PRIMARY KEY,
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id),
+  texto TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'aberta' CHECK (estado IN ('aberta','respondida')),
+  criada_em INTEGER NOT NULL,
+  UNIQUE (cliente_id, texto)
+);
+`
   }
 ];
 

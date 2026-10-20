@@ -258,3 +258,17 @@ test('memoria no Hindsight: os documentos do cliente apagado entram na lista de 
   assert.deepEqual((db.prepare('SELECT referencia FROM sync_hindsight').all() as { referencia: string }[]).map((r) => r.referencia), [`conv:${cB}:2026-10-10`], 'o do Beta segue sincronizado');
   assert.deepEqual((db.prepare("SELECT referencia FROM fila WHERE tipo = 'retain'").all() as { referencia: string }[]).map((r) => r.referencia), [`conv:${cB}:2026-10-12`], 'nao reenvia ao Hindsight o que acabou de ser apagado');
 });
+
+test('extracao: duvidas e controle de extracao do cliente apagado saem (e nao quebram por chave estrangeira); os do outro ficam', () => {
+  const db = novoBanco(); semear(db, 1, 'Alfa', ALFA); semear(db, 2, 'Beta', BETA);
+  const conv = (jid: string) => (db.prepare('SELECT id FROM conversas WHERE jid = ?').get(jid) as { id: number }).id;
+  const cA = conv(ALFA), cB = conv(BETA);
+  for (const c of [1, 2]) db.prepare('INSERT INTO duvidas (cliente_id, texto, criada_em) VALUES (?, ?, 1)').run(c, `duvida ${c}`);
+  for (const c of [cA, cB]) db.prepare("INSERT INTO sync_hindsight (tipo, referencia, document_id, hash_conteudo, sincronizado_em) VALUES ('ext', ?, ?, 'h', 1)").run(`ext:${c}:2026-10-10`, `ext:${c}:2026-10-10`);
+  db.prepare("INSERT INTO fila (tipo, referencia, proximo_em, criado_em, atualizado_em) VALUES ('extrair', ?, 0, 0, 0), ('extrair', ?, 0, 0, 0)").run(`ext:${cA}:2026-10-11`, `ext:${cB}:2026-10-11`);
+  const p = proporApagarCliente(db, 1, AGORA)!;
+  assert.equal(confirmarApagar(db, p.frase, { selfChat: true }, AGORA + 1000, nada).ok, true);
+  assert.deepEqual((db.prepare('SELECT cliente_id AS c FROM duvidas').all() as { c: number }[]).map((r) => r.c), [2]);
+  assert.deepEqual((db.prepare("SELECT referencia FROM sync_hindsight WHERE tipo = 'ext'").all() as { referencia: string }[]).map((r) => r.referencia), [`ext:${cB}:2026-10-10`]);
+  assert.deepEqual((db.prepare("SELECT referencia FROM fila WHERE tipo = 'extrair'").all() as { referencia: string }[]).map((r) => r.referencia), [`ext:${cB}:2026-10-11`]);
+});

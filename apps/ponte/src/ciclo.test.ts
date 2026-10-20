@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { abrirBanco, migrar } from '../../core/src/db.ts';
 import { criarEscuta } from '../../core/src/whatsapp/escuta.ts';
-import { iniciarPonte, lerChaveDoEnv } from './ciclo.ts';
+import { iniciarPonte, lerChaveDoEnv, EXTRACOES_POR_GIRO } from './ciclo.ts';
 import type { PortasAgenda } from './agenda.ts';
 import { lerServicos } from '../../core/src/whatsapp/estado.ts';
 import type { PortasSelfChat } from './selfchat.ts';
@@ -69,4 +69,25 @@ test('laco: faz o backup do dia no destino escolhido (uma vez por dia) sem atrap
     await p.terminou;
     assert.deepEqual(readdirSync(pasta), ['acervo-2026-10-21.sqlite'], 'tres giros, um backup so');
   } finally { rmSync(pasta, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
+});
+
+test('laco: roda a extracao de compromissos (no maximo EXTRACOES_POR_GIRO por giro) e uma falha do modelo nao derruba o laco', async () => {
+  const db = abrirBanco(); migrar(db);
+  const DONO = '5511900000000@s.whatsapp.net';
+  const D10 = Date.UTC(2025, 9, 10, 15, 0, 0);
+  const HOJE = D10 + 30 * 3_600_000;
+  const escuta = criarEscuta(db, { pn: DONO }, { agora: () => HOJE });
+  db.prepare('INSERT INTO clientes (id, nome) VALUES (1, ?)').run('Alfa');
+  for (const [i, jid] of ['5511999990001', '5511999990002', '5511999990003'].entries()) {
+    escuta.mensagens([{ key: { id: `M${i}`, remoteJid: `${jid}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(D10 / 1000) }], 'notify');
+    db.prepare("UPDATE contatos SET cliente_id = 1, papel = 'cliente' WHERE id = (SELECT contato_id FROM contato_jids WHERE jid = ?)").run(`${jid}@s.whatsapp.net`);
+  }
+  const pedidos: string[] = [];
+  const extracao = { instrucoes: 'REGRAS', porta: { extrair: async (_p: string, sessao: string) => { pedidos.push(sessao); throw new Error('modelo fora do ar'); } } };
+  let giros = 0;
+  const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, extracao, agora: () => HOJE, intervaloMs: 1, esperar: async () => { if (++giros >= 1) p.parar(); } });
+  await p.terminou;
+  assert.equal(pedidos.length, EXTRACOES_POR_GIRO, 'dois por giro, nao a fila inteira');
+  assert.ok(pedidos.every((s) => s.startsWith('heimdall:extracao:ext:')));
+  assert.equal((db.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair'").get() as { n: number }).n, 3, 'falha nao perde o trabalho: ele volta para tentar depois');
 });

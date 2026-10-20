@@ -4,12 +4,19 @@ import { processarSelfChat, type PortasSelfChat } from './selfchat.ts';
 import { gerarRelatorioDoDia, type PortasAgenda } from './agenda.ts';
 import { gravarServico } from '../../core/src/whatsapp/estado.ts';
 import { backupDoDia } from '../../core/src/backup-copia.ts';
+import { agendarExtracao, processarExtrair, type PortaExtracao } from '../../core/src/extracao.ts';
+import { pegarProximo } from '../../core/src/fila.ts';
+
+/** Quantos trabalhos de extracao por giro: o modelo e lento; o self-chat nao pode esperar uma fila inteira. */
+export const EXTRACOES_POR_GIRO = 2;
 
 export interface OpcoesPonte {
   banco: Banco;
   portas: PortasSelfChat;
   /** Relatorios diario e semanal; sem isto o laco so cuida do self-chat. */
   agenda?: PortasAgenda;
+  /** Extracao de compromissos e sinais das conversas de cliente (so le o banco; o resultado volta para o banco). */
+  extracao?: { porta: PortaExtracao; instrucoes: string };
   /** Pergunta ao Hermes se esta de pe; o resultado vai para a tabela de configuracao (a tela mostra no painel). */
   saudeHermes?: () => Promise<boolean>;
   agora?: () => number;
@@ -26,6 +33,16 @@ export function iniciarPonte(o: OpcoesPonte): { parar(): void; terminou: Promise
     while (!parado) {
       try { await processarSelfChat(o.banco, o.portas, agora()); } catch { /* erro inesperado nao derruba o laco: tenta no proximo giro */ }
       if (o.agenda) { try { await gerarRelatorioDoDia(o.banco, o.agenda, agora()); } catch { /* idem */ } }
+      if (o.extracao) {
+        try {
+          agendarExtracao(o.banco, agora());
+          for (let i = 0; i < EXTRACOES_POR_GIRO && !parado; i++) {
+            const job = pegarProximo(o.banco, ['extrair'], agora());
+            if (!job) break;
+            await processarExtrair(o.banco, job, o.extracao.porta, o.extracao.instrucoes, agora());
+          }
+        } catch { /* idem */ }
+      }
       try { backupDoDia(o.banco, agora()); } catch { /* o erro fica anotado pelo proprio backupDoDia; o laco segue */ }
       if (o.saudeHermes) { let ok = false; try { ok = await o.saudeHermes(); } catch { /* sem resposta */ } try { gravarServico(o.banco, 'hermes', ok, agora()); } catch { /* idem */ } }
       await esperar(o.intervaloMs ?? 5000);
