@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { abrirBanco, migrar } from '../db.ts';
-import { gravarEstado, lerEstado, gravarQr, lerQr, gravarHistorico, gravarContagem, mascararNumero } from './estado.ts';
+import { gravarEstado, lerEstado, gravarQr, lerQr, gravarHistorico, gravarContagem, mascararNumero, gravarServico, lerServicos } from './estado.ts';
 
 const novo = () => { const db = abrirBanco(); migrar(db); return db; };
 
@@ -65,4 +65,25 @@ test('um aviso (ex.: mensagens que nao puderam ser gravadas) NAO troca o estado 
   assert.deepEqual(e.aviso, { motivo: '2 mensagem(ns) nao puderam ser gravadas', em: 200 });
   gravarEstado(db, { estado: 'conectado', dono: { pn: '5511900000000@s.whatsapp.net' } }, 300);
   assert.equal(lerEstado(db).aviso, null, 'reconectar limpa o aviso');
+});
+
+test('QR com imagem: o desenho (SVG) pronto para a tela fica ao lado do texto do QR, e some junto ao conectar', () => {
+  const db = novo();
+  gravarQr(db, 'QR-STRING', 500, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+  assert.deepEqual(lerQr(db), { qr: 'QR-STRING', em: 500, svg: '<svg xmlns="http://www.w3.org/2000/svg"></svg>' });
+  gravarQr(db, 'QR-SEM-IMAGEM', 600);
+  assert.equal(lerQr(db)!.svg, undefined, 'um QR novo sem imagem nao herda o desenho do anterior');
+  gravarQr(db, 'QR-STRING', 700, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+  gravarEstado(db, { estado: 'conectado', dono: { pn: '5511900000000@s.whatsapp.net' } }, 800);
+  assert.equal(lerQr(db), null);
+});
+
+test('servicos: cada processo anota se o servico com que fala responde; a tela so le', () => {
+  const db = novo();
+  assert.deepEqual(lerServicos(db), {});
+  gravarServico(db, 'hindsight', true, 1000);
+  gravarServico(db, 'hermes', false, 2000);
+  gravarServico(db, 'hindsight', false, 3000);
+  assert.deepEqual(lerServicos(db), { hindsight: { ok: false, em: 3000 }, hermes: { ok: false, em: 2000 } });
+  assert.throws(() => gravarServico(db, 'qualquer coisa', true, 1), /servico/i);
 });

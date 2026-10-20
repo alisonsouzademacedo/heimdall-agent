@@ -12,6 +12,7 @@ import { criarTransporte, type SocketEnvio } from './transporte.ts';
 import { supervisionar } from './supervisor.ts';
 import { iniciarBaixador } from './ciclo.ts';
 import { iniciarEntregador } from './entrega.ts';
+import { qrParaSvg } from './qr.ts';
 import { criarGravadorMidia } from './arquivos.ts';
 import type { PortasBaixar } from '../../core/src/midia.ts';
 import type { MensagemBaileys } from '../../core/src/whatsapp/traduzir.ts';
@@ -52,6 +53,8 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
   // Mensagens que NOS enviamos (so ao dono): guardadas para o reenvio pedido pelo WhatsApp (getMessage).
   const enviadas = new Map<string, unknown>();
   let ultimoIdEnviado: string | null = null;
+  let ultimoQr: string | null = null;
+  let conexaoPendente: ConexaoAberta | null = null; // a conexao que ainda espera o QR ser lido
   const getMessage = async (key: { id?: string | null }) => (key.id ? (enviadas.get(key.id) as { message?: unknown } | undefined)?.message : undefined);
 
   const supervisor = supervisionar({
@@ -59,18 +62,26 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
     aoEstado: () => {},
     criar: async (aoEstadoSup) => {
       const c = await abrir(join(o.pastaDados, 'auth_info'), getMessage as never);
+      conexaoPendente = c;
       const ligacao = ligarEventos({
         sock: c.sock,
         banco,
         salvarCreds: c.salvarCreds,
         serializar,
-        aoQr: (qr) => gravarQr(banco, qr),
+        aoQr: (qr) => {
+          gravarQr(banco, qr);
+          ultimoQr = qr;
+          // O desenho chega depois do texto; so vale se este ainda e o QR atual e se ainda nao conectou (conectar apaga o QR).
+          void qrParaSvg(qr).then((svg) => { if (ultimoQr === qr && c === conexaoPendente) gravarQr(banco, qr, Date.now(), svg); }).catch(() => {});
+        },
         aoHistorico: (h) => gravarHistorico(banco, h),
         aoGravar: () => { const e = ligacao.escuta(); if (e) gravarContagem(banco, e.totais()); },
         aoEstado: (e) => {
           gravarEstado(banco, e);
           if (e.estado === 'conectado') {
             conexaoAberta = c;
+            ultimoQr = null;
+            conexaoPendente = null;
             envio = criarEnvio(e.dono, criarTransporte(c.sock, e.dono, {
               aoEnviar: (r) => {
                 const id = (r as { key?: { id?: string } } | undefined)?.key?.id;

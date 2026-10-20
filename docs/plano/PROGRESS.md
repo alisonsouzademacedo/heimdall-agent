@@ -120,3 +120,17 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 **Não verificado (precisa do dono):** tudo o que depende do WhatsApp real, dos logins e de modelo (extração de fatos no Hindsight, respostas do Hermes, qualidade em português); Windows para os `smoke_*.sh`; os horários reais às 08:00; entrega de relatório como `.md` anexo (hoje sai como texto).
 **Adiado (decisão registrada em `fase-1-mcp.md`):** servidor MCP próprio do Heimdall (o contêiner do Hermes não alcança `127.0.0.1` do computador).
 **Próximo passo:** passos 2 a 12 da tela (QR, progresso, teste de self-chat, relatório de teste, painel) e a extração de compromissos/sinais (fila `extrair`). Roteiro para a IA local: `runbooks/09-ligar-as-pecas.md`.
+
+## 2026-10-20 (3) — Tela de configuração: passos 2 a 12 (parte do servidor e da página)
+**O que a tela passou a fazer (visto num Chromium de verdade, com dados sintéticos; capturas só no ambiente de teste):**
+- **Conectar o WhatsApp:** mostra o QR (desenho SVG gerado pelo listener com a biblioteca `qrcode`; a página só o exibe como imagem, e só enquanto não há conexão). Mostra "conectado, conta terminada em …0000".
+- **Sincronizar, Extrair:** barras de progresso reais lidas do banco (histórico do WhatsApp, fila de download de áudio e PDF), contadores e as etapas ficam verdes sozinhas.
+- **Self-chat:** botão que pede UMA mensagem de teste (vai pela caixa de saída; o listener entrega só ao self-chat) e detecta a resposta do dono (o eco da nossa própria mensagem não conta).
+- **Agenda:** botão que gera o diário e o semanal de teste agora e confere se cabem em uma tela.
+- **Pronto (painel):** estado do WhatsApp, acervo, fila, caixa de saída, memória enviada, último relatório e saúde do Hindsight e do Hermes (cada processo anota a saúde na tabela de configuração; a tela só lê).
+- Corrigido: a tela usava um `style=` no HTML que a própria política de segurança (CSP) bloqueava (erro no console); e **a tela abria o banco sem WAL nem espera por trava**, o que daria "database is locked" com o listener rodando junto.
+**Nova dependência:** `qrcode` 1.5.4 (MIT) e `@types/qrcode` 1.5.6 (MIT, só desenvolvimento) em `apps/listener`; versões exatas e `package-lock.json` do registro oficial do npm.
+**Mudança num teste existente (explicada ao dono):** `servidor.test.ts` afirmava "só 1 passo pronto"; passou a afirmar a **lista exata** dos passos prontos (ambiente, whatsapp, sincronizar, extrair, selfchat, agenda, pronto). É mais rígido, não mais frouxo, mas o dono deve saber que o texto esperado mudou porque o produto mudou.
+**Testes:** núcleo 317 · listener 62 · memória 16 · ponte 35. Mutações novas para o painel (todas pegas depois do teste que faltava para "reconectando").
+**Ainda sem ligação na tela:** Cadastro (formulário), Conectar o modelo (os logins continuam manuais, `runbooks/07-logins.md`), Processar (barra da extração por modelo; depende do login), Voz e personalidade, Backup (o módulo `backup.ts` existe, falta o botão e a escolha do destino).
+**Não verificado:** o QR lido por um celular de verdade; a tela com o listener real escrevendo ao mesmo tempo.

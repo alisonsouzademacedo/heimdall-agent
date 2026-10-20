@@ -46,7 +46,7 @@ test('processos externos: so ambiente.ts (comandos fixos); nunca eval', () => {
 });
 
 test('a tela local nao tem caminho para envio, apagamento nem aprendizado', () => {
-  for (const f of ['onboarding/servidor.ts', 'onboarding/ambiente.ts', 'onboarding/recursos.ts', 'onboarding/passos.ts']) {
+  for (const f of ['onboarding/servidor.ts', 'onboarding/ambiente.ts', 'onboarding/recursos.ts', 'onboarding/passos.ts', 'onboarding/painel.ts']) {
     assert.doesNotMatch(codigo(f), /from '\.\.?\/(\.\.\/)?(envio|apagar|aprendizado|backup)\.ts'/, f);
   }
 });

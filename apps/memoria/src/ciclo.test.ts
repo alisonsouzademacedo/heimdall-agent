@@ -6,6 +6,7 @@ import { criarEscuta } from '../../core/src/whatsapp/escuta.ts';
 import { resumoDaFila } from '../../core/src/fila.ts';
 import type { ItemRetain } from '../../core/src/memoria.ts';
 import { rodarCiclo, iniciarMemoria } from './ciclo.ts';
+import { lerServicos } from '../../core/src/whatsapp/estado.ts';
 
 const D10 = Date.UTC(2025, 9, 10, 15, 0, 0);
 const HOJE = D10 + 30 * 3_600_000;
@@ -40,4 +41,12 @@ test('porta fora do ar: o laco continua vivo e o trabalho fica para depois', asy
   const fora = { reter: async () => { throw new Error('recusou'); } };
   assert.equal(await rodarCiclo(c.db, fora, HOJE), 'reagendada');
   assert.equal(await rodarCiclo(c.db, fora, HOJE + 1000), 'vazio', 'ainda dentro da espera da fila');
+});
+
+test('laco: anota se o Hindsight responde (a tela mostra); erro ao checar vira "sem resposta" e o laco continua', async () => {
+  const c = cenario();
+  const respostas = [true, false];
+  const m = iniciarMemoria({ banco: c.db, porta: c.porta, saudeHindsight: async () => { const r = respostas.shift(); if (r === undefined) throw new Error('caiu'); return r; }, agora: () => HOJE, intervaloMs: 1, esperar: async () => { if (!respostas.length) m.parar(); } });
+  await m.terminou;
+  assert.deepEqual(lerServicos(c.db), { hindsight: { ok: false, em: HOJE } });
 });

@@ -12,6 +12,7 @@ import { PASSOS } from './passos.ts';
 import { resumoDeFalhas, type Verificacao } from './ambiente.ts';
 import type { Perfil } from './perfil.ts';
 import { CSS, JS, HTML } from './recursos.ts';
+import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas } from './painel.ts';
 
 export interface OpcoesServidor {
   banco: Banco;
@@ -107,6 +108,11 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/app.css') return responder(res, 200, 'text/css; charset=utf-8', CSS);
         if (url.pathname === '/app.js') return responder(res, 200, 'application/javascript; charset=utf-8', JS);
         if (url.pathname === '/api/estado') return json(res, 200, estado());
+        if (url.pathname === '/api/painel') {
+          const painel = montarPainel(op.banco, agora());
+          atualizarEtapas(op.banco, painel, agora());
+          return json(res, 200, painel);
+        }
         return json(res, 404, { erro: 'nao encontrado' });
       }
       if (metodo === 'POST') {
@@ -126,6 +132,13 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
           op.banco.prepare("UPDATE onboarding_etapas SET estado = ?, fim = ?, erro = ? WHERE passo = 'ambiente'").run(falhas ? 'vermelho' : 'verde', agora(), falhas || null);
           const perfil = op.perfil ? await op.perfil() : undefined;
           return json(res, 200, perfil ? { verificacoes, ok: !falhas, perfil } : { verificacoes, ok: !falhas });
+        }
+        if (url.pathname === '/api/selfchat/testar') return json(res, 200, { pedido: pedirTesteSelfChat(op.banco, agora()) });
+        if (url.pathname === '/api/agenda/testar') {
+          const relatorios = gerarRelatorioDeTeste(op.banco, agora());
+          const tudoCabe = relatorios.every((r) => r.cabe);
+          op.banco.prepare("UPDATE onboarding_etapas SET estado = ?, fim = ?, erro = ? WHERE passo = 'agenda'").run(tudoCabe ? 'verde' : 'vermelho', agora(), tudoCabe ? null : 'um relatorio de teste passou do tamanho de uma tela');
+          return json(res, 200, { relatorios });
         }
         if (url.pathname === '/api/bug') {
           const etapa = typeof dados.etapa === 'string' ? dados.etapa : '';

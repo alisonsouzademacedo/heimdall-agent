@@ -5,6 +5,7 @@ import { abrirBanco, migrar } from '../../core/src/db.ts';
 import { criarEscuta } from '../../core/src/whatsapp/escuta.ts';
 import { iniciarPonte, lerChaveDoEnv } from './ciclo.ts';
 import type { PortasAgenda } from './agenda.ts';
+import { lerServicos } from '../../core/src/whatsapp/estado.ts';
 import type { PortasSelfChat } from './selfchat.ts';
 
 const T = Date.UTC(2025, 9, 10, 15, 0, 0);
@@ -44,4 +45,12 @@ test('laco: gera o relatorio do dia (uma vez) alem de responder o self-chat', as
   let giros = 0;
   await p.terminou;
   assert.equal((db.prepare("SELECT COUNT(*) AS n FROM saida WHERE tipo = 'relatorio'").get() as { n: number }).n, 1, 'tres giros, um relatorio so');
+});
+
+test('laco: anota na tabela de configuracao se o Hermes responde (a tela mostra); falha ao checar vira "sem resposta", nunca derruba o laco', async () => {
+  const db = abrirBanco(); migrar(db);
+  const respostas = [true, false];
+  const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, saudeHermes: async () => { const r = respostas.shift(); if (r === undefined) throw new Error('caiu'); return r; }, agora: () => 5000, intervaloMs: 1, esperar: async () => { if (!respostas.length) p.parar(); } });
+  await p.terminou;
+  assert.deepEqual(lerServicos(db), { hermes: { ok: false, em: 5000 } });
 });

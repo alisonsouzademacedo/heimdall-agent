@@ -120,3 +120,24 @@ test('caixa de saida: o texto pendente sai pelo Envio so quando ha conexao, vai 
     await l.parar();
   } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
 });
+
+test('QR: o texto e o desenho (SVG) chegam a tabela de configuracao; um QR velho nunca sobrescreve o novo; conectar apaga tudo', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'heimdall-listener-'));
+  try {
+    const f = conexaoFalsa();
+    const l = await iniciarListener({ pastaDados: dir, abrir: async () => ({ sock: f.sock as never, salvarCreds: async () => {} }), esperar: async () => {}, intervaloEntregaMs: 10, intervaloBaixarMs: 10 });
+    const ver = abrirBanco(join(dir, 'acervo.sqlite'));
+    ver.exec('PRAGMA busy_timeout = 5000');
+    await f.emitir({ 'connection.update': { qr: 'QR-UM' } });
+    await f.emitir({ 'connection.update': { qr: 'QR-DOIS' } });
+    for (let i = 0; i < 50 && !lerQr(ver)?.svg; i++) await new Promise((r) => setTimeout(r, 40));
+    const q = lerQr(ver)!;
+    assert.equal(q.qr, 'QR-DOIS');
+    assert.match(q.svg!, /^<svg/);
+    await f.emitir({ 'connection.update': { connection: 'open' } });
+    await new Promise((r) => setTimeout(r, 100));
+    assert.equal(lerQr(ver), null, 'conectado: o QR some, mesmo que um desenho ainda estivesse a caminho');
+    ver.close();
+    await l.parar();
+  } finally { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
+});

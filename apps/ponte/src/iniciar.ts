@@ -23,7 +23,7 @@ export function iniciar(raiz: string = process.cwd()) {
     redator: (pedido) => hermes.perguntar(pedido, { sessao: 'heimdall:relatorios' }),
     instrucoes: { comum: ler('comum.md'), diario: ler('diario.md'), semanal: ler('semanal.md') }
   };
-  const p = iniciarPonte({ agenda, banco, portas: { hermes, apagarArquivo: () => { /* o apagamento de arquivos reais entra com o gravador de midia (passo da tela) */ } } });
+  const p = iniciarPonte({ agenda, saudeHermes: () => hermes.saude(), banco, portas: { hermes, apagarArquivo: () => { /* o apagamento de arquivos reais entra com o gravador de midia (passo da tela) */ } } });
   return { hermes, parar: async () => { p.parar(); await p.terminou; banco.close(); }, terminou: p.terminou };
 }
 

@@ -2,12 +2,15 @@
 import type { Banco } from '../../core/src/db.ts';
 import { processarSelfChat, type PortasSelfChat } from './selfchat.ts';
 import { gerarRelatorioDoDia, type PortasAgenda } from './agenda.ts';
+import { gravarServico } from '../../core/src/whatsapp/estado.ts';
 
 export interface OpcoesPonte {
   banco: Banco;
   portas: PortasSelfChat;
   /** Relatorios diario e semanal; sem isto o laco so cuida do self-chat. */
   agenda?: PortasAgenda;
+  /** Pergunta ao Hermes se esta de pe; o resultado vai para a tabela de configuracao (a tela mostra no painel). */
+  saudeHermes?: () => Promise<boolean>;
   agora?: () => number;
   esperar?: (ms: number) => Promise<void>;
   intervaloMs?: number;
@@ -22,6 +25,7 @@ export function iniciarPonte(o: OpcoesPonte): { parar(): void; terminou: Promise
     while (!parado) {
       try { await processarSelfChat(o.banco, o.portas, agora()); } catch { /* erro inesperado nao derruba o laco: tenta no proximo giro */ }
       if (o.agenda) { try { await gerarRelatorioDoDia(o.banco, o.agenda, agora()); } catch { /* idem */ } }
+      if (o.saudeHermes) { let ok = false; try { ok = await o.saudeHermes(); } catch { /* sem resposta */ } try { gravarServico(o.banco, 'hermes', ok, agora()); } catch { /* idem */ } }
       await esperar(o.intervaloMs ?? 5000);
     }
   })();

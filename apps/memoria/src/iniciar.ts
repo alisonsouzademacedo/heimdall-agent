@@ -13,7 +13,7 @@ export function iniciar(raiz: string = process.cwd()) {
   banco.prepare('PRAGMA busy_timeout = 5000').get();
   migrar(banco);
   const hindsight = criarClienteHindsight({ url: process.env.HINDSIGHT_URL ?? 'http://127.0.0.1:8888', banco: process.env.HINDSIGHT_BANK ?? 'heimdall', chave: process.env.HINDSIGHT_API_KEY });
-  const m = iniciarMemoria({ banco, porta: hindsight });
+  const m = iniciarMemoria({ banco, porta: hindsight, saudeHindsight: () => hindsight.saude() });
   return { hindsight, parar: () => { m.parar(); void m.terminou.then(() => banco.close()); }, terminou: m.terminou };
 }
 

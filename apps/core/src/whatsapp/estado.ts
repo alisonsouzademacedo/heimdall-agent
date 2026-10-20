@@ -52,11 +52,24 @@ export function gravarEstado(db: Banco, e: EstadoGravavel, agora: number = Date.
   }
 }
 
-export function gravarQr(db: Banco, qr: string, agora: number = Date.now()): void {
-  gravar(db, K.qr, { qr, em: agora });
+// "svg" e o desenho do QR, gerado por quem recebe o QR (o listener); a tela mostra so ele, como imagem (nunca como HTML).
+export function gravarQr(db: Banco, qr: string, agora: number = Date.now(), svg?: string): void {
+  gravar(db, K.qr, svg === undefined ? { qr, em: agora } : { qr, em: agora, svg });
 }
-export function lerQr(db: Banco): { qr: string; em: number } | null {
-  return ler<{ qr: string; em: number }>(db, K.qr);
+export function lerQr(db: Banco): { qr: string; em: number; svg?: string } | null {
+  return ler<{ qr: string; em: number; svg?: string }>(db, K.qr);
+}
+
+// Saude dos servicos com que cada processo fala (Hindsight, Hermes): quem fala com eles anota, a tela so le. Sem rede aqui.
+const SERVICOS = new Set(['hindsight', 'hermes']);
+export function gravarServico(db: Banco, nome: string, ok: boolean, agora: number = Date.now()): void {
+  if (!SERVICOS.has(nome)) throw new Error('servico desconhecido');
+  gravar(db, `servico.${nome}`, { ok, em: agora });
+}
+export function lerServicos(db: Banco): Record<string, { ok: boolean; em: number }> {
+  const saida: Record<string, { ok: boolean; em: number }> = {};
+  for (const nome of SERVICOS) { const v = ler<{ ok: boolean; em: number }>(db, `servico.${nome}`); if (v) saida[nome] = v; }
+  return saida;
 }
 
 export function gravarHistorico(db: Banco, h: { progresso: number | null; ultima: boolean }, agora: number = Date.now()): void {
