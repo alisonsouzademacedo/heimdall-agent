@@ -15,7 +15,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D5 | Ponte listener ↔ Hermes: **opção Q** (API Server do Hermes; o listener envia a resposta, travado no próprio JID) | usuário |
 | D6 | Hermes é o centro; memória de recuperação: **Hindsight** (a confirmar no spike) | usuário + análise |
 | D7 | LLM: **ChatGPT Plus para tudo** (texto, áudio, documentos); sem API paga | usuário |
-| D8 | Onde roda (local ou VPS): **decidir depois** | usuário |
+| D8 | Onde roda (local ou VPS): ~~decidir depois~~ **resolvida pela D30** (Windows primeiro, VPS depois da validação) | usuário |
 | D9 | Dados de clientes nunca vão para o git (`data/` ignorado) | análise |
 | D11 | PDF: **markitdown** (só PDF, transcrições de reuniões do Google Meet); outros documentos e imagens ficam de fora por enquanto; exemplos de PDF só na configuração | usuário |
 | D13 | O PDF vem normalmente do **Pedro** (gestor interno); papéis dos contatos aprendidos no início, com cadastro explícito prioritário | usuário |
@@ -35,6 +35,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D27 | Cadastro por **formulário** na tela de onboarding; o usuário escuta tudo e **não tem contatos pessoais** no WhatsApp empresarial, só o próprio número pessoal (tratar como `dono_pessoal`, fora das regras de cliente) | usuário |
 | D28 | Regra para a IA instaladora: **cada erro resolvido gera teste de regressão, atualização das instruções e registro em `LICOES.md`**; só acrescenta, nunca enfraquece as regras inegociáveis | usuário |
 | D29 | Personalidade: **sem exemplos do usuário**; o Heimdall aprende o jeito de falar dele ao processar o conteúdo e cria a própria personalidade (proposta com aprovação no self-chat, a confirmar) | usuário |
+| D30 | **Onde roda:** primeiro **no Windows do dono**, até validar (relatório diário e semanal gerados, tudo o que o Baileys puxar absorvido, aprendizado em andamento); **só então migra para a VPS** já contextualizado, levando acervo, memória e aprendizado (plano em `fase-2-migracao-para-vps.md`). Resolve a D8; a D23 continua valendo até a migração | usuário (2026-10-20) |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 

@@ -15,7 +15,7 @@ Se algo falhar, um relatório sem segredos é gravado em `data\bugs\` e o texto 
 
 ## Estado atual
 
-Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (regras de acompanhamento, envio travado ao self-chat, banco, ingestão, apagar com confirmação, backup, relatórios, aprendizado, contrato MCP), o instalador e o passo "Ambiente" da tela estão prontos e testados em Linux **e, desde 2026-10-19, num Windows 11 real** (primeira rodada: 3 erros corrigidos, ver `docs/plano/LICOES.md`). O **Docker ainda não roda nessa máquina** (virtualização desligada na BIOS e WSL ausente), e os demais passos da tela (2 a 12) ainda precisam ser construídos.
+Veja [`docs/plano/PROGRESS.md`](docs/plano/PROGRESS.md). Em resumo: o núcleo (regras de acompanhamento, envio travado ao self-chat, banco, ingestão, apagar com confirmação, backup, relatórios, aprendizado, contrato MCP), o instalador e o passo "Ambiente" da tela estão prontos e testados em Linux **e num Windows 11 real** (também no GitHub, com Node 22 e 24). No Windows do dono o **Docker Desktop já funciona** (WSL ativado pelo caminho manual da Microsoft, `docs/wsl/`) e a **memória foi medida em 8 GB**: cabe, mas sem margem (`docs/plano/fase-1-orcamento-de-memoria.md`). O instalador e a tela mostram o **perfil recomendado para cada computador** (`docs/plano/fase-1-perfis-de-computador.md`). **Ainda não existem:** os Dockerfiles e o Compose do Heimdall, os passos 2 a 12 da tela de configuração e o relatório semanal. **Onde roda (D30):** primeiro no Windows, até validar; depois migra para uma VPS já com o aprendizado (`docs/plano/fase-2-migracao-para-vps.md`).
 
 ## Mapa do repositório
 

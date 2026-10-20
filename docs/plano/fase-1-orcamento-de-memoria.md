@@ -1,6 +1,6 @@
-# Fase 1 — Orçamento de memória em 8 GB (proposta, 2026-10-19)
+# Fase 1 — Orçamento de memória em 8 GB
 
-Estado: **proposta, nada instalado.** Medições são da máquina do dono (Windows 11 Pro, 8029 MB, Docker Desktop 29.9.1, WSL 3.0.3.0). Os números dos serviços vêm das páginas citadas e **não foram medidos aqui**.
+Estado (2026-10-20): **medido** na máquina do dono (Windows 11 Pro, 8029 MB, Docker Desktop 29.9.1, WSL 3.0.3.0). **Leia primeiro a seção 5d (resultado da medição).** As seções 1 a 4 são o raciocínio feito *antes* de medir (as contas da seção 3 são estimativas **superadas** pela 5d); as seções 5b e 5c são o diário da execução, mantidas como histórico. Os números da seção 2 são da documentação, não medidos.
 
 ## 1. Medido nesta máquina (sem nenhum contêiner do Heimdall)
 | O quê | MB | Observação |
@@ -23,7 +23,7 @@ Leitura: **a VM ociosa já custa ~1,9 GB e o Docker Desktop ~0,6 GB: ~2,5 GB ant
 | faster-whisper `small`, `int8`, CPU | ~1477 MB para 13 min de áudio (i7-12700K, 8 threads); **não há número de CPU para modelos maiores** | `docs/faster-whisper/repo/README.md` |
 | Núcleo/escuta (Node) | ~65 MB medidos na tela | medido |
 
-## 3. Contas (estimativas, a validar com `docker stats`)
+## 3. Contas (estimativas feitas ANTES de medir; superadas pela seção 5d)
 - **Tudo "como está no plano"** (Hindsight completo + Postgres + Hermes + Whisper `small`): 1,5 a 2 + 0,5 a 1 + 1 + 1,5 = **4,5 a 5,5 GB** só de serviços, além dos ~2,5 GB do Docker. **Não cabe** em 8 GB com o Windows e outros programas.
 - **Versão leve** (Hindsight slim + embeddings locais ONNX + reranker `rrf` + Postgres + Hermes 1 GB + Whisper `small` só quando houver áudio): 0,5 a 1 + 0,5 a 1 + 1 + 0,1 = **~2,1 a 3,1 GB** em regime, **~3,6 a 4,6 GB** durante uma transcrição. Fica no limite, e só com o app do Claude e o navegador fechados durante o processamento pesado.
 
@@ -42,13 +42,13 @@ Leitura: **a VM ociosa já custa ~1,9 GB e o Docker Desktop ~0,6 GB: ~2,5 GB ant
 2. Escolher entre (a) versão leve com `.wslconfig` e (b) servidor externo, com os números na mão.
 3. Só então escrever o Compose (versões fixas, portas em `127.0.0.1`, volumes nomeados; runbooks 02, 03, 06) e testar.
 
-## 5b. Ponto de parada (2026-10-19, noite) — retomar daqui
+## 5b. Ponto de parada (2026-10-19, noite) — histórico (já retomado e concluído em 5c e 5d)
 Autorizado pelo dono: baixar e medir. **Versões fixas escolhidas** (consultadas nos registros, só leitura): `pgvector/pgvector:pg18` (154 MB comprimidos; **baixada**), `ghcr.io/vectorize-io/hindsight:1.0.0-slim` (465 MB; **baixada**, 1,95 GB em disco), `nousresearch/hermes-agent:v0.22.2` (1070 MB; **download iniciado, não confirmado**: conferir com `docker image ls`; se faltar, repetir o `docker pull`, que retoma as camadas), base `python:3.12-slim` (41 MB) e modelo `Systran/faster-whisper-small` (461 MB, Hugging Face): **ainda não baixados**.
 **Divergências documentação × realidade (registrar em `PROGRESS.md`):** a documentação do Hermes manda "tag `X.Y.Z`", mas as tags reais têm prefixo `v` (`v0.22.2`); os exemplos do Hindsight citam `0.4.9`, mas o registro já tem `1.0.0` (a documentação local pode estar defasada).
 **Cuidado com a medição:** o dono combinou fechar o app do Claude e o navegador para medir, mas o app do Claude é onde a IA roda. Plano: um script de medição independente (processo oculto do PowerShell, gravando em `data\medicao\`, fora do git) sobe os contêineres um a um e amostra `docker stats`, `vmmemWSL` e a memória livre do Windows; o dono fecha os programas, espera o fim e reabre o app para eu ler os arquivos. Whisper: áudio sintético pt-BR gerado com a voz do Windows (mede memória e tempo, **não** qualidade). Hindsight slim pode **não subir** sem o provedor `onnx` (pergunta aberta da seção 6); se falhar, o erro é o resultado.
 Contêineres de teste usam o prefixo `m-`, **sem publicar portas**, e são removidos ao fim (são descartáveis, criados pela IA).
 
-## 5c. Atualização (2026-10-20): downloads concluídos e medição preparada
+## 5c. Atualização (2026-10-20): downloads concluídos e medição preparada — histórico
 **Baixado (tamanhos reais):** `pgvector/pgvector:pg18` (641 MB em disco), `ghcr.io/vectorize-io/hindsight:1.0.0-slim` (465 MB comprimidos, 1,95 GB em disco), `nousresearch/hermes-agent:v0.22.2` (4,55 GB em disco; a camada baixada de 1070 MB comprimidos terminou antes da interrupção do dia 19), `python:3.12-slim` (179 MB em disco), pacotes `pip` do `faster-whisper==1.2.1` (~115 MB reais, não 150 a 250) e o modelo `small` (464 MB; `model.bin` 483.546.902 bytes) embutidos na imagem de teste `heimdall-whisper-teste:small` (1,73 GB em disco).
 **Achado (sem baixar nada):** a imagem slim do Hindsight **já traz** `onnxruntime` 1.20.1, `tokenizers` e `huggingface_hub`, e **não traz** `torch`, `sentence_transformers`, `transformers` nem `flashrank`; **CORREÇÃO (medido em 2026-10-20 12:06):** isso **não** bastava. Ao subir com `HINDSIGHT_API_EMBEDDINGS_PROVIDER=onnx`, o Hindsight 1.0.0-slim **saiu em ~16 s** com `ImportError: onnxruntime and transformers are required for OnnxEmbeddings. Install with: pip install 'hindsight-api-slim[local-onnx]'` (falta `transformers`, que eu já tinha visto ausente na verificação e interpretei mal). **Conclusão: o `onnx` exige imagem própria (slim + extra `local-onnx`).** O modelo de ~470 MB não chegou a ser baixado. O modelo `intfloat/multilingual-e5-small` pesa ~470 MB (`onnx/model.onnx` 448 MB + tokenizador ~21 MB) e é baixado pelo próprio contêiner na primeira subida: **download extra que depende da autorização do dono**.
 **Medição:** `data\medicao\medir.cmd` (fora do git) roda numa janela visível, sobe pg, Hermes, Hindsight e Whisper em sequência (sem portas publicadas), amostra `docker stats`, `vmmemWSL` e a memória livre a cada ~4 s, grava `resultado-<data>\{log.txt,amostras.csv,resumo.txt,hindsight-log.txt,whisper-saida.txt}` e remove os contêineres, volumes e rede de teste (`m-*`). Áudio sintético (voz pt-BR do Windows, texto inventado, ~259 s): mede memória e tempo, **não** qualidade.
@@ -68,5 +68,6 @@ Ferramenta: `data\medicao\medir.ps1` (fora do git). Imagens fixas: `pgvector/pgv
 **Candidatos a economia (não testados):** `HINDSIGHT_API_EMBEDDINGS_ONNX_FILE` para o arquivo `onnx/model_O4.onnx` (224 MB) ou `model_qint8_avx512_vnni.onnx` (113 MB; **exige CPU com AVX-512 VNNI, que o i5-9300H desta máquina provavelmente não tem: verificar**); modelo Whisper `base`; transcrever só com o Hindsight parado. Qualidade em português: **não medida**.
 **Limites da medição:** uma rodada por cenário; áudio sintético (a transcrição teve uma inserção estranha, "um copyright", e 567 palavras contra 498 faladas: indício de alucinação, **qualidade não avaliada**); Hindsight sem LLM (não faz extração de fatos); Hermes sem modelo nem conversa; a fase "Docker ocioso" da 2ª rodada ficou **contaminada** por ~3,6 GB de cache da VM dos `docker build` anteriores (na 1ª rodada, limpa, a VM ociosa ficou em ~1,97 GB); com o app do Claude e o navegador abertos.
 
-## 6. Não verificado
-Consumo real dos três serviços; qualidade do reranker `rrf` e do `multilingual-e5-small` em português; se a imagem slim oficial permite o provedor `onnx`; quanta memória a VM devolve ao Windows quando ociosa; se `autoMemoryReclaim` ajuda neste caso.
+## 6. Não verificado (atualizado em 2026-10-20)
+Já medido (ver 5d): consumo ocioso dos quatro serviços e se a imagem slim aceita `onnx` (**não aceita sem o extra `local-onnx`**).
+Continua **não verificado**: consumo **sob uso real** (banco com dados, Hermes em conversa, Hindsight com LLM); qualidade do reranker `rrf` e do `multilingual-e5-small` em português; qualidade do Whisper (houve alucinação no áudio sintético); AVX-512 na CPU (os modelos `qint8` dependem disso); quanta memória a VM devolve ao Windows quando ociosa e se `autoMemoryReclaim` ajuda; uso da GPU (GTX 1650) dentro do Docker/WSL; **qualquer medição em Linux** (a VPS do dono é a candidata a segunda máquina medida; ver `fase-2-migracao-para-vps.md`).

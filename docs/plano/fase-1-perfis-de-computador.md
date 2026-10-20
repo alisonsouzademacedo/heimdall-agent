@@ -42,3 +42,4 @@ i5-9300H (8 CPUs lógicas), 7,84 GiB, GTX 1650 de 4 GB, Windows 11 Pro: **Enxuto
 - GPU: só detectada; uso dentro do Docker **não verificado**.
 - A imagem do Hindsight com `local-onnx` e a do trabalhador de áudio (com `av` fixado) **ainda não existem no repositório** (só imagens de teste em `data\medicao`, fora do git): ver `runbooks/02` e `06`.
 - Windows em outras edições e Linux/macOS: perfis só por documentação; **nunca rodados** nessas máquinas.
+- **Linux de 8 GB (ex.: a VPS do dono):** o perfil "Enxuto" **não herda** a conclusão do Windows (sem a VM do WSL e sem o Docker Desktop, cerca de 2,5 GB medidos no Windows, a folga tende a ser maior); ele avisa que os números vieram do Windows e que o Linux **não foi medido** (teste em `perfil.test.ts`). Medir a VPS vira a segunda máquina medida.
