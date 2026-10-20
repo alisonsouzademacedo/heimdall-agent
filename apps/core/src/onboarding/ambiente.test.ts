@@ -62,6 +62,11 @@ test('virtualizacao ligada mas WSL ausente: so o WSL falha, e diz como instalar'
   assert.equal(estado(v, 'virtualizacao'), 'ok');
   assert.equal(estado(v, 'wsl'), 'falha');
   assert.match(v.find((x) => x.id === 'wsl')!.detalhe, /wsl --install/);
+  // Na maquina do dono 'wsl --install' respondeu em circulo; o que funcionou foi o caminho manual da Microsoft (docs/wsl/install-manual.md).
+  const d = v.find((x) => x.id === 'wsl')!.detalhe;
+  assert.match(d, /dism\.exe \/online \/enable-feature \/featurename:Microsoft-Windows-Subsystem-Linux/);
+  assert.match(d, /dism\.exe \/online \/enable-feature \/featurename:VirtualMachinePlatform/);
+  assert.match(d, /docs\/wsl\/install-manual\.md/);
 });
 
 test('virtualizacao e WSL presentes: ambas ok e a maquina boa segue sem falhas', () => {

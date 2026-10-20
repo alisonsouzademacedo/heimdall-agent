@@ -31,6 +31,7 @@ grep -q 'BIOS' "$T/saida.txt" && pass "virtualizacao desligada: explica a BIOS" 
 roda 1 0; C=$?
 grep -E 'FALTA.*WSL' "$T/saida.txt" >/dev/null && pass "WSL ausente: aparece como FALTA" || fail "WSL ausente nao foi apontado"
 grep -q 'wsl --install' "$T/saida.txt" && pass "WSL ausente: diz como instalar (wsl --install)" || fail "sem a instrucao wsl --install"
+grep -q 'dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux' "$T/saida.txt" && grep -q 'featurename:VirtualMachinePlatform' "$T/saida.txt" && grep -q 'docs/wsl/install-manual.md' "$T/saida.txt" && pass "WSL ausente: traz o caminho manual (dism) para quando o wsl --install responde em circulo" || fail "sem o caminho manual do WSL (dism) quando wsl --install nao funciona"
 grep -E 'FALTA.*Virtualizacao' "$T/saida.txt" >/dev/null && fail "virtualizacao ligada apontada como falta" || pass "virtualizacao ligada nao e apontada"
 
 # 3) tudo presente

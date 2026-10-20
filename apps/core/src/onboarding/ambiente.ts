@@ -53,7 +53,7 @@ export function avaliar(m: Medidas): Verificacao[] {
     v.push({ id: 'virtualizacao', rotulo: `Virtualização: ${m.virtualizacao ? 'ligada' : 'desligada'}`, detalhe: m.virtualizacao ? 'O Docker Desktop consegue rodar' : 'Desligada. Ligue na BIOS/UEFI (reinicie o computador e entre na configuracao da placa; o nome da opcao varia: Intel VT-x, Virtualization Technology ou SVM). Sem isso o Docker nao abre.', estado: m.virtualizacao ? 'ok' : 'falha' });
   }
   if (m.wsl !== undefined) {
-    v.push({ id: 'wsl', rotulo: `WSL 2: ${m.wsl ? 'instalado' : 'nao instalado'}`, detalhe: m.wsl ? 'Pronto para o Docker Desktop' : 'Instale com "wsl --install" num PowerShell aberto como administrador e reinicie o computador.', estado: m.wsl ? 'ok' : 'falha' });
+    v.push({ id: 'wsl', rotulo: `WSL 2: ${m.wsl ? 'instalado' : 'nao instalado'}`, detalhe: m.wsl ? 'Pronto para o Docker Desktop' : 'Instale com "wsl --install" num PowerShell aberto como administrador e reinicie o computador. Se "wsl --install" responder em circulo ("instale executando wsl.exe --install"), use o caminho manual (docs/wsl/install-manual.md): como administrador rode "dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart" e "dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart", reinicie e rode "wsl --update".', estado: m.wsl ? 'ok' : 'falha' });
   }
   v.push({ id: 'docker', rotulo: 'Docker', detalhe: m.dockerRodando ? 'Rodando' : 'Instalado? Abra o Docker Desktop, aceite os termos e espere ficar verde.', estado: m.dockerRodando ? 'ok' : 'falha' });
   return v;

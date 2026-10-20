@@ -24,6 +24,10 @@ LIN_REP=$(grep -n 'RepararSocketsDocker \$pastaSegredos' "$PS1" | head -1 | cut 
 if [ -n "$LIN_WSL" ] && [ -n "$LIN_REP" ] && [ "$LIN_WSL" -lt "$LIN_REP" ]; then pass "o instalador para o WSL (wsl --shutdown) ANTES de mover a pasta"; else fail "o reparo nao para o WSL antes de mover a pasta (wsl --shutdown na linha '$LIN_WSL', reparo na linha '$LIN_REP')"; fi
 if grep -E "HEIMDALL_TESTE -ne '1'.*wsl(\.exe)? --shutdown" "$PS1" >/dev/null; then pass "wsl --shutdown so roda fora do modo de teste (os testes nunca derrubam o WSL)"; else fail "wsl --shutdown nao esta protegido pelo modo de teste"; fi
 
+# O dono precisa saber, ANTES de aceitar, que "wsl --shutdown" para TODO o WSL (outras distribuicoes Linux e o que roda nelas), nao so o Docker.
+PERG=$(grep -n "Pergunta 'Posso parar o WSL" "$PS1" | head -1)
+echo "$PERG" | grep -qiE 'todas as distribuicoes|todo o WSL' && echo "$PERG" | grep -qi 'salve' && pass "a pergunta avisa que o WSL inteiro sera parado e pede para salvar o trabalho" || fail "a pergunta do reparo nao avisa que wsl --shutdown para TODAS as distribuicoes Linux (e pede para salvar o trabalho)"
+
 # ---- ligacao no instalador (sempre -SomenteMostrar: nada e instalado nem removido) ----
 T=$(mktemp -d); mkdir -p "$T/com" "$T/sem"; : > "$T/com/engine.sock"
 roda() { # roda <pasta-de-segredos> <docker-rodando: 0|1>  (o estado do Docker e FIXADO: o teste nao pode depender do computador onde roda)
