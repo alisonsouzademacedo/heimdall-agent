@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { abrirBanco, migrar } from '../../core/src/db.ts';
 import { criarEscuta } from '../../core/src/whatsapp/escuta.ts';
 import { iniciarPonte, lerChaveDoEnv } from './ciclo.ts';
+import type { PortasAgenda } from './agenda.ts';
 import type { PortasSelfChat } from './selfchat.ts';
 
 const T = Date.UTC(2025, 9, 10, 15, 0, 0);
@@ -33,4 +34,14 @@ test('lerChaveDoEnv: pega API_SERVER_KEY do arquivo .env, ignora comentarios e n
   assert.equal(lerChaveDoEnv('API_SERVER_KEY="entre-aspas-123"\r\n'), 'entre-aspas-123');
   assert.equal(lerChaveDoEnv('# API_SERVER_KEY=comentada\nX=1'), null);
   assert.equal(lerChaveDoEnv(''), null);
+});
+
+test('laco: gera o relatorio do dia (uma vez) alem de responder o self-chat', async () => {
+  const db = abrirBanco(); migrar(db);
+  const agenda: PortasAgenda = { redator: null, instrucoes: { comum: '', diario: '', semanal: '' } };
+  const QUARTA_8H = Date.parse('2026-10-21T11:00:00Z');
+  const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, agenda, agora: () => QUARTA_8H, intervaloMs: 1, esperar: async () => { if (++giros >= 3) p.parar(); } });
+  let giros = 0;
+  await p.terminou;
+  assert.equal((db.prepare("SELECT COUNT(*) AS n FROM saida WHERE tipo = 'relatorio'").get() as { n: number }).n, 1, 'tres giros, um relatorio so');
 });

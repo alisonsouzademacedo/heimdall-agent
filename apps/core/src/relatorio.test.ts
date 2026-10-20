@@ -115,6 +115,8 @@ test('pacote do banco: aguardando ordenado por espera, follow-up devido e client
   assert.match(p.aguardando[0]!.texto, /2 dias/);
   assert.match(p.aguardando[1]!.texto, /1 dia$/);
   assert.deepEqual(p.followups.map((x) => [x.codigo, x.cliente]), [['F1', 'Gama']]);
+  assert.deepEqual(p.aguardando.map((x) => x.clienteId), [1, 2], 'cada item carrega o id do cliente (as correcoes A1/F1/P1 dependem disso)');
+  assert.equal(p.followups[0]!.clienteId, 3);
   assert.match(p.resumo, /2 cliente\(s\) aguardam/);
   assert.match(p.resumo, /Alfa/);
   assert.equal(p.semNovidade, 1); // Delta (nunca respondeu)

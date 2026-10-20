@@ -12,6 +12,7 @@ export interface Item {
   texto: string;
   motivo: string; // toda recomendacao traz o dado que a sustenta
   rascunho?: string;
+  clienteId?: number; // para as correcoes por codigo (A1, F2, P1) saberem de qual cliente se fala; nao aparece no texto
 }
 
 export interface PacoteDiario {
@@ -130,17 +131,17 @@ export function montarPacoteDiario(db: Banco, agora: number, cfg: ConfigAcompanh
     if (estado === 'oculto') continue;
     if (estado === 'aguardando_usuario') {
       const dias = Math.max(0, diasEntre(diaLocal(r.aguardandoUsuarioDesde!, cfg.fuso), hoje)); // dias corridos, no fuso do dono
-      aguardando.push({ codigo: '', cliente: c.nome, texto: `espera há ${dias} ${dias === 1 ? 'dia' : 'dias'}`, motivo: `última mensagem do cliente em ${diaLocal(r.aguardandoUsuarioDesde!, cfg.fuso)} sem resposta sua`, desde: r.aguardandoUsuarioDesde! });
+      aguardando.push({ codigo: '', clienteId: c.id, cliente: c.nome, texto: `espera há ${dias} ${dias === 1 ? 'dia' : 'dias'}`, motivo: `última mensagem do cliente em ${diaLocal(r.aguardandoUsuarioDesde!, cfg.fuso)} sem resposta sua`, desde: r.aguardandoUsuarioDesde! });
     } else if (estado === 'follow_up_devido') {
       f++;
-      followups.push({ codigo: `F${f}`, cliente: c.nome, texto: `tentativa ${r.tentativas} de ${cfg.maxTentativas}`, motivo: `seu último contato foi em ${diaLocal(r.ultimaMensagemMinhaEm!, cfg.fuso)} e venceu o prazo de ${cfg.intervaloDiasUteis} dias úteis` });
+      followups.push({ codigo: `F${f}`, clienteId: c.id, cliente: c.nome, texto: `tentativa ${r.tentativas} de ${cfg.maxTentativas}`, motivo: `seu último contato foi em ${diaLocal(r.ultimaMensagemMinhaEm!, cfg.fuso)} e venceu o prazo de ${cfg.intervaloDiasUteis} dias úteis` });
     } else if (estado === 'ativo' || estado === 'sem_resposta_nunca' || estado === 'desconsiderado') {
       semNovidade++;
     }
     const sinais = db.prepare('SELECT tipo FROM sinais_potencial WHERE cliente_id = ? AND em BETWEEN ? AND ?').all(c.id, janela.inicio, janela.fim) as { tipo: string }[];
     if (sinais.length) {
       pot++;
-      potencial.push({ codigo: `P${pot}`, cliente: c.nome, texto: sinais[0]!.tipo.replaceAll('_', ' '), motivo: 'sinal registrado no dia anterior' });
+      potencial.push({ codigo: `P${pot}`, clienteId: c.id, cliente: c.nome, texto: sinais[0]!.tipo.replaceAll('_', ' '), motivo: 'sinal registrado no dia anterior' });
     }
   }
   aguardando.sort((x, y) => x.desde - y.desde);

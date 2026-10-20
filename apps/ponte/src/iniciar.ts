@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { abrirBanco, migrar } from '../../core/src/db.ts';
 import { iniciarPonte, lerChaveDoEnv } from './ciclo.ts';
 import { criarClienteHermes } from './hermes.ts';
+import type { PortasAgenda } from './agenda.ts';
 
 export function iniciar(raiz: string = process.cwd()) {
   const pastaDados = resolve(raiz, process.env.HEIMDALL_DATA ?? 'data');
@@ -17,7 +18,12 @@ export function iniciar(raiz: string = process.cwd()) {
   const chave = process.env.HERMES_API_KEY ?? (existsSync(envArquivo) ? lerChaveDoEnv(readFileSync(envArquivo, 'utf8')) : null);
   if (!chave) throw new Error('Falta a chave da API do Hermes (HERMES_API_KEY ou API_SERVER_KEY em infra/compose/.env)');
   const hermes = criarClienteHermes({ url: process.env.HERMES_URL ?? 'http://127.0.0.1:8642', chave });
-  const p = iniciarPonte({ banco, portas: { hermes, apagarArquivo: () => { /* o apagamento de arquivos reais entra com o gravador de midia (passo da tela) */ } } });
+  const ler = (nome: string): string => readFileSync(join(raiz, 'prompts', 'relatorios', nome), 'utf8');
+  const agenda: PortasAgenda = {
+    redator: (pedido) => hermes.perguntar(pedido, { sessao: 'heimdall:relatorios' }),
+    instrucoes: { comum: ler('comum.md'), diario: ler('diario.md'), semanal: ler('semanal.md') }
+  };
+  const p = iniciarPonte({ agenda, banco, portas: { hermes, apagarArquivo: () => { /* o apagamento de arquivos reais entra com o gravador de midia (passo da tela) */ } } });
   return { hermes, parar: async () => { p.parar(); await p.terminou; banco.close(); }, terminou: p.terminou };
 }
 
