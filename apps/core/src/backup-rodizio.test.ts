@@ -2,7 +2,8 @@
 // e nunca o mais recente valido. Dados sinteticos; pastas temporarias.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { abrirBanco, migrar } from './db.ts';
@@ -70,4 +71,23 @@ test('rodizio: pasta que nao existe nao quebra e nao apaga nada', () => {
 test('decisao: exatamente 30 dias fica; 31 dias sai (com um valido mais novo para sobrar)', () => {
   const lista = [{ nome: nome('2026-09-20'), valido: true }, { nome: nome('2026-09-19'), valido: true }, { nome: nome('2026-10-19'), valido: true }];
   assert.deepEqual(escolherParaApagar(lista, '2026-10-20'), [nome('2026-09-19')]);
+});
+
+test('backupValido: banco que ABRE mas esta corrompido por dentro (pagina estragada) e reprovado pela checagem de integridade', () => {
+  const pasta = mkdtempSync(join(tmpdir(), 'hd-rodizio-'));
+  try {
+    const arq = join(pasta, nome('2026-10-18'));
+    const db = new DatabaseSync(arq);
+    db.exec('CREATE TABLE mensagens(a INTEGER, b TEXT); CREATE INDEX i ON mensagens(b);');
+    const ins = db.prepare('INSERT INTO mensagens VALUES (?, ?)');
+    for (let i = 0; i < 3000; i++) ins.run(i, `texto${i * 7919}`);
+    db.close();
+    assert.equal(backupValido(arq), true, 'antes de estragar esta bom');
+    const buf = readFileSync(arq);
+    const tam = buf.readUInt16BE(16) || 65536;
+    const off = (buf.length / tam - 1) * tam + tam / 2;
+    for (let i = 0; i < 64; i++) buf[off + i] = (buf[off + i] ?? 0) ^ 0xff;
+    writeFileSync(arq, buf);
+    assert.equal(backupValido(arq), false);
+  } finally { rmSync(pasta, { recursive: true, force: true }); }
 });
