@@ -42,5 +42,11 @@ Leitura: **a VM ociosa já custa ~1,9 GB e o Docker Desktop ~0,6 GB: ~2,5 GB ant
 2. Escolher entre (a) versão leve com `.wslconfig` e (b) servidor externo, com os números na mão.
 3. Só então escrever o Compose (versões fixas, portas em `127.0.0.1`, volumes nomeados; runbooks 02, 03, 06) e testar.
 
+## 5b. Ponto de parada (2026-10-19, noite) — retomar daqui
+Autorizado pelo dono: baixar e medir. **Versões fixas escolhidas** (consultadas nos registros, só leitura): `pgvector/pgvector:pg18` (154 MB comprimidos; **baixada**), `ghcr.io/vectorize-io/hindsight:1.0.0-slim` (465 MB; **baixada**, 1,95 GB em disco), `nousresearch/hermes-agent:v0.22.2` (1070 MB; **download iniciado, não confirmado**: conferir com `docker image ls`; se faltar, repetir o `docker pull`, que retoma as camadas), base `python:3.12-slim` (41 MB) e modelo `Systran/faster-whisper-small` (461 MB, Hugging Face): **ainda não baixados**.
+**Divergências documentação × realidade (registrar em `PROGRESS.md`):** a documentação do Hermes manda "tag `X.Y.Z`", mas as tags reais têm prefixo `v` (`v0.22.2`); os exemplos do Hindsight citam `0.4.9`, mas o registro já tem `1.0.0` (a documentação local pode estar defasada).
+**Cuidado com a medição:** o dono combinou fechar o app do Claude e o navegador para medir, mas o app do Claude é onde a IA roda. Plano: um script de medição independente (processo oculto do PowerShell, gravando em `data\medicao\`, fora do git) sobe os contêineres um a um e amostra `docker stats`, `vmmemWSL` e a memória livre do Windows; o dono fecha os programas, espera o fim e reabre o app para eu ler os arquivos. Whisper: áudio sintético pt-BR gerado com a voz do Windows (mede memória e tempo, **não** qualidade). Hindsight slim pode **não subir** sem o provedor `onnx` (pergunta aberta da seção 6); se falhar, o erro é o resultado.
+Contêineres de teste usam o prefixo `m-`, **sem publicar portas**, e são removidos ao fim (são descartáveis, criados pela IA).
+
 ## 6. Não verificado
 Consumo real dos três serviços; qualidade do reranker `rrf` e do `multilingual-e5-small` em português; se a imagem slim oficial permite o provedor `onnx`; quanta memória a VM devolve ao Windows quando ociosa; se `autoMemoryReclaim` ajuda neste caso.

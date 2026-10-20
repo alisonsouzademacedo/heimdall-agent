@@ -23,6 +23,7 @@ echo "$JOB" | grep -q 'working-directory: apps/core' && pass "npm test roda em a
 echo "$JOB" | grep -q 'tests/repo/check_higiene.sh' && pass "roda check_higiene.sh" || fail "nao roda check_higiene.sh"
 echo "$JOB" | grep -q 'tests/instalar/check_ambiente_windows.sh' && pass "roda check_ambiente_windows.sh (virtualizacao e WSL)" || fail "nao roda check_ambiente_windows.sh"
 echo "$JOB" | grep -q 'tests/instalar/check_assinatura.sh' && pass "roda check_assinatura.sh (assinatura do Docker, so no Windows)" || fail "nao roda check_assinatura.sh"
+echo "$JOB" | grep -q 'tests/instalar/check_docker_reparo.sh' && pass "roda check_docker_reparo.sh (Docker com socket preso)" || fail "nao roda check_docker_reparo.sh"
 echo "$JOB" | grep -q 'fail-fast: false' && pass "uma versao de Node falhar nao esconde a outra (fail-fast: false)" || fail "fail-fast nao desligado"
 # O dono recebe os arquivos em LF (ZIP do GitHub): o runner nao deve converter para CRLF antes do checkout
 echo "$JOB" | grep -q 'core.autocrlf false' && pass "autocrlf desligado antes do checkout (arquivos em LF, como no ZIP do dono)" || fail "autocrlf nao desligado antes do checkout"
