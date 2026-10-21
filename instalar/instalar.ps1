@@ -201,7 +201,7 @@ if ($faltando.Count -gt 0 -and -not $SomenteMostrar) {
 # ---------- depois da instalacao ----------
 Titulo 'Estado do Docker'
 if (DockerRodando) { Ok 'Docker rodando' }
-elseif (DockerInstalado) { Falta 'Docker instalado, mas NAO esta rodando. Abra o Docker Desktop pelo menu Iniciar, aceite os termos, espere ficar verde e rode iniciar.cmd de novo.' }
+elseif (DockerInstalado) { Falta 'Docker instalado, mas NAO esta rodando. Abra o Docker Desktop pelo menu Iniciar (ou por instalar\docker-fora.cmd), aceite os termos, espere ficar verde e rode iniciar.cmd de novo. NAO abra o Docker por dentro do app Claude: ele nasce com a pasta AppData redirecionada e quebra no arquivo engine.sock (instalar\docker-fora.cmd abre fora dele e ja repara o arquivo preso).' }
 else { Falta 'Docker ainda nao instalado.' }
 
 # Docker Desktop que nao abre depois de um desligamento brusco: arquivo de conexao preso (engine.sock). Ver instalar/docker-reparo.ps1 e LICOES.md (2026-10-20).

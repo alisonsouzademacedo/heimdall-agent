@@ -66,9 +66,29 @@ function GarantirEnv {
 
 function ComposeArgs([string[]]$resto) { return @('compose', '--env-file', $envCompose, '-f', $compose) + $resto }
 
+# O Docker Desktop NUNCA e aberto daqui por Start-Process: se este launcher roda por dentro do app Claude (empacotado, AppData redirecionado),
+# o Docker nasce la dentro e quebra no engine.sock real (LICOES.md, 2026-10-20). Quem abre e instalar\docker-fora.cmd, pelo Explorer.
+$bibFora = Join-Path $PSScriptRoot 'fora-do-pacote.ps1'
+if (Test-Path $bibFora) { . $bibFora }
+function DockerFunciona {
+  if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_DOCKER_RODANDO) { return ($env:HEIMDALL_TESTE_DOCKER_RODANDO -eq '1') }
+  try { & docker info 2>$null | Out-Null; return ($LASTEXITCODE -eq 0) } catch { return $false }
+}
+function GarantirDocker {
+  $cmd = Join-Path $PSScriptRoot 'docker-fora.cmd'
+  if ($SomenteMostrar) { Plano 'se o Docker estiver parado: abrir o Docker Desktop por instalar\docker-fora.cmd (fora do app Claude; repara o engine.sock preso se houver)'; return }
+  if (DockerFunciona) { return }
+  if (-not (Get-Command AbrirForaDoApp -ErrorAction SilentlyContinue) -or -not (Test-Path $cmd)) { Aviso 'O Docker nao esta funcionando e nao achei instalar\docker-fora.cmd. Abra o Docker Desktop pelo menu Iniciar (nao por dentro do app Claude).'; return }
+  Info 'O Docker nao esta funcionando: abrindo pelo docker-fora.cmd (fora do app Claude)...'
+  AbrirForaDoApp $cmd
+  for ($i = 0; $i -lt 48; $i++) { Start-Sleep -Seconds 5; if (DockerFunciona) { Ok 'Docker funcionando'; return } }
+  Aviso 'O Docker ainda nao respondeu em 4 minutos. Veja data\logs\docker-fora.log (se pedir, clique em Quit na janela de erro e rode de novo).'
+}
+
 function Iniciar {
   if (-not (VersaoDoNodeServe)) { Aviso 'Preciso do Node.js 22.18 ou mais novo. Rode iniciar.cmd (o instalador) primeiro.'; if (-not $SomenteMostrar) { exit 1 } }
   GarantirEnv
+  if (-not $SemDocker) { GarantirDocker }
   if (-not $SemDocker) {
     if ($SomenteMostrar) { Plano ('docker ' + ((ComposeArgs @('up', '-d')) -join ' ')) }
     else {

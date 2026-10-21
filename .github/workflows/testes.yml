@@ -75,3 +75,5 @@ jobs:
         run: REQUIRE_PWSH=1 sh tests/instalar/check_assinatura.sh
       - name: Instalador - reparo do Docker com socket preso
         run: REQUIRE_PWSH=1 sh tests/instalar/check_docker_reparo.sh
+      - name: Instalador - Docker aberto fora do app Claude
+        run: REQUIRE_PWSH=1 sh tests/instalar/check_fora_do_pacote.sh
