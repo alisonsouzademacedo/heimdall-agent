@@ -3,6 +3,7 @@
 # Uso: sh tests/preflight/check_ps1.sh      (REQUIRE_PWSH=1 faz a falta do PowerShell 7 contar como falha)
 # Procura o PowerShell 7 em: variável PWSH, PATH, ou no arquivo apontado por PWSH_PATH_FILE.
 cd "$(dirname "$0")/../.." || exit 2
+. tests/lib/so.sh   # caminho_nativo: caminhos dentro de texto de comando do PowerShell (Windows)
 PS1=spike/preflight/preflight.ps1
 FAIL=0
 pass() { echo "  [PASSOU] $1"; }
@@ -32,7 +33,7 @@ else
   if [ -z "$ERR" ]; then pass "o PowerShell analisa o .ps1 sem erros de sintaxe"; else fail "erros de sintaxe no .ps1"; echo "$ERR"; fi
   # Teste 3: executa o script inteiro com um Windows simulado e confere o resultado
   TMP=$(mktemp -d); OUT="$TMP/resultado.json"
-  ( cd "$TMP" && PREFLIGHT_OUT="$OUT" "$PW" -NoProfile -Command ". '$OLDPWD/tests/preflight/mocks.ps1'; & '$OLDPWD/$PS1' *> '$TMP/saida.txt'; exit \$LASTEXITCODE" ) >/dev/null 2>&1
+  ( cd "$TMP" && PREFLIGHT_OUT="$(caminho_nativo "$OUT")" "$PW" -NoProfile -Command ". '$(caminho_nativo "$OLDPWD")/tests/preflight/mocks.ps1'; & '$(caminho_nativo "$OLDPWD")/$PS1' *> '$(caminho_nativo "$TMP")/saida.txt'; exit \$LASTEXITCODE" ) >/dev/null 2>&1
   CODE=$?
   if [ -s "$OUT" ] && grep -q '"resultado"' "$OUT" && grep -q '"whisper_sugerido"' "$OUT"; then pass "execução completa com Windows simulado (saída $CODE)"; else fail "o script não terminou ou não gravou o JSON"; tail -5 "$TMP/saida.txt" 2>/dev/null; fi
   grep -q 'Windows 11 Pro' "$TMP/saida.txt" 2>/dev/null && grep -q 'suportado' "$TMP/saida.txt" && pass "reconhece Windows 11 como suportado" || fail "não reconheceu o Windows simulado como suportado"

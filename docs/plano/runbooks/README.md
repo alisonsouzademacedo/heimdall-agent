@@ -3,7 +3,7 @@
 **Estado: documentados a partir das páginas citadas; nenhum foi executado.** O spike (`../fase-1-spike.md`) executa cada roteiro e registra divergências em `../PROGRESS.md`. Onde a documentação não cobre algo, o roteiro diz **[validar]**. Quem executar deve seguir o `AGENTS.md` (ler a página de origem inteira antes de agir).
 
 ## Ordem
-0. `spike/preflight/` (verificador de ambiente) → 1. [Docker](01-docker.md) → 2. [Hindsight e PostgreSQL](02-hindsight.md) → 3. [Hermes](03-hermes.md) → 4. [Logins](07-logins.md) → 5. [Krayin](04-krayin.md) → 6. [Trabalhador de áudio e PDF](06-media-worker.md) → 7. [Escuta com Baileys (núcleo)](05-listener-baileys.md) → 8. Integrações → 9. [Testes de fumaça](08-testes-de-fumaca.md)
+0. `spike/preflight/` (verificador de ambiente) → 1. [Docker](01-docker.md) → 2. [Hindsight e PostgreSQL](02-hindsight.md) → 3. [Hermes](03-hermes.md) → 4. [Logins](07-logins.md) → 5. [Krayin](04-krayin.md) → 6. [Trabalhador de áudio e PDF](06-media-worker.md) → 7. [Escuta com Baileys (núcleo)](05-listener-baileys.md) → 8. Integrações → 9. [Testes de fumaça](08-testes-de-fumaca.md) → 10. [Testes e caminhos por sistema (Windows e Linux)](10-testes-windows-e-linux.md)
 
 **Setup por computador:** o instalador e a tela mostram o perfil ideal para a máquina (Insuficiente, Enxuto, Equilibrado, Folgado) com o que foi **medido** separado do que é estimativa: `../fase-1-perfis-de-computador.md`. Medição de memória e armadilhas de instalação descobertas: `../fase-1-orcamento-de-memoria.md`, `02-hindsight.md` e `06-media-worker.md`.
 

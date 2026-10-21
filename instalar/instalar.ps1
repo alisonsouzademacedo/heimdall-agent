@@ -87,6 +87,7 @@ function DockerRodando {
   try { & docker info 2>$null | Out-Null; return ($LASTEXITCODE -eq 0) } catch { return $false }
 }
 function AtualizaPath {
+  if ($env:HEIMDALL_TESTE -eq '1') { return }   # em teste o PATH e so o dos programas falsos; trocar pelo do sistema apagaria o isolamento
   if ($ehWindows) {
     $m = [Environment]::GetEnvironmentVariable('Path', 'Machine'); $u = [Environment]::GetEnvironmentVariable('Path', 'User')
     $env:Path = "$m;$u"
@@ -234,6 +235,7 @@ if ($ehWindows) {
   try {
     $so = Get-CimInstance Win32_OperatingSystem
     $livreMb = [math]::Round($so.FreePhysicalMemory / 1024)
+    if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_MEM_LIVRE_MB) { $livreMb = [int]$env:HEIMDALL_TESTE_MEM_LIVRE_MB }   # so em teste: nao depender da maquina
     if ($livreMb -lt 2048) { Falta "Memoria livre baixa ($livreMb MB). Feche navegadores e outros programas antes de continuar." } else { Ok "Memoria livre: $livreMb MB" }
   } catch { }
 }

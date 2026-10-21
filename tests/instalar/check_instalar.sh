@@ -2,6 +2,7 @@
 # Testes do instalador do Windows (instalar/instalar.ps1): so ASCII, sem ${var}: perigoso, sintaxe, e comportamento com
 # programas FALSOS no PATH (nada e instalado de verdade). Uso: sh tests/instalar/check_instalar.sh  (REQUIRE_PWSH=1 exige o PowerShell 7)
 cd "$(dirname "$0")/../.." || exit 2
+. tests/lib/so.sh   # SO, falsos (.cmd no Windows, shell no Linux) e limpeza
 PS1=instalar/instalar.ps1
 FAIL=0
 pass() { echo "  [PASSOU] $1"; }
@@ -37,11 +38,17 @@ else
   export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 HEIMDALL_TESTE=1
   T=$(mktemp -d)
   # sintaxe pelo analisador do PowerShell
-  PS1_PATH="$PWD/$PS1" "$PW" -NoProfile -Command '$e=$null;[void][System.Management.Automation.Language.Parser]::ParseFile($env:PS1_PATH,[ref]$null,[ref]$e); if($e.Count){$e|%{$_.Message};exit 1}' >/dev/null 2>&1 && pass "o PowerShell analisa o instalador sem erros" || fail "erro de sintaxe no instalador"
+  PS1_PATH="$(caminho_nativo "$PWD/$PS1")" "$PW" -NoProfile -Command '$e=$null;[void][System.Management.Automation.Language.Parser]::ParseFile($env:PS1_PATH,[ref]$null,[ref]$e); if($e.Count){$e|%{$_.Message};exit 1}' >/dev/null 2>&1 && pass "o PowerShell analisa o instalador sem erros" || fail "erro de sintaxe no instalador"
 
-  fake() { # fake <pasta> <nome> <saida> [codigo]
-    printf '#!/bin/sh\necho "%s"\nexit %s\n' "$3" "${4:-0}" > "$1/$2"; chmod +x "$1/$2"; }
-  novo_bin() { B="$T/$1"; mkdir -p "$B"; printf '#!/bin/sh\necho "$@" >> "%s/winget-chamadas.txt"\nexit 0\n' "$T" > "$B/winget"; chmod +x "$B/winget"; }
+  # Os programas falsos vem de tests/lib/so.sh (no Windows sao .cmd; um script sem extensao abriria "escolher programa").
+  # No Windows o instalador mede o computador de verdade (memoria livre, virtualizacao, WSL, engine.sock do Docker): fixa tudo,
+  # para o resultado nao depender da maquina onde o teste roda (AGENTS.md).
+  if [ "$SO" = windows ]; then
+    mkdir -p "$T/segredos"
+    export HEIMDALL_TESTE_VIRT=1 HEIMDALL_TESTE_WSL=1 HEIMDALL_TESTE_SECRETS_DIR="$(caminho_nativo "$T/segredos")" HEIMDALL_TESTE_MEM_LIVRE_MB=8000
+  fi
+  fake() { falso_saida "$@"; } # fake <pasta> <nome> <saida> [codigo]
+  novo_bin() { B="$T/$1"; mkdir -p "$B"; falso_anota "$B" winget "$T/winget-chamadas.txt"; }
   roda() { # roda <bin> <entrada> [args...]
     b="$1"; entrada="$2"; shift 2
     printf '%s' "$entrada" | PATH="$b" "$PW" -NoProfile -File "$PWD/$PS1" -SemPausa -SemTestes -SemClipboard "$@" > "$T/saida.txt" 2>&1
@@ -88,27 +95,39 @@ N
   fake "$T/e" python "Python 3.12.1"; fake "$T/e" docker "erro" 1; roda "$T/e" "" -SomenteMostrar; C=$?
   grep -q "NAO esta rodando" "$T/saida.txt" && pass "H) Docker parado e avisado" || fail "H) Docker parado nao avisado"
 
+  # L) memoria livre (a medicao so existe no Windows): pouca memoria avisa; bastante memoria mostra OK. Em teste a medida e FIXADA.
+  if [ "$SO" = windows ]; then
+    HEIMDALL_TESTE_MEM_LIVRE_MB=1000 roda "$T/a" "" -SomenteMostrar
+    grep -q "Memoria livre baixa (1000 MB)" "$T/saida.txt" && pass "L) com 1000 MB livres o instalador avisa que a memoria esta baixa" || fail "L) nao avisou memoria baixa com 1000 MB"
+    HEIMDALL_TESTE_MEM_LIVRE_MB=8000 roda "$T/a" "" -SomenteMostrar
+    grep -q "Memoria livre: 8000 MB" "$T/saida.txt" && ! grep -q "Memoria livre baixa" "$T/saida.txt" && pass "L) com 8000 MB livres mostra OK e nao avisa" || fail "L) com 8000 MB nao mostrou OK"
+  else
+    echo "  [NAO SE APLICA] L) memoria livre: so o instalador do Windows mede a memoria (no Linux o bloco nao existe)"
+  fi
+
   # I) conectar a pasta ao GitHub (com git de verdade e um "GitHub" local)
   if command -v git >/dev/null 2>&1; then
     GIT_REAL=$(command -v git)
     ORIGEM="$T/origem"; mkdir -p "$ORIGEM"; (cd "$ORIGEM" && git init -q -b main && git config user.email t@t && git config user.name t && mkdir -p instalar && echo "ola" > arquivo.txt && git add -A && git commit -q -m inicial)
     git clone -q --bare "$ORIGEM" "$T/remoto.git"
     PROJ="$T/proj"; mkdir -p "$PROJ/instalar"; cp "$PS1" "$PROJ/instalar/instalar.ps1"; cp "$ORIGEM/arquivo.txt" "$PROJ/arquivo.txt"   # como o conteudo do ZIP: sem .git
-    novo_bin g; printf '#!/bin/sh\nexec "%s" "$@"\n' "$GIT_REAL" > "$T/g/git"; chmod +x "$T/g/git"; fake "$T/g" node "v22.22.0"; fake "$T/g" python "Python 3.12.1"; fake "$T/g" docker "Docker version 29"
-    printf '' | HEIMDALL_REPO_URL="$T/remoto.git" PATH="$T/g" "$PW" -NoProfile -File "$PROJ/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida.txt" 2>&1
-    (cd "$PROJ" && [ "$(git rev-parse --abbrev-ref HEAD)" = main ] && [ "$(git remote get-url origin)" = "$T/remoto.git" ] && [ "$(git rev-parse --abbrev-ref main@{upstream})" = origin/main ]) && pass "I) a pasta do ZIP virou repositorio ligado ao GitHub (main acompanha origin/main)" || fail "I) git nao foi conectado"
+    novo_bin g; falso_script "$T/g" git 'exec "'"$GIT_REAL"'" "$@"' '"'"$(caminho_nativo "$GIT_REAL")"'" %*'; fake "$T/g" node "v22.22.0"; fake "$T/g" python "Python 3.12.1"; fake "$T/g" docker "Docker version 29"
+    printf '' | HEIMDALL_REPO_URL="$(caminho_nativo "$T/remoto.git")" PATH="$T/g$PATH_GIT" "$PW" -NoProfile -File "$PROJ/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida.txt" 2>&1
+    (cd "$PROJ" && [ "$(git rev-parse --abbrev-ref HEAD)" = main ] && [ "$(git remote get-url origin)" = "$(caminho_nativo "$T/remoto.git")" ] && [ "$(git rev-parse --abbrev-ref main@{upstream})" = origin/main ]) && pass "I) a pasta do ZIP virou repositorio ligado ao GitHub (main acompanha origin/main)" || fail "I) git nao foi conectado"
     (cd "$PROJ" && [ -z "$(git status --porcelain | grep -v '^?? instalar' | grep -v '^?? instalar-relatorio' | grep -v '^?? data')" ]) && pass "I) os arquivos baixados nao aparecem como alterados" || fail "I) o git mostra arquivos alterados apos conectar"
-    printf '' | HEIMDALL_REPO_URL="$T/remoto.git" PATH="$T/g" "$PW" -NoProfile -File "$PROJ/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida2.txt" 2>&1
+    printf '' | HEIMDALL_REPO_URL="$(caminho_nativo "$T/remoto.git")" PATH="$T/g$PATH_GIT" "$PW" -NoProfile -File "$PROJ/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida2.txt" 2>&1
     grep -q "ja conectada" "$T/saida2.txt" && pass "I) rodar de novo nao refaz a conexao" || fail "I) segunda execucao refez a conexao"
     # J) URL do GitHub quebrada: vira relatorio de bug, sem derrubar o instalador
     PROJ2="$T/proj2"; mkdir -p "$PROJ2/instalar"; cp "$PS1" "$PROJ2/instalar/instalar.ps1"
-    printf '' | HEIMDALL_REPO_URL="$T/nao-existe.git" PATH="$T/g" "$PW" -NoProfile -File "$PROJ2/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida3.txt" 2>&1
+    printf '' | HEIMDALL_REPO_URL="$(caminho_nativo "$T/nao-existe.git")" PATH="$T/g$PATH_GIT" "$PW" -NoProfile -File "$PROJ2/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard > "$T/saida3.txt" 2>&1
     BUG=$(ls "$PROJ2"/data/bugs/*conectar-git*.md 2>/dev/null | head -1)
     [ -n "$BUG" ] && grep -q "^estado: aberto" "$BUG" && grep -q "^origem: instalador" "$BUG" && pass "J) falha ao conectar o git gera relatorio de bug aberto em data/bugs" || fail "J) sem relatorio de bug ao falhar o git"
     grep -q "Bugs de instalacao" "$BUG" 2>/dev/null && pass "J) o relatorio instrui a IA (teste que falha, correcao, LICOES, commit)" || fail "J) relatorio sem instrucoes para a IA"
     # K) winget falha e imprime segredo: o relatorio nao pode conter o segredo
     novo_bin k; FALSO_GHP="ghp""_abcdefghijklmnopqrstuvwxyz1234567890"   # segredo FALSO montado em partes (o teste de higiene procura chaves nos arquivos)
-    printf '#!/bin/sh\necho "erro token=SEGREDO123456 e %s em C:\\\\Users\\\\Joao\\\\x"\nexit 1\n' "$FALSO_GHP" > "$T/k/winget"; chmod +x "$T/k/winget"
+    falso_script "$T/k" winget 'echo "erro token=SEGREDO123456 e '"$FALSO_GHP"' em C:\\Users\\Joao\\x"
+exit 1' 'echo erro token=SEGREDO123456 e '"$FALSO_GHP"' em C:\Users\Joao\x
+exit /b 1'
     PROJ3="$T/proj3"; mkdir -p "$PROJ3/instalar"; cp "$PS1" "$PROJ3/instalar/instalar.ps1"
     printf '' | PATH="$T/k" "$PW" -NoProfile -File "$PROJ3/instalar/instalar.ps1" -SemPausa -SemTestes -SemClipboard -Sim > "$T/saida4.txt" 2>&1
     BUG3=$(ls "$PROJ3"/data/bugs/*instalar-git*.md 2>/dev/null | head -1)
@@ -120,7 +139,7 @@ N
   else
     echo "  [NAO EXECUTADO] cenarios I-K: git nao encontrado"; [ "${REQUIRE_PWSH:-0}" = 1 ] && FAIL=$((FAIL+1))
   fi
-  rm -rf "$T"
+  limpar_pasta "$T"
 fi
 
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"

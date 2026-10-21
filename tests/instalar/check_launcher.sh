@@ -2,6 +2,7 @@
 # Testes do launcher (instalar/heimdall.ps1): so ASCII, sem comando perigoso, sintaxe, e comportamento com node e docker FALSOS no PATH
 # (nada sobe de verdade). Uso: sh tests/instalar/check_launcher.sh  (REQUIRE_PWSH=1 exige o PowerShell 7)
 cd "$(dirname "$0")/../.." || exit 2
+. tests/lib/so.sh   # SO, falsos (.cmd no Windows, shell no Linux), vivo e matar
 PS1=instalar/heimdall.ps1
 FAIL=0
 pass() { echo "  [PASSOU] $1"; }
@@ -31,20 +32,19 @@ else
   for p in apps/core/src/onboarding apps/listener/src apps/trabalhos/src apps/memoria/src apps/ponte/src apps/ponte/scripts; do mkdir -p "$R/$p"; done
   for p in listener trabalhos memoria ponte; do mkdir -p "$R/apps/$p/node_modules"; done
   B="$T/bin"; mkdir -p "$B"
-  # vivo <pid>: existe e nao e zumbi (processo morto que o pai ainda nao recolheu conta como parado)
-  vivo() { kill -0 "$1" 2>/dev/null && ! grep -q '^State:.*Z' "/proc/$1/status" 2>/dev/null; }
-  # node falso: "--version" responde v22.22.0; a tela imprime o link; os demais ficam vivos por um tempo
-  cat > "$B/node" <<'EOF'
-#!/bin/sh
-if [ "$1" = "--version" ]; then echo v22.22.0; exit 0; fi
+  # Os programas falsos, "vivo" e "matar" vem de tests/lib/so.sh (no Windows os falsos sao .cmd: script sem extensao abriria "escolher programa").
+  # node falso: "--version" responde v22.22.0; a tela imprime o link; os demais ficam vivos por cerca de 25 s
+  falso_script "$B" node 'if [ "$1" = "--version" ]; then echo v22.22.0; exit 0; fi
 case "$1" in
   *scripts/gerar-config.ts) echo "timezone: x"; exit 0;;
   *onboarding/iniciar.ts) echo "Se o navegador nao abrir sozinho, copie este endereco: http://127.0.0.1:8765/?codigo=teste123";;
 esac
-sleep 25
-EOF
-  printf '#!/bin/sh\necho "$@" >> "%s/docker-chamadas.txt"\nexit 0\n' "$T" > "$B/docker"; chmod +x "$B/node" "$B/docker"
-  roda() { (cd "$R" && PATH="$B:$PATH" HEIMDALL_DATA="$R/data" "$PW" -NoProfile -File "$R/instalar/heimdall.ps1" -SemPausa "$@" > "$T/saida.txt" 2>&1); return $?; }
+sleep 25' 'if "%~1"=="--version" (echo v22.22.0& exit /b 0)
+echo %~1| findstr /C:"scripts/gerar-config.ts" >nul && (echo timezone: x& exit /b 0)
+echo %~1| findstr /C:"onboarding/iniciar.ts" >nul && echo Se o navegador nao abrir sozinho, copie este endereco: http://127.0.0.1:8765/?codigo=teste123
+ping -n 26 127.0.0.1 >nul'
+  falso_anota "$B" docker "$T/docker-chamadas.txt"
+  roda() { (cd "$R" && PATH="$B:$PATH" HEIMDALL_DATA="$(caminho_nativo "$R/data")" "$PW" -NoProfile -File "$R/instalar/heimdall.ps1" -SemPausa "$@" > "$T/saida.txt" 2>&1); return $?; }
 
   # 1) somente mostrar: nada e criado nem iniciado
   roda -Acao iniciar -SomenteMostrar; C=$?
@@ -77,15 +77,23 @@ EOF
   rm -f "$T/docker-chamadas.txt"
 
   # 5) node antigo: recusa iniciar
-  printf '#!/bin/sh\nif [ "$1" = "--version" ]; then echo v20.11.0; exit 0; fi\nexit 0\n' > "$B/node"
+  falso_script "$B" node 'if [ "$1" = "--version" ]; then echo v20.11.0; exit 0; fi
+exit 0' 'if "%~1"=="--version" (echo v20.11.0& exit /b 0)
+exit /b 0' 
   roda -Acao iniciar -SemDocker; C=$?
   [ "$C" -ne 0 ] && grep -q "Node.js 22.18" "$T/saida.txt" && pass "Node 20 e recusado com explicacao" || fail "Node antigo passou"
   # 6) config-hermes: gera, copia para o conteiner e reinicia
-  printf '#!/bin/sh\nif [ "$1" = "--version" ]; then echo v22.22.0; exit 0; fi\necho "timezone: x"\n' > "$B/node"
-  printf '#!/bin/sh\necho "$@" >> "%s/docker-chamadas.txt"\ncase "$*" in *"ps -aq hermes"*) echo cont123;; esac\nexit 0\n' "$T" > "$B/docker"; chmod +x "$B/docker"
+  falso_script "$B" node 'if [ "$1" = "--version" ]; then echo v22.22.0; exit 0; fi
+echo "timezone: x"' 'if "%~1"=="--version" (echo v22.22.0& exit /b 0)
+echo timezone: x' 
+  falso_script "$B" docker 'echo "$@" >> "'"$T"'/docker-chamadas.txt"
+case "$*" in *"ps -aq hermes"*) echo cont123;; esac
+exit 0' '>> "'"$(caminho_nativo "$T")"'/docker-chamadas.txt" echo %*
+echo %* | findstr /C:"ps -aq hermes" >nul && echo cont123
+exit /b 0' 
   roda -Acao config-hermes; grep -q 'cp .*:/opt/data/config.yaml' "$T/docker-chamadas.txt" 2>/dev/null && grep -q 'restart hermes' "$T/docker-chamadas.txt" && pass "config-hermes copia o config para o volume e reinicia o Hermes" || { fail "config-hermes nao fez o fluxo"; head -5 "$T/saida.txt"; }
-  for p in $PIDS; do kill "$p" 2>/dev/null; done
-  rm -rf "$T"
+  for p in $PIDS; do matar "$p"; done
+  limpar_pasta "$T"
 fi
 
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"

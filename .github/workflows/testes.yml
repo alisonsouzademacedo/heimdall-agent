@@ -79,3 +79,11 @@ jobs:
         run: REQUIRE_PWSH=1 sh tests/instalar/check_fora_do_pacote.sh
       - name: Instalador - reparo com socket Unix de verdade
         run: REQUIRE_PWSH=1 sh tests/instalar/check_socket_real.sh
+      - name: Testes - biblioteca de programas falsos (Windows)
+        run: REQUIRE_PWSH=1 sh tests/lib/check_so.sh
+      - name: Instalador - comportamento no Windows (falsos .cmd)
+        run: REQUIRE_PWSH=1 sh tests/instalar/check_instalar.sh
+      - name: Launcher - comportamento no Windows (falsos .cmd)
+        run: REQUIRE_PWSH=1 sh tests/instalar/check_launcher.sh
+      - name: Verificador de ambiente (preflight) no Windows
+        run: REQUIRE_PWSH=1 sh tests/preflight/check_ps1.sh
