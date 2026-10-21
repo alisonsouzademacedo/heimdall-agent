@@ -4,7 +4,7 @@
 import type { Banco } from '../db.ts';
 import type { IdentidadeDono } from '../envio.ts';
 import type { OrigemEvento } from '../ingestao.ts';
-import { registrarMensagem, registrarEdicao, registrarApagada, idDaMensagem, resolverContato, guardarAlteracaoPendente, aplicarAlteracoesPendentes } from '../ingestao.ts';
+import { registrarMensagem, registrarEdicao, registrarApagada, idDaMensagem, resolverContato, guardarAlteracaoPendente, aplicarAlteracoesPendentes, guardarNomePendente } from '../ingestao.ts';
 import { normalizarJid, tipoDoJid } from '../jid.ts';
 import { traduzirMensagem, traduzirAtualizacao, type MensagemBaileys, type AtualizacaoBaileys, type Acao } from './traduzir.ts';
 
@@ -134,6 +134,7 @@ export function criarEscuta(db: Banco, dono: IdentidadeDono, opcoes: { agora?: (
         if (!jid || !nome) continue;
         const r = db.prepare('UPDATE contatos SET nome = ? WHERE nome IS NULL AND id = (SELECT contato_id FROM contato_jids WHERE jid = ?)').run(nome, jid);
         n2 += Number(r.changes);
+        if (Number(r.changes) === 0 && !db.prepare('SELECT 1 AS x FROM contato_jids WHERE jid = ?').get(jid)) guardarNomePendente(db, jid, nome, agora()); // o contato ainda nao existe
       }
       return n2;
     },
@@ -145,6 +146,7 @@ export function criarEscuta(db: Banco, dono: IdentidadeDono, opcoes: { agora?: (
         if (!jid || !nome || tipoDoJid(jid) !== 'grupo') continue;
         const r = db.prepare("UPDATE conversas SET nome = ? WHERE jid = ? AND tipo = 'grupo'").run(nome, jid);
         n2 += Number(r.changes);
+        if (Number(r.changes) === 0 && !db.prepare('SELECT 1 AS x FROM conversas WHERE jid = ?').get(jid)) guardarNomePendente(db, jid, nome, agora()); // o grupo ainda nao existe
       }
       return n2;
     },

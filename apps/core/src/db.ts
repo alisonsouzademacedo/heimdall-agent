@@ -295,6 +295,19 @@ CREATE INDEX idx_alteracoes_pendentes_msg ON alteracoes_pendentes (wa_msg_id);
 -- Hash (sem texto de conversa) do conteudo no momento em que o trabalho foi abandonado. Os agendadores comparam: igual = nao adianta tentar de novo.
 ALTER TABLE fila ADD COLUMN hash_abandono TEXT;
 `
+  },
+  {
+    versao: 11,
+    descricao: 'nome de contato/grupo que chega antes da primeira mensagem (a lista de contatos costuma vir primeiro): espera e e aplicado quando o contato/grupo aparece',
+    sql: `
+-- Uma linha por JID; a ultima lista recebida vale. Nada e apagado: ao aplicar, a linha ganha "aplicada_em". Nunca sobrescreve nome que o contato ja tem.
+CREATE TABLE nomes_pendentes (
+  jid TEXT PRIMARY KEY,
+  nome TEXT NOT NULL,
+  recebida_em INTEGER NOT NULL,
+  aplicada_em INTEGER
+);
+`
   }
 ];
 

@@ -55,6 +55,8 @@ MUTACOES = [
     ("src/onboarding/ambiente.ts", "memTotalBytes / GIB); // 7,8 GiB", "memTotalBytes / GIB) + 1; // 7,8 GiB", "ambiente: memoria arredondada como no verificador"),
     ("src/onboarding/ambiente.ts", "estado: m.virtualizacao ? 'ok' : 'falha'", "estado: 'ok'", "ambiente: virtualizacao desligada e falha"),
     ("src/onboarding/ambiente.ts", "estado: m.wsl ? 'ok' : 'falha'", "estado: 'ok'", "ambiente: WSL ausente e falha"),
+    ('src/whatsapp/escuta.ts', 'guardarNomePendente(db, jid, nome, agora()); // o contato ainda nao existe', '/* nao guarda */', 'contatos: nome que chega antes do contato e guardado'),
+    ('src/ingestao.ts', "WHERE id = ?').get(contatoId) as { nome: string | null }).nome === null) {", "WHERE id = ?').get(contatoId) as { nome: string | null }).nome !== null) {", 'contatos: nome pendente e aplicado so a contato sem nome'),
     ('src/whatsapp/escuta.ts', 'aplicarAlteracoesPendentes(db, a.evento.waMsgId, agora());', '/* sem aplicar pendentes */', 'ressincronizacao: edicao/apagada que chegou antes e aplicada quando a original entra'),
     ('src/fila.ts', 'AND tipo IN (${marcas}) LIMIT 1', 'AND tipo IN (${marcas}) AND 0 LIMIT 1', 'fila: haProntos enxerga trabalho pronto (agendador so varre com a fila vazia)'),
     ('src/fila.ts', 'return r !== undefined && r.h === hashConteudo;', 'return r !== undefined && r.h !== hashConteudo;', 'fila: abandonado so volta se o conteudo mudou'),

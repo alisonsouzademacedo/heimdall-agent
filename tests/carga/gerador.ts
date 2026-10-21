@@ -23,8 +23,8 @@ export function gerarHistorico(o: Opcoes): MensagemBaileys[] {
     const ts = Math.floor((AGORA - 1 * DIA - Math.floor(r() * dias * DIA)) / 1000); // sempre ANTES de hoje (dias fechados)
     let remoteJid: string; let fromMe = r() < 0.5; let participant: string | undefined;
     if (x < 0.02) { remoteJid = DONO.pn.replace(':7', ''); fromMe = true; }
-    else if (x < 0.1) { remoteJid = `1203630${String(Math.floor(r() * grupos)).padStart(6, '0')}@g.us`; participant = `55119${String(Math.floor(r() * o.clientes)).padStart(8, '0')}@s.whatsapp.net`; }
-    else remoteJid = `55119${String(Math.floor(r() * o.clientes)).padStart(8, '0')}@s.whatsapp.net`;
+    else if (x < 0.1) { remoteJid = `1203630${String(Math.floor(r() * grupos)).padStart(6, '0')}@g.us`; participant = `55119${String(Math.floor(r() * o.clientes) + 1).padStart(8, '0')}@s.whatsapp.net`; }
+    else remoteJid = `55119${String(Math.floor(r() * o.clientes) + 1).padStart(8, '0')}@s.whatsapp.net`;
     const y = r();
     const message = y < 0.01 ? { reactionMessage: { text: 'ok' } }
       : y < 0.04 ? { audioMessage: { ptt: true, seconds: 5 + Math.floor(r() * 90), mimetype: 'audio/ogg; codecs=opus' } }

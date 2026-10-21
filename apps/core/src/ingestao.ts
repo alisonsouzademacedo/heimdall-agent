@@ -30,6 +30,18 @@ function tipoJidParaTabela(jid: string): 'lid' | 'pn' | null {
 }
 
 // Acha (ou cria) o contato de um JID; se ha forma alternativa, liga os dois ao MESMO contato.
+// Nome que chegou antes de o contato/grupo existir (lista de contatos antes das mensagens): guardado, e aplicado quando ele aparecer.
+export function guardarNomePendente(db: Banco, jid: string, nome: string, agora: number = Date.now()): void {
+  const j = normalizarJid(jid);
+  if (!j || nome.trim() === '') return;
+  db.prepare('INSERT INTO nomes_pendentes (jid, nome, recebida_em) VALUES (?, ?, ?) ON CONFLICT (jid) DO UPDATE SET nome = excluded.nome, recebida_em = excluded.recebida_em, aplicada_em = NULL').run(j, nome.trim(), agora);
+}
+function nomePendenteDe(db: Banco, jid: string): string | null {
+  const r = db.prepare('SELECT nome FROM nomes_pendentes WHERE jid = ? AND aplicada_em IS NULL').get(jid) as { nome: string } | undefined;
+  return r?.nome ?? null;
+}
+const marcarAplicado = (db: Banco, jid: string): void => { db.prepare('UPDATE nomes_pendentes SET aplicada_em = ? WHERE jid = ?').run(Date.now(), jid); };
+
 export function resolverContato(db: Banco, jid: string, alt?: string, nome?: string): number | null {
   const principal = normalizarJid(jid);
   if (!principal || !tipoJidParaTabela(principal)) return null;
@@ -46,6 +58,16 @@ export function resolverContato(db: Banco, jid: string, alt?: string, nome?: str
   for (const f of formas) {
     db.prepare('INSERT OR IGNORE INTO contato_jids (jid, contato_id, tipo) VALUES (?, ?, ?)').run(f, contatoId, tipoJidParaTabela(f));
   }
+  // Sem nome ainda: usa o que a lista de contatos mandou antes (nunca sobrescreve um nome existente).
+  if ((db.prepare('SELECT nome FROM contatos WHERE id = ?').get(contatoId) as { nome: string | null }).nome === null) {
+    for (const f of formas) {
+      const pend = nomePendenteDe(db, f);
+      if (pend === null) continue;
+      db.prepare('UPDATE contatos SET nome = ? WHERE id = ? AND nome IS NULL').run(pend, contatoId);
+      marcarAplicado(db, f);
+      break;
+    }
+  }
   return contatoId;
 }
 
@@ -55,6 +77,8 @@ function conversaDe(db: Banco, remoteJid: string, alt: string | undefined, dono:
   const t = tipoDoJid(jid);
   if (t === 'grupo') {
     db.prepare('INSERT OR IGNORE INTO conversas (jid, tipo) VALUES (?, ?)').run(jid, 'grupo');
+    const pend = nomePendenteDe(db, jid);
+    if (pend !== null && db.prepare("UPDATE conversas SET nome = ? WHERE jid = ? AND nome IS NULL").run(pend, jid).changes > 0) marcarAplicado(db, jid);
     return (db.prepare('SELECT id FROM conversas WHERE jid = ?').get(jid) as { id: number }).id;
   }
   if (t !== 'pn' && t !== 'lid') return null; // transmissao, status, canal: ignorados

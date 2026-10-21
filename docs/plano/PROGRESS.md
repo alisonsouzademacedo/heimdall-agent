@@ -226,3 +226,10 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - **Não verificado (só com o WhatsApp real):** quanto histórico o WhatsApp entrega; **se o WhatsApp reenvia o histórico quando a carga cai no meio** (os testes só provam que reenviar é seguro). Runbook 08, linhas 21 a 24.
 - **Limite conhecido:** a varredura que agenda trabalhos custa ~8 s por 20 mil mensagens e roda quando a fila esvazia (e a cada giro ocioso); com centenas de milhares de mensagens fica pesada. Próximo passo possível: marcar "dia sujo" em vez de varrer tudo.
 - **Limite conhecido:** a extração anda um dia por vez (2 por giro); com milhares de dias antigos leva horas/dias de modelo, sem perder nada (a fila retoma). Decisão do dono: limitar a extração aos últimos N dias na primeira carga?
+
+## 2026-10-21 (nuvem) — contatos e fechamento operacional
+- **Puxada dos contatos:** 4º defeito real achado e corrigido (lista de contatos antes das mensagens perdia os nomes → `nomes_pendentes`, migração v11). Testes: 3 unitários (falharam antes) + 2 de carga (500 contatos). Core 375/375.
+- **Primeira carga (decisão do dono): processar tudo**, sem limite de dias. Garantias testadas: não puxa repetido (mensagem duplicada ignorada; documento/extração só refeito se o conteúdo mudou), retoma de onde parou depois de queda (fila durável, trabalho preso volta, dia concluído não é refeito), abandono não volta sem mudança de conteúdo.
+- Medida em escala (sintético, em memória): 100 mil mensagens na entrada em 77 s (~1,3 mil/s; cai de ~4 mil/s com 20 mil, ainda com folga). Reenvio total do histórico: 76 s, sem duplicar.
+- Não verificado (só com o WhatsApp real): quanto histórico/contatos o WhatsApp entrega e se reenvia depois de queda (runbook 08, linhas 21 a 25).
+- Ferramenta de teste descartável: PowerShell 7.4.6 e Playwright 1.56.1 só nesta máquina de nuvem.

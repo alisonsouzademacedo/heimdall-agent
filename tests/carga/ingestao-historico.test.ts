@@ -103,3 +103,30 @@ test('ressincronizacao 5: edicao e "apagada" que chegam ANTES da mensagem origin
   assert.ok(m, 'a mensagem entrou');
   assert.equal(m!.texto, 'texto corrigido', 'a edicao que chegou antes precisa valer (senao o acervo guarda texto desatualizado)');
 });
+
+// ---- puxada dos contatos: a lista chega junto do historico (messaging-history.set.contacts), muitas vezes ANTES das mensagens ----
+function lista(): { id: string; name: string }[] {
+  const ids = new Set<string>();
+  for (const m of historico) for (const j of [m.key.remoteJid!, m.key.participant ?? '']) if (j.endsWith('@s.whatsapp.net') && !j.startsWith('5511900000000')) ids.add(j);
+  return [...ids].map((id) => ({ id, name: `Contato ${id.slice(2, 13)}` }));
+}
+const semNome = (db: Banco) => (db.prepare("SELECT COUNT(*) AS n FROM contatos WHERE nome IS NULL AND id IN (SELECT contato_id FROM contato_jids)").get() as { n: number }).n;
+
+test('contatos: a lista inteira chega ANTES das mensagens -> todos os contatos ficam com nome, e a lista sozinha nao cria contato', async () => {
+  const db = novoBanco(); const l = ligar(db); const contatos = lista();
+  const t0 = performance.now();
+  for (const parte of emLotes(contatos, 500)) await l.historico([], { contacts: parte });
+  assert.equal(contar(db, 'contatos'), 0, 'lista de contatos sem mensagem nao cria contato (so quem conversou entra no acervo)');
+  for (const lote of lotes) await l.historico(lote);
+  console.log(`    [medida] ${contatos.length} contatos (lista antes) + ${N} mensagens em ${((performance.now() - t0) / 1000).toFixed(1)} s; contatos sem nome: ${semNome(db)}`);
+  assert.equal(semNome(db), 0);
+});
+
+test('contatos: a lista chega DEPOIS das mensagens e e reenviada duas vezes -> mesmos nomes, nenhum contato novo', async () => {
+  const db = novoBanco(); const l = ligar(db); const contatos = lista();
+  for (const lote of lotes) await l.historico(lote);
+  const antes = contar(db, 'contatos');
+  for (let vez = 0; vez < 2; vez++) for (const parte of emLotes(contatos, 500)) await l.historico([], { contacts: parte });
+  assert.equal(contar(db, 'contatos'), antes);
+  assert.equal(semNome(db), 0);
+});

@@ -195,3 +195,35 @@ test('edicao de uma mensagem que nunca chega fica so como pendencia (nao inventa
   assert.deepEqual({ ...l }, { texto: 'mesma id, outro cliente', estado: 'ativa' });
   assert.equal(pendentes(db), 1, 'a pendencia do outro cliente continua esperando');
 });
+
+// Carga dos contatos (LICOES.md, 2026-10-21): a lista de contatos/grupos costuma chegar ANTES das mensagens; o nome nao pode se perder.
+const semApelido = (id: string, jid = CLIENTE): MensagemBaileys => ({ key: { id, remoteJid: jid, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: 1_760_000_000 });
+const nomeDe = (db: ReturnType<typeof novo>['db'], jid: string) => (db.prepare('SELECT ct.nome AS n FROM contato_jids j JOIN contatos ct ON ct.id = j.contato_id WHERE j.jid = ?').get(jid) as { n: string | null } | undefined)?.n;
+
+test('nome de contato que chega ANTES da primeira mensagem dele e guardado e aplicado quando o contato aparece', () => {
+  const { db, escuta } = novo();
+  assert.equal(escuta.contatos([{ id: CLIENTE, name: 'Ana da Loja' }]), 0, 'ainda nao ha contato para atualizar');
+  assert.equal(contar(db, 'contatos'), 0, 'a lista de contatos sozinha nao cria contato nem conversa');
+  escuta.mensagens([semApelido('N1')], 'historico');
+  assert.equal(nomeDe(db, CLIENTE), 'Ana da Loja');
+});
+
+test('nome pendente: a ultima lista recebida vale; e nunca sobrescreve um nome que o contato ja tem', () => {
+  const { db, escuta } = novo();
+  escuta.contatos([{ id: CLIENTE, name: 'Nome velho' }]);
+  escuta.contatos([{ id: CLIENTE, name: 'Nome novo' }]);
+  escuta.mensagens([semApelido('N2')], 'historico');
+  assert.equal(nomeDe(db, CLIENTE), 'Nome novo');
+  const OUTRO = '5511999990009@s.whatsapp.net';
+  escuta.contatos([{ id: OUTRO, name: 'Da agenda' }]);
+  escuta.mensagens([{ key: { id: 'N3', remoteJid: OUTRO, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: 1_760_000_000, pushName: 'Apelido no WhatsApp' }], 'historico');
+  assert.equal(nomeDe(db, OUTRO), 'Apelido no WhatsApp', 'quem ja entrou com nome nao e sobrescrito');
+});
+
+test('nome de grupo que chega antes da primeira mensagem do grupo e guardado e aplicado', () => {
+  const { db, escuta } = novo();
+  const GRUPO = '120363000000000001@g.us';
+  escuta.conversas([{ id: GRUPO, name: 'Equipe comercial' }]);
+  escuta.mensagens([m('G1', { conversation: 'bom dia' }, { remoteJid: GRUPO, participant: CLIENTE })], 'historico');
+  assert.equal((db.prepare('SELECT nome FROM conversas WHERE jid = ?').get(GRUPO) as { nome: string | null }).nome, 'Equipe comercial');
+});
