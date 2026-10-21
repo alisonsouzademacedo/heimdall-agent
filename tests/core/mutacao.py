@@ -24,6 +24,7 @@ MUTACOES = [
     ("src/acompanhamento.ts", "if (doCliente.length === 0) {", "if (false) {", "quem nunca respondeu nao gera follow-up"),
     ("src/acompanhamento.ts", "ordenadas.filter((m) => m.deMim && m.em > ultimaCliente.em)", "ordenadas.filter((m) => m.deMim)", "resposta do cliente zera a contagem"),
     ("src/acompanhamento.ts", "hoje >= proximo ? 'follow_up_devido'", "hoje > proximo ? 'follow_up_devido'", "follow-up vence no dia certo"),
+    ("src/db.ts", "if (m.versao <= versaoAtual(db)) { db.exec('COMMIT'); continue; }", "", "migrar le a versao DENTRO da transacao (5 processos migram o mesmo banco)"),
     ("src/calendario.ts", "return s >= 1 && s <= 5 &&", "return s >= 1 && s <= 6 &&", "sabado nao e dia util"),
     ("src/calendario.ts", "const ontem = somarDias(diaLocal(agora, fuso), -1);", "const ontem = diaLocal(agora, fuso);", "diario cobre o dia anterior"),
     ("src/envio.ts", "await transporte.enviar(destino, { tipo: 'texto', texto });", "await transporte.enviar(texto, { tipo: 'texto', texto });", "envio so ao self-chat"),

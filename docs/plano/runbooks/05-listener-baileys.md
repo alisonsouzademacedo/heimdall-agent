@@ -32,6 +32,7 @@ O núcleo só tem **uma função de envio**, com destino fixo no JID do próprio
 Parear por QR (usuário); ver `connection: open`; receber uma mensagem de teste e vê-la no banco; reiniciar o processo e ver que **não** pede QR de novo; tentar enviar a outro número e ver que o teste de segurança falha como esperado.
 
 ## Armadilhas
+- **WhatsApp recusa `browser[1] = 'Desktop'` com histórico completo (428 em 0,6 s, QR nunca aparece; provado em 2026-10-20).** O Baileys envia `webSubPlatform = DARWIN/WIN32` nessa combinação. `'DESKTOP'` (maiúsculo) e `'Chrome'` recebem o QR. Correção **pendente de OK do dono**: `docs/plano/pendencias/2026-10-21-whatsapp-428-desktop.md`. Para ver o motivo de um corte, ligar o registro do Baileys **só num teste isolado** (sessão nova, sem mensagens); o listener real fica em silêncio de propósito.
 - Mensagens recebidas com o núcleo desligado e histórico chegam como `append`; guardar ambos e deduplicar por `key.id`.
 - O Baileys **não reconecta sozinho** (`troubleshooting.md`).
 - Todo processo com banco aberto precisa de `parar()` que **espera** o laço terminar e fecha o banco antes de devolver; no Windows um arquivo SQLite aberto impede apagar a pasta (EBUSY) e os testes só ficam vermelhos lá.

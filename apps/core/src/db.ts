@@ -288,11 +288,13 @@ export function versaoAtual(db: Banco): number {
 // Aplica as migracoes pendentes, cada uma em transacao. Idempotente: rodar de novo nao muda nada.
 export function migrar(db: Banco, ate: number = MIGRACOES.at(-1)!.versao, agora: number = Date.now()): number {
   db.exec('CREATE TABLE IF NOT EXISTS schema_versao (versao INTEGER PRIMARY KEY, aplicada_em INTEGER NOT NULL)');
-  const atual = versaoAtual(db);
   for (const m of MIGRACOES) {
-    if (m.versao <= atual || m.versao > ate) continue;
-    db.exec('BEGIN');
+    if (m.versao > ate) continue;
+    // Os processos do Heimdall sobem juntos e migram o mesmo arquivo: pega a trava de escrita ANTES de decidir e le a versao DENTRO da transacao,
+    // senao outro processo pode aplicar a mesma migracao entre a leitura e o BEGIN ("table ... already exists"; LICOES.md, 2026-10-20).
+    db.exec('BEGIN IMMEDIATE');
     try {
+      if (m.versao <= versaoAtual(db)) { db.exec('COMMIT'); continue; }
       db.exec(m.sql);
       db.prepare('INSERT INTO schema_versao (versao, aplicada_em) VALUES (?, ?)').run(m.versao, agora);
       db.exec('COMMIT');

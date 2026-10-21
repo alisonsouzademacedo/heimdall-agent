@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { abrirBanco, migrar, versaoAtual, MIGRACOES, contar } from './db.ts';
 
 const TABELAS_V1 = ['clientes', 'contatos', 'contato_jids', 'conversas', 'mensagens', 'midias', 'compromissos', 'sinais_potencial', 'feedback', 'ajustes_cliente', 'apagar_pendente', 'esquecimento', 'auditoria_apagar'];
@@ -94,4 +97,40 @@ test('v7: memoria_apagar guarda so o id do documento, com estado e tentativas; i
   assert.throws(() => db.prepare("INSERT INTO memoria_apagar (document_id, pedido_em, estado) VALUES ('x', 1, 'talvez')").run(), /CHECK/);
   const colunas = (db.prepare('PRAGMA table_info(memoria_apagar)').all() as { name: string }[]).map((c) => c.name);
   assert.deepEqual(colunas.filter((c) => /texto|conteudo|nome|mensagem/i.test(c)), [], 'nenhum conteudo de conversa nesta tabela');
+});
+
+// Os 5 processos (tela, listener, executor, memoria, ponte) sobem juntos e cada um chama migrar() no MESMO acervo.sqlite. Se a versao e lida
+// fora da transacao, outro processo pode aplicar a mesma migracao entre a leitura e o BEGIN e o segundo morre com "table ... already exists"
+// (LICOES.md, 2026-10-20: o processo da memoria nao subiu na 1a execucao com o launcher). A corrida e simulada de forma deterministica:
+// a conexao A e embrulhada para que, no instante do primeiro BEGIN, a conexao B ja termine todas as migracoes.
+test('migrar: outro processo aplica as migracoes entre a leitura da versao e o BEGIN: nao quebra e termina na ultima versao', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hm-mig-'));
+  const arquivo = join(dir, 'acervo.sqlite');
+  const a = abrirBanco(arquivo);
+  const b = abrirBanco(arquivo);
+  try {
+    a.exec('PRAGMA busy_timeout = 5000');
+    b.exec('PRAGMA busy_timeout = 5000');
+    let disparou = false;
+    const aComCorrida = new Proxy(a, {
+      get(alvo, prop) {
+        if (prop === 'exec') {
+          return (sql: string) => {
+            if (!disparou && /^BEGIN/i.test(sql)) { disparou = true; migrar(b); }
+            return alvo.exec(sql);
+          };
+        }
+        const v = Reflect.get(alvo, prop);
+        return typeof v === 'function' ? v.bind(alvo) : v;
+      }
+    });
+    assert.equal(migrar(aComCorrida as typeof a), MIGRACOES.at(-1)!.versao);
+    assert.ok(disparou, 'a corrida foi simulada');
+    assert.equal(versaoAtual(a), MIGRACOES.at(-1)!.versao);
+    const aplicadas = (a.prepare('SELECT versao FROM schema_versao ORDER BY versao').all() as { versao: number }[]).map((r) => r.versao);
+    assert.deepEqual(aplicadas, MIGRACOES.map((m) => m.versao), 'cada migracao aparece uma vez so');
+  } finally {
+    a.close(); b.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

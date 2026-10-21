@@ -32,6 +32,7 @@ Antes de subir os serviços: gerar o `config.yaml` do Hermes e gravá-lo no volu
 ## Armadilhas já encontradas (resumo; detalhes em `../LICOES.md`)
 - O Hermes só conecta o MCP do Hindsight **na partida**: sem o healthcheck do Hindsight no Compose ele fica "estacionado". Está corrigido e testado.
 - `/v1/toolsets` do Hermes **não lista MCP**; usar `hermes tools list --platform api_server` e `hermes mcp test hindsight`.
+- Os 5 processos migram o MESMO `acervo.sqlite` ao subir juntos: `migrar()` usa `BEGIN IMMEDIATE` e relê a versao dentro da transação (antes, o da memória morria com `table fila already exists`; `LICOES.md`, 2026-10-20). Todo processo novo deve definir `busy_timeout` antes de migrar.
 - No Windows, `parar()` de qualquer processo precisa fechar o banco antes de devolver (senão apagar a pasta falha com EBUSY).
 - No Windows `python3` é o atalho falso da Loja: todo script `tests/**/check_*.sh` que usa Python deve escolher o interpretador que roda (`python3`, `python`, `py`), como `check_core.sh` e `check_infra.sh`. Verificação que lê "saída vazia" como sucesso esconde esse erro.
 - A API do Hermes dá acesso a todas as ferramentas se o config não for aplicado: conferir sempre `smoke_hermes.sh` depois de mudar o config.
