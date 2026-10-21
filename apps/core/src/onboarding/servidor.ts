@@ -13,7 +13,11 @@ import { resumoDeFalhas, type Verificacao } from './ambiente.ts';
 import type { Perfil } from './perfil.ts';
 import { CSS, JS, HTML } from './recursos.ts';
 import { definirDestinoDeBackup, backupDoDia, lerBackup } from '../backup-copia.ts';
-import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas } from './painel.ts';
+import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas, estadosAoVivo, type EstadoAoVivo } from './painel.ts';
+import { lerConfigHistorico, gravarConfigHistorico, resumoHistoricoAntigo } from '../historico-antigo.ts';
+import { cadastrarMembro, listarEquipe, normalizarTelefone } from '../cadastro.ts';
+import { lerTesteDoModelo, pedirTesteDoModelo } from '../modelo-teste.ts';
+import { diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada } from '../extracao.ts';
 
 export interface OpcoesServidor {
   banco: Banco;
@@ -76,8 +80,19 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
   const estado = () => {
     const linhas = op.banco.prepare('SELECT passo, estado FROM onboarding_etapas').all() as { passo: string; estado: string }[];
     const mapa = new Map(linhas.map((l) => [l.passo, l.estado]));
+    // Os passos que dependem de trabalho em andamento vem AO VIVO (nunca do verde gravado): "processando" com barra e texto.
+    const vivo = estadosAoVivo(montarPainel(op.banco, agora())) as Record<string, EstadoAoVivo | undefined>;
+    // cadastro: verde com ao menos um membro da equipe; modelo: o resultado do ultimo teste (so ok/falhou, nunca o texto)
+    const membros = listarEquipe(op.banco).length;
+    vivo.cadastro = { estado: membros > 0 ? 'verde' : 'pendente', percentual: null, detalhe: membros > 0 ? `${membros} membro(s) da equipe cadastrado(s)` : 'Nenhum membro da equipe cadastrado ainda.' };
+    const tm = lerTesteDoModelo(op.banco);
+    vivo.modelo = { estado: tm.estado === 'ok' ? 'verde' : tm.estado === 'pedido' ? 'processando' : 'pendente', percentual: null, detalhe: tm.estado === 'ok' ? `Chamada de teste ok (${tm.ms} ms)` : tm.estado === 'falhou' ? `A chamada de teste falhou: ${tm.motivo}` : tm.estado === 'pedido' ? 'Teste pedido; aguardando a ponte responder.' : 'Ainda sem chamada de teste.' };
     return {
-      passos: PASSOS.map((p) => ({ id: p.id, titulo: p.titulo, mito: p.mito, explicacao: p.explicacao, pronto: p.pronto, estado: mapa.get(p.id) === 'verde' ? 'verde' : mapa.get(p.id) === 'vermelho' ? 'vermelho' : 'pendente' })),
+      passos: PASSOS.map((p) => {
+        const v = vivo[p.id];
+        const gravado = mapa.get(p.id) === 'verde' ? 'verde' : mapa.get(p.id) === 'vermelho' ? 'vermelho' : 'pendente';
+        return { id: p.id, titulo: p.titulo, mito: p.mito, explicacao: p.explicacao, pronto: p.pronto, estado: v ? v.estado : gravado, percentual: v ? v.percentual : null, detalhe: v ? v.detalhe : '' };
+      }),
       bugsAbertos: listarAbertos(op.pastaBugs).length
     };
   };
@@ -109,6 +124,25 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/app.css') return responder(res, 200, 'text/css; charset=utf-8', CSS);
         if (url.pathname === '/app.js') return responder(res, 200, 'application/javascript; charset=utf-8', JS);
         if (url.pathname === '/api/estado') return json(res, 200, estado());
+        if (url.pathname === '/api/historico-antigo') {
+          const c = lerConfigHistorico(op.banco);
+          return json(res, 200, { config: { liberado: c.liberado, ritmoSegundos: Math.round(c.ritmoMs / 1000), tamanhoPagina: c.tamanhoPagina, maxPaginas: c.maxPaginas }, resumo: resumoHistoricoAntigo(op.banco) });
+        }
+        if (url.pathname === '/api/cadastro') return json(res, 200, { equipe: listarEquipe(op.banco) });
+        if (url.pathname === '/api/modelo') {
+          return json(res, 200, { teste: lerTesteDoModelo(op.banco), passos: [
+            'O login e feito por voce, no terminal, nunca nesta tela: abra um terminal e rode  docker exec -it heimdall-hermes-1 hermes model  (runbooks/07-logins.md, secao A). Esta tela nunca ve nem guarda senha, token ou chave.',
+            'Para trocar de conta: rode o mesmo comando e escolha a nova conta; depois volte aqui e clique em "Fazer chamada de teste".',
+            'A cota de 5 horas do plano do ChatGPT e compartilhada com os outros aplicativos que usam a mesma conta: se voce usar o ChatGPT ao mesmo tempo, o Heimdall pode esperar.',
+            'Alternativa: chave de API (decisao D26). Tambem se configura no terminal, no Hermes; esta tela nunca recebe a chave.',
+            'O Hindsight fica sem modelo proprio (decisao sua): ele guarda e busca trechos; a extracao de compromissos usa o Hermes.'
+          ] });
+        }
+        if (url.pathname === '/api/processamento') {
+          const c = diasDeExtracaoPendentes(op.banco, agora());
+          const naFila = (op.banco.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair' AND estado IN ('pendente','em_andamento')").get() as { n: number }).n;
+          return json(res, 200, { liberada: extracaoLiberada(op.banco), diasNovos: c.novos, diasRefeitos: c.refeitos, naFila, consultasPrevistas: c.novos + c.refeitos + naFila });
+        }
         if (url.pathname === '/api/painel') {
           const painel = montarPainel(op.banco, agora());
           atualizarEtapas(op.banco, painel, agora());
@@ -135,6 +169,28 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
           return json(res, 200, perfil ? { verificacoes, ok: !falhas, perfil } : { verificacoes, ok: !falhas });
         }
         if (url.pathname === '/api/selfchat/testar') return json(res, 200, { pedido: pedirTesteSelfChat(op.banco, agora()) });
+        if (url.pathname === '/api/historico-antigo/liberar') {
+          if (typeof dados.liberar !== 'boolean') return json(res, 400, { erro: 'Informe liberar: true ou false.' });
+          if (dados.liberar && dados.confirmar !== true) return json(res, 400, { erro: 'Para liberar a busca de mensagens antigas a confirmacao e obrigatoria.' });
+          if (dados.ritmoSegundos !== undefined && (typeof dados.ritmoSegundos !== 'number' || !Number.isFinite(dados.ritmoSegundos) || dados.ritmoSegundos < 15 || dados.ritmoSegundos > 3600)) return json(res, 400, { erro: 'O intervalo entre pedidos precisa ficar entre 15 e 3600 segundos (ritmo conservador para nao arriscar a conta).' });
+          gravarConfigHistorico(op.banco, { liberado: dados.liberar, ...(typeof dados.ritmoSegundos === 'number' ? { ritmoMs: Math.floor(dados.ritmoSegundos * 1000) } : {}) });
+          return json(res, 200, { liberado: lerConfigHistorico(op.banco).liberado });
+        }
+        if (url.pathname === '/api/cadastro/entender') {
+          const r = normalizarTelefone(typeof dados.telefone === 'string' ? dados.telefone : '');
+          return r.ok ? json(res, 200, { exibir: r.exibir }) : json(res, 400, { erro: r.motivo });
+        }
+        if (url.pathname === '/api/cadastro/membro') {
+          const r = cadastrarMembro(op.banco, { nome: typeof dados.nome === 'string' ? dados.nome : '', funcao: typeof dados.funcao === 'string' ? dados.funcao : '', telefone: typeof dados.telefone === 'string' ? dados.telefone : '' }, agora());
+          return r.ok ? json(res, 200, { achou: r.achou, aviso: r.aviso ?? null, exibir: r.exibir }) : json(res, 400, { erro: r.motivo });
+        }
+        if (url.pathname === '/api/modelo/testar') return json(res, 200, { pedido: pedirTesteDoModelo(op.banco, agora()) });
+        if (url.pathname === '/api/processamento/liberar') {
+          if (typeof dados.liberar !== 'boolean') return json(res, 400, { erro: 'Informe liberar: true ou false.' });
+          if (dados.liberar && dados.confirmar !== true) return json(res, 400, { erro: 'Para liberar o processamento a confirmacao e obrigatoria.' });
+          definirExtracaoLiberada(op.banco, dados.liberar);
+          return json(res, 200, { liberada: extracaoLiberada(op.banco) });
+        }
         if (url.pathname === '/api/agenda/testar') {
           const relatorios = gerarRelatorioDeTeste(op.banco, agora());
           const tudoCabe = relatorios.every((r) => r.cabe);

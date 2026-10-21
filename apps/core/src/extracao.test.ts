@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { abrirBanco, migrar, type Banco } from './db.ts';
 import { criarEscuta } from './whatsapp/escuta.ts';
 import { pegarProximo, resumoDaFila } from './fila.ts';
-import { agendarExtracao, diasDeExtracaoPendentes, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
+import { agendarExtracao, diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
 
 const DONO = { pn: '5511900000000@s.whatsapp.net' };
 const D10 = Date.UTC(2025, 9, 10, 15, 0, 0); // 10/10/2025 12:00 em SP (sexta)
@@ -203,4 +203,13 @@ test('diasDeExtracaoPendentes: separa dias novos de dias ja extraidos que mudara
   c = diasDeExtracaoPendentes(db, HOJE);
   assert.deepEqual({ novos: c.novos, refeitos: c.refeitos }, { novos: 1, refeitos: 1 }, 'o dia ja extraido muda e sera refeito');
   assert.equal(agendarExtracao(db, HOJE).length, 2, 'o que se conta e o que se enfileira');
+});
+
+test('trava de processamento: por padrao FECHADA; o dono abre e fecha (config extracao.liberada)', () => {
+  const { db } = cenario();
+  assert.equal(extracaoLiberada(db), false);
+  definirExtracaoLiberada(db, true);
+  assert.equal(extracaoLiberada(db), true);
+  definirExtracaoLiberada(db, false);
+  assert.equal(extracaoLiberada(db), false);
 });

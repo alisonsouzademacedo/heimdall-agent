@@ -48,3 +48,31 @@ Revisar o painel final ("Pronto") e todos os passos (Ambiente, WhatsApp, Cadastr
 
 ## Ao terminar (a IA da nuvem)
 1. Rodar tudo (`npm test` nas 5 partes, `tsc`, `sh tests/run-all.sh`, `tests/carga/check_carga.sh`) e mostrar a saída; 2. atualizar `PROGRESS.md`, `LICOES.md`, os runbooks e este arquivo (marcar o que foi feito); 3. commit e envio ao GitHub; 4. avisar o dono de que a IA local pode retomar, **com a lista exata do que ele deve conferir**: o Heimdall puxa o resto do histórico? não repete extração? a trava de processamento funciona?
+
+
+---
+## Estado da execucao (IA da nuvem, 2026-10-21, ao fim do credito)
+
+**PRONTO, testado e enviado (core 408, listener 74, ponte 50, memoria 19; `tsc` limpo):**
+- **A) Historico antigo:** nucleo (`apps/core/src/historico-antigo.ts`, migracao v12), laco do listener (`apps/listener/src/historico-antigo.ts`, ligado em `iniciar.ts`, **trava fechada por padrao**), contagem de dias novos x refeitos SEM enfileirar (`diasDeExtracaoPendentes`), trava de arquitetura (regra 1), 3 cenarios de carga (`tests/carga/historico-antigo.test.ts`: chega depois da extracao, chega duas vezes, queda no meio). Endpoints `/api/historico-antigo` e `/api/historico-antigo/liberar` (confirmacao + ritmo entre 15 e 3600 s).
+- **D) Trava de processamento:** `extracao.liberada` (padrao FALSA); a ponte nao enfileira nem consulta o modelo com ela fechada; `/api/processamento` (so conta) e `/api/processamento/liberar` (liberar exige `confirmar:true`; pausar nao). Testes de ponte, servidor e nucleo.
+- **B) Parte de dados da tela:** estados AO VIVO (`estadosAoVivo`) com `processando`, `percentual` (so onde ha total conhecido) e `detalhe`; `/api/estado` os entrega por passo e o verde gravado de sincronizar/extrair deixou de valer. **Cadastro da equipe interna** com numero inteligente (`apps/core/src/cadastro.ts`, migracao v13, tabela `equipe`): formatos humanos, DDD 55 x codigo do pais decidido pelo numero de digitos, duas variantes (com e sem o 9), casa com `contato_jids` sem consultar o WhatsApp, recusa cliente e duplicata; endpoints `/api/cadastro*`.
+- **C) Conectar o modelo (parte de dados):** `apps/core/src/modelo-teste.ts`: a tela so grava o PEDIDO de teste, a **ponte** executa (a tela nao tem rede nem chave; regra de arquitetura do nucleo), guarda so ok/falhou/tempo/motivo curto (nunca o texto); `/api/modelo` entrega as instrucoes (login no terminal, cota de 5 horas compartilhada, alternativa por chave de API, Hindsight em `none`).
+- Passos `cadastro`, `modelo` e `processar` ja constam como `pronto: true` em `passos.ts`.
+
+**PENDENTE (nao feito por falta de credito):**
+1. **Interface (`apps/core/src/onboarding/recursos.ts`, JS e CSS) dos passos novos.** Os endpoints existem e estao testados, mas a tela ainda NAO os usa: faltam (a) renderizadores `cadastro` (formulario nome/funcao/telefone, "Entender o numero", "Salvar", lista), `modelo` (instrucoes, botao "Fazer chamada de teste" e leitura do resultado a cada 2 s), `processar` (contas de `/api/processamento`, botao "Liberar o processamento" com `confirm` e "Pausar"), e o cartao do historico antigo dentro de `sincronizar` (liberar/pausar com ritmo); (b) menu lateral com **barra e texto** ("133 de 655"), classe amarela `proc` para `processando` e texto de estado (nao so cor); (c) no `setInterval`, passos de formulario (`cadastro`, `modelo`) so atualizam o MENU, nunca o painel (senao apagam o que o dono digita); (d) trocar o texto "Este passo ainda nao esta ligado... (docs/plano/...)" por texto sem caminho de arquivo (hoje so o passo `voz` cai nele). **ATENCAO:** como `cadastro`, `modelo` e `processar` ja estao `pronto: true` e o JS ainda nao tem o renderizador, esses tres passos aparecem na tela **sem conteudo** ate a interface ser feita.
+2. Teste da tela real (`tests/navegadores/tela.mjs`) para os passos novos e para "processando" no menu.
+3. **E) Revisao final** do painel "Pronto" e de todos os passos (textos em portugues simples, acessibilidade) e o registro do que ficou nao verificado.
+4. Quebras propositais em `tests/core/mutacao.py` para as regras novas (historico antigo, trava `extracao.liberada`, `estadosAoVivo`, cadastro, modelo-teste) e rodar o `mutacao.py` completo (leva ~40 minutos).
+5. Rodar `sh tests/run-all.sh` e `sh tests/carga/check_carga.sh` com tudo junto (nesta sessao rodei so os `npm test` e o `tsc`; os cenarios de carga do historico antigo passaram isoladamente com 2000 mensagens).
+6. Adaptador de login do Hermes por `hermes doctor`: **nao feito de proposito** (o nucleo nao pode rodar programas fora de `ambiente.ts` e o formato da saida nao esta verificado).
+7. "Contexto de cada membro montado quando o modelo processar": so a tabela `equipe` (nome, funcao) existe; a montagem do contexto no processamento nao foi feita.
+
+**Ordem seguida:** A, D, B (dados), C (dados). A tarefa D foi adiantada antes de B e C de proposito, para a ponte nunca gastar cota sem o OK do dono.
+
+**O que o dono confere na volta a IA local (nada disto foi provado com o WhatsApp real):**
+1. **Puxa o resto do historico?** Atualizar o ramo; o acervo migra sozinho para v13. Abrir a busca antiga com `POST /api/historico-antigo/liberar` (ou pela tela quando a interface existir) com ritmo conservador (60 s) e **decidir o ritmo**; acompanhar `historico_pedidos` (conversas concluidas/esgotadas) e as mensagens novas. Anotar quanto o WhatsApp realmente devolve.
+2. **Nao extrai de novo?** Antes de liberar o modelo, consultar `GET /api/processamento`: `diasNovos` x `diasRefeitos` (dias ja extraidos que mudaram). Conferir que os dias antigos geram so trabalho novo e que `diasRefeitos` e o numero esperado.
+3. **A trava funciona?** Com `extracao.liberada` falsa a ponte nao consulta o modelo (conferir o contador de consultas do Hermes ou `fila` sem `extrair`); liberar (com `confirmar`) e ver o processamento comecar; pausar e ver parar.
+4. **Conectar o modelo:** apos trocar a conta no terminal, `POST /api/modelo/testar` e depois `GET /api/modelo`: `teste.estado` deve virar `ok`.

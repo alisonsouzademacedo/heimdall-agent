@@ -7,6 +7,8 @@ import { resumoDaFila } from '../fila.ts';
 import { enfileirarSaida, ehMensagemNossa, resumoDaSaida } from '../saida.ts';
 import { lerBackup } from '../backup-copia.ts';
 import { caberEmUmaTela, contarPalavras, montarPacoteDiario, renderizarDiario, MAX_PALAVRAS_DIARIO, MAX_PALAVRAS_SEMANAL } from '../relatorio.ts';
+import { extracaoLiberada } from '../extracao.ts';
+import { resumoHistoricoAntigo, type ResumoHistorico } from '../historico-antigo.ts';
 import { caberSemanal, montarPacoteSemanal, renderizarSemanal } from '../relatorio-semanal.ts';
 
 export type EstadoTesteSelfChat = 'nao_feito' | 'aguardando_envio' | 'aguardando_resposta' | 'ok' | 'falhou';
@@ -21,6 +23,8 @@ export interface Painel {
   servicos: Record<string, { ok: boolean; ha: number }>;
   selfchat: { teste: EstadoTesteSelfChat };
   backup: { destino: string | null; ultimoEm: number | null; erro: string | null };
+  historicoAntigo: ResumoHistorico;
+  processamento: { liberada: boolean };
 }
 
 const SVG_MAX = 100_000;
@@ -69,7 +73,9 @@ export function montarPainel(db: Banco, agora: number = Date.now()): Painel {
     relatorios: { ultimo: ultimo ?? null },
     servicos,
     selfchat: { teste: estadoDoTesteSelfChat(db) },
-    backup: lerBackup(db)
+    backup: lerBackup(db),
+    historicoAntigo: resumoHistoricoAntigo(db),
+    processamento: { liberada: extracaoLiberada(db) }
   };
 }
 
@@ -101,10 +107,45 @@ export function atualizarEtapas(db: Banco, p: Painel, agora: number = Date.now()
   };
   const w = p.whatsapp;
   marca('whatsapp', w.estado === 'conectado' ? 'verde' : w.estado === 'deslogado' || w.estado === 'erro' ? 'vermelho' : null);
-  marca('sincronizar', w.estado === 'conectado' && w.historico?.ultima === true ? 'verde' : null);
-  const baixar = p.fila.porTipo.baixar_midia ?? {};
-  const semPendencia = (baixar.pendente ?? 0) === 0 && (baixar.em_andamento ?? 0) === 0;
-  marca('extrair', w.estado === 'conectado' && w.historico?.ultima === true && p.acervo.mensagens > 0 && semPendencia ? 'verde' : null);
+  // sincronizar, extrair e processar NAO sao gravados aqui: o verde "pegajoso" escondia trabalho novo. Veja estadosAoVivo (calculado a cada leitura).
   marca('backup', p.backup.destino !== null && p.backup.ultimoEm !== null && p.backup.erro === null ? 'verde' : null);
   marca('selfchat', p.selfchat.teste === 'ok' ? 'verde' : p.selfchat.teste === 'falhou' ? 'vermelho' : null);
+}
+
+// Estado "ao vivo" dos passos que dependem de trabalho em andamento: calculado a cada leitura, NUNCA gravado (verde nao fica pegajoso).
+// Porcentagem so onde existe total conhecido (arquivos da fila; progresso que o WhatsApp informa; conversas do historico antigo); senao null.
+export interface EstadoAoVivo { estado: 'pendente' | 'processando' | 'verde'; percentual: number | null; detalhe: string }
+type EntradaAoVivo = Pick<Painel, 'whatsapp' | 'fila' | 'acervo' | 'historicoAntigo' | 'processamento'>;
+const soma = (o: Record<string, number> | undefined): number => Object.values(o ?? {}).reduce((a, b) => a + b, 0);
+const pct = (parte: number, total: number): number => (total > 0 ? Math.floor((parte * 100) / total) : 0);
+
+export function estadosAoVivo(p: EntradaAoVivo): { sincronizar: EstadoAoVivo; extrair: EstadoAoVivo; processar: EstadoAoVivo } {
+  const w = p.whatsapp;
+  const conectado = w.estado === 'conectado';
+  const recebido = conectado && w.historico !== null && (w.historico.ultima === true || (w.historico.progresso ?? 0) >= 100);
+
+  let sincronizar: EstadoAoVivo;
+  const ha = p.historicoAntigo;
+  if (!conectado) sincronizar = { estado: 'pendente', percentual: null, detalhe: 'Conecte o WhatsApp primeiro.' };
+  else if (!recebido) sincronizar = { estado: 'processando', percentual: w.historico?.progresso ?? null, detalhe: `${p.acervo.mensagens} mensagens em ${p.acervo.conversas} conversas recebidas ate agora` };
+  else if (ha.liberado && ha.pendentes + ha.emAndamento > 0) sincronizar = { estado: 'processando', percentual: pct(ha.concluidas + ha.esgotadas, ha.conversas), detalhe: `Buscando mensagens mais antigas: ${ha.concluidas + ha.esgotadas} de ${ha.conversas} conversas (${ha.novas} mensagens novas)` };
+  else sincronizar = { estado: 'verde', percentual: 100, detalhe: ha.liberado && ha.conversas > 0 ? `Historico recebido; conversas antigas: ${ha.concluidas} concluidas, ${ha.esgotadas} no limite` : 'Historico recebido.' };
+
+  const b = p.fila.porTipo.baixar_midia ?? {};
+  const total = soma(b), ok = b.ok ?? 0, pend = (b.pendente ?? 0) + (b.em_andamento ?? 0), sem = (b.abandonada ?? 0) + (b.erro ?? 0);
+  const texto = `${ok} de ${total} arquivos${sem > 0 ? ` (${sem} sem arquivo: expirados no WhatsApp)` : ''}`;
+  let extrair: EstadoAoVivo;
+  if (!conectado) extrair = { estado: 'pendente', percentual: null, detalhe: 'Conecte o WhatsApp primeiro.' };
+  else if (!recebido || pend > 0) extrair = { estado: 'processando', percentual: total > 0 ? pct(ok, total) : null, detalhe: total > 0 ? texto : 'Aguardando o historico chegar.' };
+  else if (p.acervo.mensagens > 0) extrair = { estado: 'verde', percentual: 100, detalhe: total > 0 ? texto : 'Mensagens guardadas; nao ha audios nem PDFs.' };
+  else extrair = { estado: 'pendente', percentual: null, detalhe: 'Ainda nao ha mensagens guardadas.' };
+
+  const e = p.fila.porTipo.extrair ?? {};
+  const totalE = soma(e), okE = e.ok ?? 0, pendE = (e.pendente ?? 0) + (e.em_andamento ?? 0);
+  let processar: EstadoAoVivo;
+  if (!p.processamento.liberada) processar = { estado: 'pendente', percentual: null, detalhe: 'Aguardando o seu OK para liberar o processamento.' };
+  else if (totalE === 0) processar = { estado: 'pendente', percentual: null, detalhe: 'Liberado; ainda sem dias para processar.' };
+  else if (pendE > 0) processar = { estado: 'processando', percentual: pct(okE, totalE), detalhe: `${okE} de ${totalE} dias processados` };
+  else processar = { estado: 'verde', percentual: 100, detalhe: `${okE} de ${totalE} dias processados` };
+  return { sincronizar, extrair, processar };
 }

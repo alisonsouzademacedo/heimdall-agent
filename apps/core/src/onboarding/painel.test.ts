@@ -6,7 +6,7 @@ import { gravarEstado, gravarQr, gravarHistorico, gravarContagem, gravarServico 
 import { criarEscuta } from '../whatsapp/escuta.ts';
 import { enfileirar } from '../fila.ts';
 import { enfileirarSaida, marcarEnviada } from '../saida.ts';
-import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas } from './painel.ts';
+import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas, estadosAoVivo } from './painel.ts';
 import { definirDestinoDeBackup, backupDoDia } from '../backup-copia.ts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -97,7 +97,7 @@ test('relatorio de teste: diario e semanal agora, ignorando o dia da semana; cab
   assert.equal(gerarRelatorioDeTeste(db, T).length, 2, 'cada teste gera um par novo (chave com o instante)');
 });
 
-test('etapas: whatsapp/sincronizar/extrair/selfchat ficam verdes sozinhas quando o banco mostra que deram certo; deslogado deixa vermelho', () => {
+test('etapas: whatsapp e selfchat ficam verdes sozinhas quando o banco mostra que deram certo; deslogado deixa vermelho (sincronizar/extrair NAO sao mais gravados: ver estadosAoVivo)', () => {
   const db = novo();
   for (const passo of ['whatsapp', 'sincronizar', 'extrair', 'selfchat']) db.prepare('INSERT OR IGNORE INTO onboarding_etapas (passo) VALUES (?)').run(passo);
   const estados = () => Object.fromEntries((db.prepare("SELECT passo, estado FROM onboarding_etapas WHERE passo IN ('whatsapp','sincronizar','extrair','selfchat')").all() as { passo: string; estado: string }[]).map((r) => [r.passo, r.estado]));
@@ -108,13 +108,10 @@ test('etapas: whatsapp/sincronizar/extrair/selfchat ficam verdes sozinhas quando
   assert.equal(estados().whatsapp, 'verde');
   gravarHistorico(db, { progresso: 100, ultima: true }, 2);
   atualizarEtapas(db, montarPainel(db, T), T);
-  assert.equal(estados().sincronizar, 'verde');
+  assert.equal(estados().sincronizar, 'pendente', 'verde de sincronizar/extrair nao e mais gravado (era "pegajoso"): vem de estadosAoVivo');
   criarEscuta(db, DONO, { agora: () => T }).mensagens([{ key: { id: 'M1', remoteJid: '5511999990001@s.whatsapp.net', fromMe: false }, message: { audioMessage: { ptt: true, seconds: 3 } }, messageTimestamp: Math.floor(T / 1000) }], 'notify', () => '{}');
   atualizarEtapas(db, montarPainel(db, T), T);
-  assert.equal(estados().extrair, 'pendente', 'ainda ha download na fila');
-  db.prepare("UPDATE fila SET estado = 'ok'").run();
-  atualizarEtapas(db, montarPainel(db, T), T);
-  assert.equal(estados().extrair, 'verde');
+  assert.equal(estados().extrair, 'pendente');
   gravarEstado(db, { estado: 'deslogado' }, 3);
   atualizarEtapas(db, montarPainel(db, T), T);
   assert.equal(estados().whatsapp, 'vermelho');
@@ -141,4 +138,74 @@ test('backup: o painel mostra destino, ultimo backup e erro; a etapa fica verde 
     assert.deepEqual(p.backup, { destino: pasta, ultimoEm: T, erro: null });
     atualizarEtapas(db, p, T); assert.equal(etapa(), 'verde');
   } finally { rmSync(pasta, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
+});
+
+// ---- estados ao vivo (B, 2026-10-21): "processando" (amarelo) com porcentagem SO onde existe total conhecido; verde so com tudo puxado e filas zeradas ----
+const vivo = (db: ReturnType<typeof novo>) => estadosAoVivo(montarPainel(db, T));
+function comMidias(db: ReturnType<typeof novo>, total: number, baixadas: number): void {
+  const escuta = criarEscuta(db, DONO, { agora: () => T });
+  for (let i = 0; i < total; i++) escuta.mensagens([{ key: { id: `A${i}`, remoteJid: '5511999990001@s.whatsapp.net', fromMe: false }, message: { audioMessage: { ptt: true, seconds: 3 } }, messageTimestamp: Math.floor(T / 1000) - i }], 'historico', () => '{}');
+  db.prepare("UPDATE fila SET estado = 'ok' WHERE id IN (SELECT id FROM fila WHERE tipo = 'baixar_midia' ORDER BY id LIMIT ?)").run(baixadas);
+}
+
+test('estados ao vivo: sem WhatsApp conectado os passos de dados ficam pendentes', () => {
+  const v = vivo(novo());
+  assert.equal(v.sincronizar!.estado, 'pendente'); assert.equal(v.extrair!.estado, 'pendente'); assert.equal(v.sincronizar!.percentual, null);
+});
+
+test('sincronizar: historico em andamento = processando com a porcentagem que o WhatsApp informa; sem total conhecido, nenhuma porcentagem inventada', () => {
+  const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1);
+  assert.deepEqual({ e: vivo(db).sincronizar!.estado, p: vivo(db).sincronizar!.percentual }, { e: 'processando', p: null }, 'ainda nao chegou nada: processando, sem porcentagem');
+  gravarHistorico(db, { progresso: 42, ultima: false }, 2);
+  assert.deepEqual({ e: vivo(db).sincronizar!.estado, p: vivo(db).sincronizar!.percentual }, { e: 'processando', p: 42 });
+  gravarHistorico(db, { progresso: 100, ultima: false }, 3);
+  assert.equal(vivo(db).sincronizar!.estado, 'verde', 'progresso 100 conta como recebido (o dono viu ultima=false com progresso 100)');
+});
+
+test('extrair: a porcentagem e arquivos baixados / total (133 de 655); verde so com a fila zerada; volta a processando se entra trabalho novo', () => {
+  const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1); gravarHistorico(db, { progresso: 100, ultima: true }, 2);
+  comMidias(db, 20, 5);
+  let x = vivo(db).extrair!;
+  assert.deepEqual({ e: x.estado, p: x.percentual }, { e: 'processando', p: 25 });
+  assert.match(x.detalhe, /5 de 20/);
+  db.prepare("UPDATE fila SET estado = 'ok'").run();
+  assert.equal(vivo(db).extrair!.estado, 'verde');
+  enfileirar(db, 'baixar_midia', '999', T); // entra trabalho novo depois de ja ter sido verde
+  x = vivo(db).extrair!;
+  assert.equal(x.estado, 'processando', 'verde nao e pegajoso');
+});
+
+test('extrair: download abandonado nao trava o verde, mas aparece no texto (arquivos sem copia)', () => {
+  const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1); gravarHistorico(db, { progresso: 100, ultima: true }, 2);
+  comMidias(db, 4, 2);
+  db.prepare("UPDATE fila SET estado = 'abandonada' WHERE estado = 'pendente'").run();
+  const x = vivo(db).extrair!;
+  assert.equal(x.estado, 'verde');
+  assert.match(x.detalhe, /2 sem arquivo/);
+});
+
+test('sincronizar com historico antigo ligado: enquanto ha conversa a pedir, e processando com conversas concluidas / total', () => {
+  const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1); gravarHistorico(db, { progresso: 100, ultima: true }, 2);
+  const e = criarEscuta(db, DONO, { agora: () => T });
+  for (const n of [1, 2, 3, 4]) e.mensagens([{ key: { id: `H${n}`, remoteJid: `551199999000${n}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(T / 1000) }], 'historico');
+  db.prepare("INSERT OR REPLACE INTO configuracao (chave, valor) VALUES ('historico.antigo', '{\"liberado\":true}')").run();
+  db.prepare("INSERT INTO historico_pedidos (conversa_id, estado) SELECT id, 'pendente' FROM conversas").run();
+  db.prepare("UPDATE historico_pedidos SET estado = 'concluida' WHERE conversa_id IN (SELECT conversa_id FROM historico_pedidos LIMIT 1)").run();
+  const s = estadosAoVivo(montarPainel(db, T)).sincronizar!;
+  assert.deepEqual({ e: s.estado, p: s.percentual }, { e: 'processando', p: 25 });
+  assert.match(s.detalhe, /1 de 4 conversas/);
+});
+
+test('processar: pendente enquanto a trava esta fechada; processando com dias na fila quando aberta; verde quando acaba', () => {
+  const db = novo();
+  assert.equal(vivo(db).processar!.estado, 'pendente');
+  assert.match(vivo(db).processar!.detalhe, /aguardando o seu OK/i);
+  db.prepare("INSERT INTO configuracao (chave, valor) VALUES ('extracao.liberada', 'true')").run();
+  assert.equal(vivo(db).processar!.estado, 'pendente', 'liberada mas sem nada para processar ainda');
+  enfileirar(db, 'extrair', 'ext:1:2026-01-01', T); enfileirar(db, 'extrair', 'ext:1:2026-01-02', T);
+  db.prepare("UPDATE fila SET estado = 'ok' WHERE referencia = 'ext:1:2026-01-01'").run();
+  const x = vivo(db).processar!;
+  assert.deepEqual({ e: x.estado, p: x.percentual }, { e: 'processando', p: 50 });
+  db.prepare("UPDATE fila SET estado = 'ok'").run();
+  assert.equal(vivo(db).processar!.estado, 'verde');
 });

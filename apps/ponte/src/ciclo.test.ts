@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { abrirBanco, migrar } from '../../core/src/db.ts';
 import { criarEscuta } from '../../core/src/whatsapp/escuta.ts';
 import { iniciarPonte, lerChaveDoEnv, EXTRACOES_POR_GIRO } from './ciclo.ts';
+import { definirExtracaoLiberada } from '../../core/src/extracao.ts';
 import type { PortasAgenda } from './agenda.ts';
 import { lerServicos } from '../../core/src/whatsapp/estado.ts';
 import type { PortasSelfChat } from './selfchat.ts';
@@ -82,6 +83,7 @@ test('laco: roda a extracao de compromissos (no maximo EXTRACOES_POR_GIRO por gi
     escuta.mensagens([{ key: { id: `M${i}`, remoteJid: `${jid}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(D10 / 1000) }], 'notify');
     db.prepare("UPDATE contatos SET cliente_id = 1, papel = 'cliente' WHERE id = (SELECT contato_id FROM contato_jids WHERE jid = ?)").run(`${jid}@s.whatsapp.net`);
   }
+  definirExtracaoLiberada(db, true); // a trava de processamento (D, 2026-10-21) vem fechada: este teste e do comportamento com ela ABERTA
   const pedidos: string[] = [];
   const extracao = { instrucoes: 'REGRAS', porta: { extrair: async (_p: string, sessao: string) => { pedidos.push(sessao); throw new Error('modelo fora do ar'); } } };
   let giros = 0;
@@ -123,6 +125,7 @@ test('laco: com extracao pendente nao reanalisa o acervo a cada giro; o dia novo
     db.prepare("UPDATE contatos SET cliente_id = 1, papel = 'cliente' WHERE id = (SELECT contato_id FROM contato_jids WHERE jid = ?)").run(`${jid}@s.whatsapp.net`);
   };
   for (const [i, jid] of ['5511999990001', '5511999990002', '5511999990003'].entries()) por(`M${i}`, jid, D10);
+  definirExtracaoLiberada(db, true);
   const extracao = { instrucoes: 'REGRAS', porta: { extrair: async () => '{}' } };
   const novas = () => (db.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair' AND referencia LIKE ?").get(`ext:${(db.prepare("SELECT c.id AS id FROM conversas c WHERE c.jid = '5511999990004@s.whatsapp.net'").get() as { id: number } | undefined)?.id ?? -1}:%`) as { n: number }).n;
   const vistas: number[] = [];
@@ -135,4 +138,46 @@ test('laco: com extracao pendente nao reanalisa o acervo a cada giro; o dia novo
   } });
   await p.terminou;
   assert.deepEqual(vistas, [0, 0, 1], 'giro 2: a fila ainda tinha trabalho, nao varreu; giro 3: fila vazia, agendou o dia novo');
+});
+
+// D (2026-10-21): a ponte NAO chama o modelo para extracao enquanto o dono nao liberar. Com a trava fechada nada e nem enfileirado.
+test('trava de processamento: fechada (padrao) a ponte nao pergunta nada ao modelo nem enfileira extracao; aberta processa; fechada de novo para', async () => {
+  const db = abrirBanco(); migrar(db);
+  const D10 = Date.UTC(2025, 9, 10, 15, 0, 0);
+  const HOJE = D10 + 30 * 3_600_000;
+  const escuta = criarEscuta(db, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => HOJE });
+  db.prepare('INSERT INTO clientes (id, nome) VALUES (1, ?)').run('Alfa');
+  for (const [i, jid] of ['5511999990001', '5511999990002', '5511999990003', '5511999990004', '5511999990005'].entries()) {
+    escuta.mensagens([{ key: { id: `M${i}`, remoteJid: `${jid}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(D10 / 1000) }], 'notify');
+    db.prepare("UPDATE contatos SET cliente_id = 1, papel = 'cliente' WHERE id = (SELECT contato_id FROM contato_jids WHERE jid = ?)").run(`${jid}@s.whatsapp.net`);
+  }
+  let consultas = 0;
+  const extracao = { instrucoes: 'REGRAS', porta: { extrair: async () => { consultas++; return '{}'; } } };
+  const fila = () => (db.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair'").get() as { n: number }).n;
+  const vistas: number[] = []; let giros = 0;
+  const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, extracao, agora: () => HOJE, intervaloMs: 1, esperar: async () => {
+    giros++; vistas.push(consultas);
+    if (giros === 2) assert.equal(fila(), 0, 'trava fechada: nem enfileira');
+    if (giros === 2) definirExtracaoLiberada(db, true);     // o dono libera
+    if (giros === 3) definirExtracaoLiberada(db, false);    // o dono pausa de novo
+    if (giros >= 5) p.parar();
+  } });
+  await p.terminou;
+  assert.deepEqual(vistas, [0, 0, EXTRACOES_POR_GIRO, EXTRACOES_POR_GIRO, EXTRACOES_POR_GIRO], 'giros 1-2 fechada: zero; giro 3 aberta: dois; depois de pausar: nenhuma consulta nova');
+});
+
+// C (2026-10-21): a tela pede o teste do modelo; a ponte (que ja fala com o Hermes) executa. Sem pedido, nenhuma chamada.
+test('laco: executa o teste do modelo pedido pela tela uma vez so, e sem pedido nao chama o modelo', async () => {
+  const { pedirTesteDoModelo, lerTesteDoModelo } = await import('../../core/src/modelo-teste.ts');
+  const db = abrirBanco(); migrar(db);
+  let chamadas = 0; let giros = 0;
+  const hermes = { perguntar: async (_t: string, op: { sessao: string }) => { chamadas++; assert.equal(op.sessao, 'heimdall:teste-modelo'); return 'ok'; } };
+  const p = iniciarPonte({ banco: db, portas: { hermes, apagarArquivo: () => {} }, agora: () => Date.parse('2026-10-21T11:00:00Z'), intervaloMs: 1, esperar: async () => {
+    giros++;
+    if (giros === 1) { assert.equal(chamadas, 0, 'sem pedido: nenhuma chamada'); pedirTesteDoModelo(db, Date.parse('2026-10-21T11:00:00Z')); }
+    if (giros >= 3) p.parar();
+  } });
+  await p.terminou;
+  assert.equal(chamadas, 1);
+  assert.equal(lerTesteDoModelo(db).estado, 'ok');
 });

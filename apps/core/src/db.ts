@@ -326,6 +326,22 @@ CREATE TABLE historico_pedidos (
   atualizado_em INTEGER NOT NULL DEFAULT 0
 );
 `
+  },
+  {
+    versao: 13,
+    descricao: 'equipe interna (cadastro): membros ligados a um contato; o numero digitado fica so como digitos',
+    sql: `
+-- So equipe interna (nao clientes). O contato dono do numero ganha papel "interno" (papel_fonte "cadastro"). Uma linha por contato.
+CREATE TABLE equipe (
+  id INTEGER PRIMARY KEY,
+  nome TEXT NOT NULL,
+  funcao TEXT,
+  contato_id INTEGER NOT NULL UNIQUE REFERENCES contatos(id),
+  telefone_digitos TEXT NOT NULL,
+  achou_no_acervo INTEGER NOT NULL DEFAULT 0 CHECK (achou_no_acervo IN (0,1)),
+  criado_em INTEGER NOT NULL
+);
+`
   }
 ];
 

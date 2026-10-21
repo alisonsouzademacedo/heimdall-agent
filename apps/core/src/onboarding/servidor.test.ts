@@ -172,7 +172,7 @@ test('estado lista os 12 passos; so os passos com acao real estao prontos (lista
     const e = JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto);
     assert.equal(e.passos.length, 12);
     assert.deepEqual(e.passos.map((p: { id: string }) => p.id), PASSOS.map((p) => p.id));
-    assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'sincronizar', 'extrair', 'selfchat', 'agenda', 'backup', 'pronto']);
+    assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'cadastro', 'sincronizar', 'extrair', 'modelo', 'processar', 'selfchat', 'agenda', 'backup', 'pronto']);
     assert.ok(e.passos.every((p: { estado: string }) => p.estado === 'pendente'));
     assert.equal(e.bugsAbertos, 0);
   } finally { await c.fim(); }
@@ -351,4 +351,112 @@ test('backup pela tela: escolhe o destino (validado), faz o primeiro backup agor
     assert.equal(painel.backup.destino, pasta); assert.ok(painel.backup.ultimoEm > 0);
     assert.equal((c.banco.prepare("SELECT estado FROM onboarding_etapas WHERE passo = 'backup'").get() as { estado: string }).estado, 'verde');
   } finally { await c.fim(); rmSync(pasta, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }
+});
+
+// D (2026-10-21): o passo "Processar" mostra a conta e so libera o modelo com confirmacao explicita do dono.
+test('/api/processamento mostra a trava e a conta de dias (sem enfileirar); liberar exige confirmacao; pausar volta a fechar; sem sessao = 401', async () => {
+  const c = await subir();
+  try {
+    assert.equal((await req(c, 'GET', '/api/processamento')).status, 401);
+    assert.equal((await req(c, 'POST', '/api/processamento/liberar', POST('hm=' + 'a'.repeat(64)), '{"liberar":true,"confirmar":true}')).status, 401);
+    const h = POST(await entrar(c));
+    const g = JSON.parse((await req(c, 'GET', '/api/processamento', { Cookie: h.Cookie })).texto);
+    assert.deepEqual({ liberada: g.liberada, novos: g.diasNovos, refeitos: g.diasRefeitos, fila: g.naFila }, { liberada: false, novos: 0, refeitos: 0, fila: 0 });
+    assert.equal((await req(c, 'POST', '/api/processamento/liberar', h, '{"liberar":true}')).status, 400, 'sem confirmar nao libera');
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/processamento', { Cookie: h.Cookie })).texto).liberada, false);
+    assert.equal((await req(c, 'POST', '/api/processamento/liberar', h, '{"liberar":true,"confirmar":true}')).status, 200);
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/processamento', { Cookie: h.Cookie })).texto).liberada, true);
+    assert.equal((await req(c, 'POST', '/api/processamento/liberar', h, '{"liberar":false}')).status, 200, 'pausar nao pede confirmacao');
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/processamento', { Cookie: h.Cookie })).texto).liberada, false);
+    assert.equal((await req(c, 'POST', '/api/processamento/liberar', h, '{"liberar":"sim"}')).status, 400, 'valor invalido');
+  } finally { await c.fim(); }
+});
+
+// B (2026-10-21): o menu lateral mostra "processando" com barra e texto; o verde gravado antes nao vale mais para sincronizar/extrair.
+test('/api/estado: sincronizar e extrair vem AO VIVO (processando, percentual e detalhe) mesmo que o banco tenha guardado verde antes', async () => {
+  const c = await subir();
+  try {
+    const { gravarEstado, gravarHistorico } = await import('../whatsapp/estado.ts');
+    const { criarEscuta } = await import('../whatsapp/escuta.ts');
+    gravarEstado(c.banco, { estado: 'conectado', dono: { pn: '5511900000000@s.whatsapp.net' } }, 1); gravarHistorico(c.banco, { progresso: 100, ultima: true }, 2);
+    const e = criarEscuta(c.banco, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => 1_760_000_000_000 });
+    for (let i = 0; i < 10; i++) e.mensagens([{ key: { id: `A${i}`, remoteJid: '5511999990001@s.whatsapp.net', fromMe: false }, message: { audioMessage: { ptt: true, seconds: 3 } }, messageTimestamp: 1_760_000_000 - i }], 'historico', () => '{}');
+    c.banco.prepare("UPDATE fila SET estado = 'ok' WHERE id IN (SELECT id FROM fila ORDER BY id LIMIT 4)").run();
+    c.banco.prepare("UPDATE onboarding_etapas SET estado = 'verde' WHERE passo IN ('sincronizar','extrair')").run(); // verde antigo, "pegajoso"
+    const cookie = await entrar(c);
+    const r = JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto);
+    const por = (id: string) => r.passos.find((p: { id: string }) => p.id === id);
+    assert.deepEqual({ e: por('extrair').estado, p: por('extrair').percentual }, { e: 'processando', p: 40 });
+    assert.match(por('extrair').detalhe, /4 de 10 arquivos/);
+    assert.equal(por('sincronizar').estado, 'verde', 'historico recebido por inteiro');
+    assert.equal(por('whatsapp').percentual, null, 'passo sem total conhecido: nada de porcentagem inventada');
+    assert.equal(typeof por('whatsapp').detalhe, 'string');
+    c.banco.prepare("UPDATE fila SET estado = 'ok'").run();
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto).passos.find((p: { id: string }) => p.id === 'extrair').estado, 'verde');
+  } finally { await c.fim(); }
+});
+
+// C: "Conectar o modelo": a tela guia, pede o teste e mostra o resultado; NUNCA recebe nem devolve token ou chave.
+test('/api/modelo: pedir teste (uma vez), ler o resultado e as instrucoes; sem sessao = 401; resposta sem token/chave', async () => {
+  const c = await subir();
+  try {
+    assert.equal((await req(c, 'GET', '/api/modelo')).status, 401);
+    assert.equal((await req(c, 'POST', '/api/modelo/testar', POST('hm=' + 'a'.repeat(64)), '{}')).status, 401);
+    const h = POST(await entrar(c));
+    const g0 = JSON.parse((await req(c, 'GET', '/api/modelo', { Cookie: h.Cookie })).texto);
+    assert.equal(g0.teste.estado, 'nenhum');
+    assert.ok(g0.passos.some((p: string) => /hermes model/.test(p)), 'guia o login no terminal');
+    assert.ok(g0.passos.some((p: string) => /5 horas|cota/i.test(p)), 'avisa da cota compartilhada');
+    assert.deepEqual(JSON.parse((await req(c, 'POST', '/api/modelo/testar', h, '{}')).texto), { pedido: true });
+    assert.deepEqual(JSON.parse((await req(c, 'POST', '/api/modelo/testar', h, '{}')).texto), { pedido: false });
+    const g1 = (await req(c, 'GET', '/api/modelo', { Cookie: h.Cookie })).texto;
+    assert.equal(JSON.parse(g1).teste.estado, 'pedido');
+    assert.doesNotMatch(g1, /sk-[A-Za-z0-9_-]{10,}|Bearer\s+\S{10,}|API_SERVER_KEY\s*=/);
+    assert.doesNotMatch(JSON.stringify(JSON.parse(g1).teste), /sk-|token|bearer|chave|key/i, 'os DADOS do teste nao carregam nada parecido com credencial');
+    const { executarTesteDoModelo } = await import('../modelo-teste.ts');
+    await executarTesteDoModelo(c.banco, { perguntar: async () => 'ok' }, Date.now());
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/modelo', { Cookie: h.Cookie })).texto).teste.estado, 'ok');
+    assert.equal((await req(c, 'POST', '/api/modelo/chave', h, '{"chave":"x"}')).status, 404, 'nao existe rota que receba chave');
+  } finally { await c.fim(); }
+});
+
+// B: cadastro da equipe interna
+test('/api/cadastro: entender o numero, cadastrar membro, listar sem mostrar o numero inteiro; sem sessao = 401', async () => {
+  const c = await subir();
+  try {
+    assert.equal((await req(c, 'GET', '/api/cadastro')).status, 401);
+    assert.equal((await req(c, 'POST', '/api/cadastro/membro', POST('hm=' + 'a'.repeat(64)), '{}')).status, 401);
+    const h = POST(await entrar(c));
+    const ent = JSON.parse((await req(c, 'POST', '/api/cadastro/entender', h, '{"telefone":"(11) 99999-0007"}')).texto);
+    assert.deepEqual(ent.exibir, ['+55 11 99999-0007', '+55 11 9999-0007']);
+    assert.equal((await req(c, 'POST', '/api/cadastro/entender', h, '{"telefone":"123"}')).status, 400);
+    const ok = await req(c, 'POST', '/api/cadastro/membro', h, '{"nome":"Gil","funcao":"SDR","telefone":"(11) 99999-0007"}');
+    assert.equal(ok.status, 200);
+    assert.equal(JSON.parse(ok.texto).achou, false);
+    assert.match(JSON.parse(ok.texto).aviso, /nao achei/i);
+    assert.equal((await req(c, 'POST', '/api/cadastro/membro', h, '{"nome":"Gil 2","funcao":"","telefone":"+55 11 9999-0007"}')).status, 400, 'mesma pessoa de novo');
+    const lista = (await req(c, 'GET', '/api/cadastro', { Cookie: h.Cookie })).texto;
+    assert.equal(JSON.parse(lista).equipe.length, 1);
+    assert.doesNotMatch(lista, /999990007|99999-0007/, 'nunca o numero inteiro');
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: h.Cookie })).texto).passos.find((p: { id: string }) => p.id === 'cadastro').estado, 'verde', 'cadastro com ao menos um membro: verde');
+  } finally { await c.fim(); }
+});
+
+// A: o dono libera (com confirmacao) e escolhe o ritmo do historico antigo; padrao FECHADO; 401 sem sessao.
+test('/api/historico-antigo: mostra a trava e o ritmo; liberar exige confirmacao; ritmo tem limites; pausar nao pede confirmacao', async () => {
+  const c = await subir();
+  try {
+    assert.equal((await req(c, 'GET', '/api/historico-antigo')).status, 401);
+    assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', POST('hm=' + 'a'.repeat(64)), '{"liberar":true,"confirmar":true}')).status, 401);
+    const h = POST(await entrar(c));
+    const g = JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto);
+    assert.deepEqual({ l: g.config.liberado, r: g.config.ritmoSegundos >= 15, c: g.resumo.conversas }, { l: false, r: true, c: 0 });
+    assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":true}')).status, 400, 'sem confirmar nao libera');
+    assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":true,"confirmar":true,"ritmoSegundos":2}')).status, 400, 'ritmo agressivo demais e recusado');
+    assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":true,"confirmar":true,"ritmoSegundos":60}')).status, 200);
+    const g2 = JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto);
+    assert.deepEqual({ l: g2.config.liberado, r: g2.config.ritmoSegundos }, { l: true, r: 60 });
+    assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":false}')).status, 200);
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto).config.liberado, false);
+  } finally { await c.fim(); }
 });

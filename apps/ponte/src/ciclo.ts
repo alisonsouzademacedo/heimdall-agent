@@ -6,7 +6,8 @@ import { gravarServico } from '../../core/src/whatsapp/estado.ts';
 import { backupDoDia, lerBackup } from '../../core/src/backup-copia.ts';
 import { rodizioDeBackups } from '../../core/src/backup-rodizio.ts';
 import { diaLocal } from '../../core/src/calendario.ts';
-import { agendarExtracao, processarExtrair, type PortaExtracao } from '../../core/src/extracao.ts';
+import { agendarExtracao, extracaoLiberada, processarExtrair, type PortaExtracao } from '../../core/src/extracao.ts';
+import { executarTesteDoModelo } from '../../core/src/modelo-teste.ts';
 import { haProntos, pegarProximo } from '../../core/src/fila.ts';
 
 /** Quantos trabalhos de extracao por giro: o modelo e lento; o self-chat nao pode esperar uma fila inteira. */
@@ -36,8 +37,9 @@ export function iniciarPonte(o: OpcoesPonte): { parar(): void; terminou: Promise
   const terminou = (async () => {
     while (!parado) {
       try { await processarSelfChat(o.banco, o.portas, agora()); } catch { /* erro inesperado nao derruba o laco: tenta no proximo giro */ }
+      try { await executarTesteDoModelo(o.banco, o.portas.hermes, agora()); } catch { /* idem */ } // teste pedido pela tela (passo Conectar o modelo)
       if (o.agenda) { try { await gerarRelatorioDoDia(o.banco, o.agenda, agora()); } catch { /* idem */ } }
-      if (o.extracao) {
+      if (o.extracao && extracaoLiberada(o.banco)) { // a trava e do dono (tela, passo Processar): fechada = nenhuma consulta ao modelo, nem enfileira
         try {
           if (!haProntos(o.banco, ['extrair'], agora())) agendarExtracao(o.banco, agora()); // varre o acervo todo: so quando a fila esvaziou
           for (let i = 0; i < EXTRACOES_POR_GIRO && !parado; i++) {

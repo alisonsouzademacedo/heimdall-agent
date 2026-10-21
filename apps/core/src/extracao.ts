@@ -82,6 +82,16 @@ export function agendarExtracao(db: Banco, agora: number, fuso: string = FUSO_PA
   return novos;
 }
 
+// Trava do dono (D, 2026-10-21): enquanto "extracao.liberada" for falsa (padrao) a ponte NAO chama o modelo para extrair compromissos.
+// Quem liga e desliga e a tela, so com confirmacao explicita. Gasta a cota do plano do dono: nunca liga sozinha.
+export function extracaoLiberada(db: Banco): boolean {
+  const r = db.prepare("SELECT valor FROM configuracao WHERE chave = 'extracao.liberada'").get() as { valor: string } | undefined;
+  return r?.valor === 'true';
+}
+export function definirExtracaoLiberada(db: Banco, liberada: boolean): void {
+  db.prepare("INSERT INTO configuracao (chave, valor) VALUES ('extracao.liberada', ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor").run(liberada ? 'true' : 'false');
+}
+
 // So CONTA (nao enfileira): quantos dias seriam extraidos pela primeira vez e quantos ja extraidos mudaram e seriam refeitos.
 export function diasDeExtracaoPendentes(db: Banco, agora: number, fuso: string = FUSO_PADRAO): { novos: number; refeitos: number; refs: string[] } {
   const d = diasPendentes(db, agora, fuso);
