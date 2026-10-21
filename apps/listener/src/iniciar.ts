@@ -13,6 +13,7 @@ import { supervisionar } from './supervisor.ts';
 import { iniciarBaixador } from './ciclo.ts';
 import { iniciarEntregador } from './entrega.ts';
 import { qrParaSvg } from './qr.ts';
+import { protegerConsole } from './console-seguro.ts';
 import { criarGravadorMidia } from './arquivos.ts';
 import type { PortasBaixar } from '../../core/src/midia.ts';
 import type { MensagemBaileys } from '../../core/src/whatsapp/traduzir.ts';
@@ -127,6 +128,7 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  protegerConsole(); // a libsignal despeja a sessao de criptografia no console; nunca em log (LICOES.md, 2026-10-21)
   const l = await iniciarListener({ pastaDados: join(process.cwd(), 'data') });
   console.log('Heimdall: escuta do WhatsApp ligada (so le e grava). O QR aparece na tela de configuracao.');
   const sair = () => { void l.parar().then(() => process.exit(0)); };
