@@ -9,6 +9,9 @@ Fazer **um login por vez**, na ordem abaixo. Todos usam o mesmo plano do ChatGPT
 `docker exec -it hermes hermes model` → **ChatGPT or Codex Subscription**: login por código de dispositivo (abrir o endereço mostrado, digitar o código). Credenciais em `/opt/data/auth.json`; a renovação é automática. Se a renovação falhar de modo terminal, o Hermes pede novo login (`hermes auth add openai-codex`). Organizações que bloqueiam o código de dispositivo podem usar `hermes auth add openai-codex --browser`, que escuta em `http://localhost:1455/auth/callback` (**porta fixa**). Falha de TLS (`UNEXPECTED_EOF_WHILE_READING`) pode vir de intermediário de rede que rejeita grupos pós-quânticos.
 
 ## B. Hindsight e ChatGPT (provedor `chatgpt`)
+
+> **DIVERGÊNCIA VERIFICADA (2026-10-20, no Windows do dono):** a imagem instalada `ghcr.io/vectorize-io/hindsight:1.0.0-slim` (a versão mais nova publicada no PyPI, tanto `hindsight-api` quanto `hindsight-api-slim`) **não tem** o provedor `chatgpt` nem o comando `hindsight-admin chatgpt` descritos abaixo e em `docs/hindsight/developer/models.md` ("ChatGPT Setup"): `hindsight-admin chatgpt login` responde "No such command 'chatgpt'" e o pacote só traz `codex_llm.py`/`codex_auth.py` (provedor **`openai-codex`**, que lê `auth.json` do Codex CLI em `CODEX_HOME` ou `HINDSIGHT_API_LLM_CODEX_HOME`). A documentação local descreve uma versão **ainda não publicada**. O que vale hoje: `none` (guarda e busca, sem extrair fatos) ou `openai-codex` (precisa do Codex CLI e de um login próprio, `codex login --device-auth`; endpoint privado do ChatGPT; a documentação do Hindsight diz "uso pessoal e de desenvolvimento"). **Decisão do dono pendente.** O texto abaixo vale para quando existir versão com `chatgpt`.
+
 Rota **suportada** ("Sign in with ChatGPT" para apps de código aberto); credenciais **próprias**, sem compartilhar nem rotacionar as do Codex CLI.
 
 **Elegibilidade (verificado em 2026-10-20):**

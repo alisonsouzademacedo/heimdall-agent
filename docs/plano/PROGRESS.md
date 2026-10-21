@@ -73,6 +73,7 @@ Sem dependências de execução no núcleo (teste em `tests/core/check_core.sh`)
 ## Divergências entre documentação e realidade
 - **Hermes:** a documentação manda "tag `X.Y.Z`"; as tags reais têm prefixo `v` (`v0.22.2`) (2026-10-20).
 - **Hindsight:** os exemplos da documentação local citam `0.4.9`; o registro já tem `1.0.0` (a cópia local pode estar defasada) (2026-10-20).
+- **Hindsight `chatgpt` (provedor e `hindsight-admin chatgpt`):** a documentação local (`models.md`) descreve; a versão publicada mais nova (1.0.0) **não tem** (só `openai-codex`). Verificado executando no contêiner (2026-10-20). Ver `runbooks/07-logins.md`, seção B.
 - **Hindsight slim:** a documentação diz que o provedor `onnx` usa o extra `local-onnx` ao "montar o próprio ambiente"; confirmado: **a imagem slim oficial não basta** (falta `transformers`); ver `runbooks/02`.
 - **Memória (medida × documentação):** Postgres vazio ~50 a 70 MB (doc: 512 MB+), Hermes ocioso ~330 MB (doc: 1 GB mín.), Hindsight slim+onnx ~1,3 GB (doc: slim 0,5 a 1 GB); ver `fase-1-orcamento-de-memoria.md`, seção 5d.
 - **WSL:** `wsl --install` não funcionou nesta máquina (`LICOES.md`, 2026-10-19).
