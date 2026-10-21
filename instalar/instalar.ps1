@@ -83,6 +83,7 @@ function PythonOk {
 }
 function DockerInstalado { return (Tem 'docker') }
 function DockerRodando {
+  if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_DOCKER_RODANDO) { return ($env:HEIMDALL_TESTE_DOCKER_RODANDO -eq '1') }   # so em teste: nao depender do Docker real
   if (-not (Tem 'docker')) { return $false }
   try { & docker info 2>$null | Out-Null; return ($LASTEXITCODE -eq 0) } catch { return $false }
 }
@@ -237,7 +238,7 @@ if ($faltando.Count -gt 0 -and -not $SomenteMostrar) {
 # ---------- depois da instalacao ----------
 Titulo 'Estado do Docker'
 if (DockerRodando) { Ok 'Docker rodando' }
-elseif (DockerInstalado) { Falta 'Docker instalado, mas NAO esta rodando. Abra o Docker Desktop pelo menu Iniciar (ou por instalar\docker-fora.cmd), aceite os termos, espere ficar verde e rode iniciar.cmd de novo. NAO abra o Docker por dentro do app Claude: ele nasce com a pasta AppData redirecionada e quebra no arquivo engine.sock (instalar\docker-fora.cmd abre fora dele e ja repara o arquivo preso).' }
+elseif (DockerInstalado) { Falta 'Docker instalado, mas NAO esta rodando. Abra o Docker Desktop pelo menu Iniciar (ou por instalar\docker-fora.cmd), aceite os termos, espere ficar verde e rode iniciar.cmd de novo. NAO abra o Docker por dentro do app Claude: ele nasce com a pasta AppData redirecionada e quebra ao mexer nos arquivos de conexao do Docker (instalar\docker-fora.cmd abre fora dele e ja repara).' }
 else { Falta 'Docker ainda nao instalado.' }
 
 # Docker Desktop que nao abre depois de um desligamento brusco: arquivo de conexao preso (engine.sock). Ver instalar/docker-reparo.ps1 e LICOES.md (2026-10-20).
