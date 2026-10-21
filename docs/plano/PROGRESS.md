@@ -199,3 +199,11 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - O OK do dono foi inferido de uma instrução geral, não de um "sim" à pergunta; se ele preferir `'Chrome'`, basta reverter este commit.
 - Não verificado (só no Windows do dono): QR lido no celular, quanto histórico chega, e se o 428 some de fato com o servidor real.
 - Próximo: reiniciar o listener (`instalar\heimdall.ps1 -Acao iniciar`), abrir a tela, escanear o QR e anotar o histórico recebido.
+
+## 2026-10-21 (nuvem) — verificações de versão na tela (passo 0)
+- Pedido do dono: evitar conflito de versões em atualizações e clientes novos; **só mostrar os comandos**, nunca baixar sozinho (cliente leigo).
+- Feito em `apps/core/src/onboarding/ambiente.ts` (+ testes em `ambiente.test.ts`, escritos antes e falhando): três verificações novas na tela: **versão do WSL** (mínimo 2.1.5; antiga = falha, com `wsl --update`), **compilação do Windows** (10: 19045; 11: 22631; antiga = só atenção) e **imagens do Compose no Docker** (lista lida do próprio `infra/compose/docker-compose.yml`, sem segunda lista para desatualizar; faltando = atenção, mostrando `docker compose ... pull --ignore-buildable` e `... build`). 4 quebras propositais novas em `tests/core/mutacao.py`.
+- Origem dos mínimos: `docs/docker/desktop/setup/install/windows-install.md` (WSL 2.1.5; Windows 10 22H2/19045; Windows 11 23H2/22631; 8 GB). Origem de `--ignore-buildable`: `docs/docker/reference/cli/docker/compose/pull.md`. Arquivos lidos: esses dois, `docs/wsl/INDEX.md`, `install.md`, `install-manual.md`, `docs/docker/INDEX.md`.
+- Testes: `apps/core` 364/364, `tsc --noEmit` limpo.
+- **Não verificado** (só no Windows do dono): o formato real da saída de `wsl --version` (o leitor pega o primeiro `x.y.z`, tolera UTF-16 e outro idioma); se o `docker image inspect` reconhece as imagens construídas localmente na máquina dele.
+- **Fora de escopo, ainda não feito:** o `instalar.ps1` continua só conferindo Node e Python (as versões do WSL/Windows/imagens estão só na tela); teste da tela em Chrome/Edge/Firefox (Playwright). Navegador de cliente final não se aplica: o Heimdall só lê o WhatsApp do dono.

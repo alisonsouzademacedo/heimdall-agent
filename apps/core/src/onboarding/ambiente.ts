@@ -1,8 +1,9 @@
 // Verificacao do ambiente para o passo 0 da tela, e abertura do navegador.
 // Este e um dos dois arquivos autorizados a usar node:child_process (o outro: nenhum). Comandos FIXOS, sem entrada de usuario.
 import { spawn, spawnSync } from 'node:child_process';
-import { arch, cpus, freemem, totalmem, platform } from 'node:os';
-import { statfsSync } from 'node:fs';
+import { arch, cpus, freemem, totalmem, platform, release } from 'node:os';
+import { statfsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 export type EstadoVerificacao = 'ok' | 'atencao' | 'falha';
 
@@ -23,6 +24,11 @@ export interface Medidas {
   // So no Windows (o Docker Desktop precisa dos dois; windows-install.md). undefined = nao se aplica ou nao foi medido.
   virtualizacao?: boolean;
   wsl?: boolean;
+  // Versoes (windows-install.md). wslVersao: null = WSL presente mas a versao nao foi lida. windowsBuild: terceiro numero de os.release().
+  wslVersao?: string | null;
+  windowsBuild?: number;
+  // Imagens do Compose que NAO estao no Docker (so medido com o Docker rodando). undefined = nao medido.
+  imagensFaltando?: string[];
   // Para o perfil por tipo de computador (perfil.ts). Ausentes = nao medidos.
   arch?: string; // ex.: "x64", "arm64"
   cpus?: number; // processadores logicos
@@ -36,6 +42,37 @@ function nodeSuficiente(v: string): boolean {
   if (!m) return false;
   const maior = Number(m[1]), menor = Number(m[2]);
   return maior > 22 || (maior === 22 && menor >= 18);
+}
+
+// Minimos de docs/docker/desktop/setup/install/windows-install.md: WSL 2.1.5; Windows 10 22H2 (build 19045); Windows 11 23H2 (build 22631).
+const WSL_MINIMO = [2, 1, 5] as const;
+const CMD_COMPOSE = 'docker compose --env-file infra/compose/.env -f infra/compose/docker-compose.yml';
+
+// A saida do "wsl --version" e UTF-16 (caracteres nulos entre as letras) e pode vir em outro idioma: tira os nulos e pega o primeiro x.y.z.
+export function lerVersaoWsl(saida: string): string | null {
+  const m = /(\d+)\.(\d+)\.(\d+)/.exec(saida.replace(/\u0000/g, ''));
+  return m ? `${m[1]}.${m[2]}.${m[3]}` : null;
+}
+
+function wslSuficiente(v: string): boolean {
+  const p = v.split('.').map(Number);
+  for (let i = 0; i < 3; i++) { const min = WSL_MINIMO[i]!; if ((p[i] ?? 0) !== min) return (p[i] ?? 0) > min; }
+  return true;
+}
+
+// Windows 10 precisa de 22H2 (19045); Windows 11, de 23H2 (22631). Builds 22000 a 22630 sao Windows 11 mais antigo que o minimo.
+export function windowsBuildSuficiente(b: number): boolean {
+  return b < 22000 ? b >= 19045 : b >= 22631;
+}
+
+// Imagens citadas no Compose ("image: nome:tag"), sem repetir e ignorando comentarios.
+export function imagensDoCompose(texto: string): string[] {
+  const achadas: string[] = [];
+  for (const linha of texto.split(/\r?\n/)) {
+    const m = /^\s+image:\s*([A-Za-z0-9][A-Za-z0-9._\/-]*:[A-Za-z0-9._-]+)\s*(#.*)?$/.exec(linha);
+    if (m && !achadas.includes(m[1]!)) achadas.push(m[1]!);
+  }
+  return achadas;
 }
 
 // Funcao pura: transforma medidas em verificacoes (limites do verificador: docs/plano/fase-1-requisitos-e-preflight.md).
@@ -54,6 +91,26 @@ export function avaliar(m: Medidas): Verificacao[] {
   }
   if (m.wsl !== undefined) {
     v.push({ id: 'wsl', rotulo: `WSL 2: ${m.wsl ? 'instalado' : 'nao instalado'}`, detalhe: m.wsl ? 'Pronto para o Docker Desktop' : 'Instale com "wsl --install" num PowerShell aberto como administrador e reinicie o computador. Se "wsl --install" responder em circulo ("instale executando wsl.exe --install"), use o caminho manual (docs/wsl/install-manual.md): como administrador rode "dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart" e "dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart", reinicie e rode "wsl --update".', estado: m.wsl ? 'ok' : 'falha' });
+  }
+  if (m.wsl && m.wslVersao !== undefined) {
+    const ok = m.wslVersao !== null && wslSuficiente(m.wslVersao);
+    v.push({
+      id: 'wsl-versao', rotulo: `Versão do WSL: ${m.wslVersao ?? 'não consegui ler'}`,
+      detalhe: m.wslVersao === null ? 'Rode "wsl --version" num PowerShell e confira se e 2.1.5 ou mais novo.' : ok ? 'Versao suficiente para o Docker Desktop' : 'Antiga demais (o Docker Desktop pede 2.1.5 ou mais novo). Abra o PowerShell como administrador, rode "wsl --update" e reinicie o computador.',
+      estado: m.wslVersao === null ? 'atencao' : ok ? 'ok' : 'falha'
+    });
+  }
+  if (m.windowsBuild !== undefined) {
+    const ok = windowsBuildSuficiente(m.windowsBuild);
+    v.push({ id: 'windows-versao', rotulo: `Windows (compilação ${m.windowsBuild})`, detalhe: ok ? 'Versao aceita pelo Docker Desktop' : 'A documentacao do Docker pede Windows 10 22H2 (compilacao 19045) ou Windows 11 23H2 (compilacao 22631) ou mais novo. Atualize pelo Windows Update.', estado: ok ? 'ok' : 'atencao' });
+  }
+  if (m.imagensFaltando !== undefined && m.dockerRodando) {
+    const f = m.imagensFaltando;
+    v.push({
+      id: 'imagens', rotulo: f.length === 0 ? 'Imagens do Heimdall no Docker: todas na versao certa' : `Imagens do Heimdall que faltam no Docker: ${f.length}`,
+      detalhe: f.length === 0 ? 'Nada para baixar' : `Faltam: ${f.join(', ')}. Para baixar as que vem prontas: ${CMD_COMPOSE} pull --ignore-buildable   Para construir as do projeto: ${CMD_COMPOSE} build   (o Heimdall so mostra os comandos; quem roda e voce).`,
+      estado: f.length === 0 ? 'ok' : 'atencao'
+    });
   }
   v.push({ id: 'docker', rotulo: 'Docker', detalhe: m.dockerRodando ? 'Rodando' : 'Instalado? Abra o Docker Desktop, aceite os termos e espere ficar verde.', estado: m.dockerRodando ? 'ok' : 'falha' });
   return v;
@@ -96,6 +153,30 @@ export function lerNvidiaSmi(texto: string): { nome: string; vramMb: number } | 
   return melhor;
 }
 
+// Windows: terceiro numero de "10.0.22631" (os.release) e a compilacao. Fora do padrao: undefined.
+function compilacaoWindows(): number | undefined {
+  const m = /^\d+\.\d+\.(\d+)/.exec(release());
+  return m ? Number(m[1]) : undefined;
+}
+
+function versaoWsl(): string | null {
+  try {
+    const r = spawnSync('wsl', ['--version'], { timeout: 15_000, windowsHide: true });
+    if (r.status !== 0 || !r.stdout) return null;
+    const b = r.stdout as Buffer;
+    return lerVersaoWsl(b.includes(0) ? b.toString('utf16le') : b.toString('utf8'));
+  } catch { return null; }
+}
+
+// Imagens do Compose ausentes no Docker. Comandos FIXOS; os nomes vem do arquivo do projeto e sao validados por imagensDoCompose.
+function imagensAusentes(pasta: string): string[] | undefined {
+  try {
+    const lista = imagensDoCompose(readFileSync(join(pasta, 'infra', 'compose', 'docker-compose.yml'), 'utf8'));
+    if (lista.length === 0) return undefined;
+    return lista.filter((img) => spawnSync('docker', ['image', 'inspect', img], { timeout: 15_000, stdio: 'ignore', windowsHide: true }).status !== 0);
+  } catch { return undefined; }
+}
+
 function placaNvidia(): { nome: string; vramMb: number } | null {
   try {
     const r = spawnSync('nvidia-smi', ['--query-gpu=name,memory.total', '--format=csv,noheader,nounits'], { timeout: 10_000, encoding: 'utf8', windowsHide: true });
@@ -107,7 +188,8 @@ export function medirSistema(pasta: string = process.cwd()): Medidas {
   let livre = 0;
   try { const s = statfsSync(pasta); livre = s.bavail * s.bsize; } catch { livre = 0; }
   const m: Medidas = { plataforma: platform(), memTotalBytes: totalmem(), memLivreBytes: freemem(), discoLivreBytes: livre, nodeVersao: process.version, dockerRodando: dockerRodando(), arch: arch(), cpus: cpus().length, gpuNvidia: placaNvidia() };
-  if (m.plataforma === 'win32') { m.virtualizacao = virtualizacaoLigada(); m.wsl = wslInstalado(); }
+  if (m.plataforma === 'win32') { m.virtualizacao = virtualizacaoLigada(); m.wsl = wslInstalado(); if (m.wsl) m.wslVersao = versaoWsl(); m.windowsBuild = compilacaoWindows(); }
+  if (m.dockerRodando) m.imagensFaltando = imagensAusentes(pasta);
   return m;
 }
 

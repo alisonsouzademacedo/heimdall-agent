@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { avaliar, resumoDeFalhas, abrirNavegador, medirSistema, lerNvidiaSmi, type Medidas } from './ambiente.ts';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { avaliar, resumoDeFalhas, abrirNavegador, medirSistema, lerNvidiaSmi, lerVersaoWsl, windowsBuildSuficiente, imagensDoCompose, type Medidas } from './ambiente.ts';
 
 const GIB = 1024 ** 3;
 const bom: Medidas = { plataforma: 'win32', memTotalBytes: 16 * GIB, memLivreBytes: 8 * GIB, discoLivreBytes: 100 * GIB, nodeVersao: 'v22.22.0', dockerRodando: true };
@@ -112,4 +114,66 @@ test('medirSistema devolve numeros plausiveis sem lancar erro', () => {
   assert.ok(m.memTotalBytes > 0 && m.memLivreBytes > 0 && m.discoLivreBytes >= 0);
   assert.equal(m.nodeVersao, process.version);
   assert.equal(typeof m.dockerRodando, 'boolean');
+});
+
+// Versoes minimas: docs/docker/desktop/setup/install/windows-install.md (WSL 2.1.5; Windows 10 22H2 = build 19045; Windows 11 23H2 = build 22631).
+test('lerVersaoWsl: acha o numero na saida do "wsl --version", mesmo em UTF-16 (caracteres nulos) ou com texto em outro idioma', () => {
+  assert.equal(lerVersaoWsl('WSL version: 2.4.13.0\nKernel version: 5.15'), '2.4.13');
+  assert.equal(lerVersaoWsl('WSL vers\u00e3o: 2.1.5.0'.split('').join('\u0000')), '2.1.5');
+  assert.equal(lerVersaoWsl('sem numero'), null);
+  assert.equal(lerVersaoWsl(''), null);
+});
+
+test('WSL: 2.1.4 falha e manda atualizar; 2.1.5 e 2.6.0 passam; ilegivel vira atencao', () => {
+  const v = (wslVersao: string | null) => avaliar({ ...bom, virtualizacao: true, wsl: true, wslVersao });
+  assert.equal(estado(v('2.1.4'), 'wsl-versao'), 'falha');
+  assert.match(v('2.1.4').find((x) => x.id === 'wsl-versao')!.detalhe, /wsl --update/);
+  assert.equal(estado(v('2.1.5'), 'wsl-versao'), 'ok');
+  assert.equal(estado(v('2.6.0'), 'wsl-versao'), 'ok');
+  assert.equal(estado(v('1.9.9'), 'wsl-versao'), 'falha');
+  assert.equal(estado(v(null), 'wsl-versao'), 'atencao');
+});
+
+test('WSL ausente: nao acrescenta a linha de versao (ja existe a linha "WSL 2")', () => {
+  assert.equal(avaliar({ ...bom, virtualizacao: true, wsl: false, wslVersao: null }).some((x) => x.id === 'wsl-versao'), false);
+  assert.equal(avaliar(bom).some((x) => x.id === 'wsl-versao'), false);
+});
+
+test('windowsBuildSuficiente: 10 exige 19045; 11 exige 22631 (22000 a 22630 e Windows 11 antigo)', () => {
+  for (const [b, esperado] of [[19044, false], [19045, true], [21999, true], [22000, false], [22621, false], [22630, false], [22631, true], [26100, true]] as const) {
+    assert.equal(windowsBuildSuficiente(b), esperado, String(b));
+  }
+});
+
+test('versao do Windows antiga vira atencao (nao bloqueia: nao foi testado em maquina antiga) e cita a exigencia do Docker', () => {
+  const v = avaliar({ ...bom, windowsBuild: 19044 });
+  assert.equal(estado(v, 'windows-versao'), 'atencao');
+  assert.match(v.find((x) => x.id === 'windows-versao')!.detalhe, /22H2.*19045|19045.*22H2/);
+  assert.equal(estado(avaliar({ ...bom, windowsBuild: 22631 }), 'windows-versao'), 'ok');
+  assert.equal(avaliar(bom).some((x) => x.id === 'windows-versao'), false);
+});
+
+test('imagensDoCompose: lista as imagens do arquivo, sem repetir e ignorando comentarios', () => {
+  const compose = 'services:\n  a:\n    image: pgvector/pgvector:pg18\n  b:\n    # image: velha:1\n    image: heimdall-x:1.0.0-onnx   # construida aqui\n  c:\n    image: pgvector/pgvector:pg18\n';
+  assert.deepEqual(imagensDoCompose(compose), ['pgvector/pgvector:pg18', 'heimdall-x:1.0.0-onnx']);
+  assert.deepEqual(imagensDoCompose('nada aqui'), []);
+});
+
+test('imagensDoCompose: o Compose real do projeto tem imagens com versao fixa', () => {
+  const real = readFileSync(fileURLToPath(new URL('../../../../infra/compose/docker-compose.yml', import.meta.url)), 'utf8');
+  const lista = imagensDoCompose(real);
+  assert.ok(lista.length >= 4, lista.join(','));
+  for (const img of lista) assert.match(img, /:[A-Za-z0-9._-]+$/, `sem tag: ${img}`);
+});
+
+test('imagens: faltando mostra os comandos exatos (so mostra, nao baixa) e Docker parado nao mede imagens', () => {
+  const v = avaliar({ ...bom, imagensFaltando: ['nousresearch/hermes-agent:v0.22.2'] });
+  assert.equal(estado(v, 'imagens'), 'atencao');
+  const d = v.find((x) => x.id === 'imagens')!.detalhe;
+  assert.match(d, /nousresearch\/hermes-agent:v0\.22\.2/);
+  assert.match(d, /docker compose .*pull --ignore-buildable/);
+  assert.match(d, /docker compose .*build/);
+  assert.equal(estado(avaliar({ ...bom, imagensFaltando: [] }), 'imagens'), 'ok');
+  assert.equal(avaliar({ ...bom, imagensFaltando: ['x:1'], dockerRodando: false }).some((x) => x.id === 'imagens'), false);
+  assert.equal(avaliar(bom).some((x) => x.id === 'imagens'), false);
 });
