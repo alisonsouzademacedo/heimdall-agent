@@ -76,3 +76,17 @@ Revisar o painel final ("Pronto") e todos os passos (Ambiente, WhatsApp, Cadastr
 2. **Nao extrai de novo?** Antes de liberar o modelo, consultar `GET /api/processamento`: `diasNovos` x `diasRefeitos` (dias ja extraidos que mudaram). Conferir que os dias antigos geram so trabalho novo e que `diasRefeitos` e o numero esperado.
 3. **A trava funciona?** Com `extracao.liberada` falsa a ponte nao consulta o modelo (conferir o contador de consultas do Hermes ou `fila` sem `extrair`); liberar (com `confirmar`) e ver o processamento comecar; pausar e ver parar.
 4. **Conectar o modelo:** apos trocar a conta no terminal, `POST /api/modelo/testar` e depois `GET /api/modelo`: `teste.estado` deve virar `ok`.
+
+---
+
+## Interface concluida (IA local, 2026-10-21)
+
+Os itens 1 a 5 da lista "PENDENTE" acima foram feitos e testados; os itens 6 e 7 continuam fora de proposito.
+
+- **Interface (`apps/core/src/onboarding/recursos.ts`):** Cadastro (rotulos/ids, `type=tel`, "Entender o numero", "Salvar membro", lista com telefone mascarado); Sincronizar (cartao da busca antiga sempre visivel, aviso de que o pedido vai ao proprio celular e que o risco de limite NAO foi medido, contagens, intervalo de 60 s, liberar com confirmacao e pausar); Modelo (instrucoes sem caminho interno, botao de teste e resultado a cada 2 s); Processar (dias novos/refeitos, fila, consultas previstas, liberar com confirmacao e pausar). Menu com barra e texto e estado amarelo `processando`; o relogio da tela nao apaga mais o intervalo digitado; passos de formulario so atualizam o menu. `/favicon.ico` responde 204.
+- **Correcoes de comportamento (teste escrito antes, falhou, depois passou):** o resumo da busca antiga conta todas as conversas elegiveis antes de liberar; Sincronizar fica `pendente` (nao verde) com a busca pausada e conversas pendentes, e `processando` quando liberada; teste do modelo que falhou deixa o passo `vermelho`; o aviso do cadastro nao mostra o numero inteiro; `/api/modelo` nao mostra `runbooks/`, `docs/` nem "decisao D26"; o intervalo padrao passou de 30 s para **60 s** (escolha do dono).
+- **Testes:** nucleo **413/413**; listener **74/74**; ponte **50/50**; memoria **19/19**; trabalhos **28/28**; `tsc --noEmit` limpo. Tela real no **Chrome**: todas as verificacoes passaram (Cadastro, intervalo preservado, Modelo, Processar, menu amarelo, cartao sem conexao, sem erro de console, sem rolagem horizontal). Chromium/Firefox/WebKit/Edge: **NAO EXECUTADO** (nao instalados nesta maquina).
+- **Teste dos testes (mutacao):** **117 quebras propositais detectadas**, nenhuma sobreviveu; a linha de base (copia com um teste quebrado de proposito) foi recusada.
+- **`sh tests/run-all.sh`:** **22 arquivos de teste, 0 com falha** (inclui a carga e o Chrome real); resultado completo na entrada de 2026-10-21 (local) do `PROGRESS.md`.
+- **Nao verificado (so com WhatsApp/Hermes reais):** quanto historico o aparelho devolve por conversa; se 60 s evita limitacao da conta; retomada depois de queda real; resposta real do teste do modelo; processamento de dias antigos. Docker e servicos estavam parados; nada foi liberado de verdade.
+- **Para o dono conferir:** abrir o Docker por `instalar\docker-fora.cmd`, subir os servicos pelo launcher e seguir os itens 26 a 29 do runbook 08. O listener em execucao ainda e o codigo antigo: reiniciar pelo launcher antes de testar a busca antiga. Nada foi enviado ao GitHub.

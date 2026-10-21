@@ -381,6 +381,8 @@ test('/api/estado: sincronizar e extrair vem AO VIVO (processando, percentual e 
     gravarEstado(c.banco, { estado: 'conectado', dono: { pn: '5511900000000@s.whatsapp.net' } }, 1); gravarHistorico(c.banco, { progresso: 100, ultima: true }, 2);
     const e = criarEscuta(c.banco, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => 1_760_000_000_000 });
     for (let i = 0; i < 10; i++) e.mensagens([{ key: { id: `A${i}`, remoteJid: '5511999990001@s.whatsapp.net', fromMe: false }, message: { audioMessage: { ptt: true, seconds: 3 } }, messageTimestamp: 1_760_000_000 - i }], 'historico', () => '{}');
+    // O historico antigo desta conversa ja foi concluido: sem isso, o passo fica pendente (busca pausada), de proposito.
+    c.banco.prepare("INSERT OR IGNORE INTO historico_pedidos (conversa_id, estado) SELECT id, 'concluida' FROM conversas WHERE tipo IN ('dm','grupo')").run();
     c.banco.prepare("UPDATE fila SET estado = 'ok' WHERE id IN (SELECT id FROM fila ORDER BY id LIMIT 4)").run();
     c.banco.prepare("UPDATE onboarding_etapas SET estado = 'verde' WHERE passo IN ('sincronizar','extrair')").run(); // verde antigo, "pegajoso"
     const cookie = await entrar(c);
@@ -407,6 +409,7 @@ test('/api/modelo: pedir teste (uma vez), ler o resultado e as instrucoes; sem s
     assert.equal(g0.teste.estado, 'nenhum');
     assert.ok(g0.passos.some((p: string) => /hermes model/.test(p)), 'guia o login no terminal');
     assert.ok(g0.passos.some((p: string) => /5 horas|cota/i.test(p)), 'avisa da cota compartilhada');
+    assert.doesNotMatch(g0.passos.join(' '), /runbooks\/|docs\/|decisao D26/i, 'a tela do dono nao mostra caminho de documentacao interna');
     assert.deepEqual(JSON.parse((await req(c, 'POST', '/api/modelo/testar', h, '{}')).texto), { pedido: true });
     assert.deepEqual(JSON.parse((await req(c, 'POST', '/api/modelo/testar', h, '{}')).texto), { pedido: false });
     const g1 = (await req(c, 'GET', '/api/modelo', { Cookie: h.Cookie })).texto;
@@ -417,6 +420,28 @@ test('/api/modelo: pedir teste (uma vez), ler o resultado e as instrucoes; sem s
     await executarTesteDoModelo(c.banco, { perguntar: async () => 'ok' }, Date.now());
     assert.equal(JSON.parse((await req(c, 'GET', '/api/modelo', { Cookie: h.Cookie })).texto).teste.estado, 'ok');
     assert.equal((await req(c, 'POST', '/api/modelo/chave', h, '{"chave":"x"}')).status, 404, 'nao existe rota que receba chave');
+  } finally { await c.fim(); }
+});
+
+test('/api/estado: teste do modelo que falhou deixa o passo vermelho (nao "aguardando")', async () => {
+  const c = await subir();
+  try {
+    const cookie = await entrar(c);
+    const { pedirTesteDoModelo, executarTesteDoModelo } = await import('../modelo-teste.ts');
+    assert.equal(pedirTesteDoModelo(c.banco, Date.now()), true);
+    await executarTesteDoModelo(c.banco, { perguntar: async () => { throw new Error('sem conexao'); } }, Date.now());
+    const e = JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto);
+    const m = e.passos.find((p: { id: string }) => p.id === 'modelo');
+    assert.equal(m.estado, 'vermelho');
+    assert.match(m.detalhe, /falhou/i);
+  } finally { await c.fim(); }
+});
+
+test('a tela responde ao favicon (nada de 404 no console do navegador)', async () => {
+  const c = await subir();
+  try {
+    const cookie = await entrar(c);
+    assert.equal((await req(c, 'GET', '/favicon.ico', { Cookie: cookie })).status, 204);
   } finally { await c.fim(); }
 });
 
@@ -459,4 +484,21 @@ test('/api/historico-antigo: mostra a trava e o ritmo; liberar exige confirmacao
     assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":false}')).status, 200);
     assert.equal(JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto).config.liberado, false);
   } finally { await c.fim(); }
+});
+
+test('interface: recursos.ts contem renderizadores de cadastro, modelo, processar e busca antiga', () => {
+  assert.match(JS, /function cadastro\(/, 'renderizador do passo cadastro deve existir');
+  assert.match(JS, /function modelo\(/, 'renderizador do passo modelo deve existir');
+  assert.match(JS, /function processar\(/, 'renderizador do passo processar deve existir');
+  assert.match(JS, /cadastro:\s*cadastro/, 'RENDER deve conter cadastro');
+  assert.match(JS, /modelo:\s*modelo/, 'RENDER deve conter modelo');
+  assert.match(JS, /processar:\s*processar/, 'RENDER deve conter processar');
+  assert.match(JS, /\/api\/cadastro\/entender/, 'deve chamar /api/cadastro/entender');
+  assert.match(JS, /\/api\/cadastro\/membro/, 'deve chamar /api/cadastro/membro');
+  assert.match(JS, /\/api\/modelo\/testar/, 'deve chamar /api/modelo/testar');
+  assert.match(JS, /\/api\/processamento\/liberar/, 'deve chamar /api/processamento/liberar');
+  assert.match(JS, /\/api\/historico-antigo\/liberar/, 'deve chamar /api/historico-antigo/liberar');
+  assert.doesNotMatch(JS, /docs\/plano\//, 'texto de passo nao ligado nao deve exibir caminhos de documentacao interna');
+  assert.doesNotMatch(JS, /innerHTML|outerHTML|document\.write|eval\(/, 'so textContent e DOM seguro');
+  assert.match(CSS, /\.no\.processando/, 'CSS deve conter classe para passo em processamento');
 });

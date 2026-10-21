@@ -37,9 +37,11 @@ Antes de subir os serviços: gerar o `config.yaml` do Hermes e gravá-lo no volu
 - No Windows, `parar()` de qualquer processo precisa fechar o banco antes de devolver (senão apagar a pasta falha com EBUSY).
 - No Windows `python3` é o atalho falso da Loja: todo script `tests/**/check_*.sh` que usa Python deve escolher o interpretador que roda (`python3`, `python`, `py`), como `check_core.sh` e `check_infra.sh`. Verificação que lê "saída vazia" como sucesso esconde esse erro.
 - A API do Hermes dá acesso a todas as ferramentas se o config não for aplicado: conferir sempre `smoke_hermes.sh` depois de mudar o config.
+- **Código de acesso da tela:** o link com `codigo=` é de **uso único** e abre a tela só naquela sessão. Nunca copie o link nem o código para chat, log, commit ou relatório. Para obter um link novo, feche a janela da tela e rode `instalar\heimdall.ps1 -Acao iniciar` de novo: o link aparece no fim da janela e em `data\logs\tela.log` (o log é local, fora do git).
+- **Ao retomar trabalho de outra IA:** não aceite "está pronto" sem conferir `git status`, os processos vivos (`node`, `python`) e o Docker. Serviço parado ou mudança sem commit explica boa parte dos "sumiu/refiz".
 
 ## Não implementado ainda (ver `PROGRESS.md`)
-Servidor MCP próprio do Heimdall (adiado: ver `fase-1-mcp.md`, seção "Decisão de 2026-10-20"), relatórios como arquivo `.md` anexo (hoje saem como texto), os passos Cadastro, Conectar o modelo, Processar, Voz e Backup da tela (os demais passos e o painel já funcionam: QR, progresso, teste do self-chat, relatório de teste, painel).
+Servidor MCP próprio do Heimdall (adiado: ver `fase-1-mcp.md`, seção "Decisão de 2026-10-20"), relatórios como arquivo `.md` anexo (hoje saem como texto) e o passo **Voz** da tela. Os passos **Cadastro, Sincronizar (com a busca antiga), Extrair, Conectar o modelo e Processar** já estão ligados na tela (2026-10-21); falta conferir o comportamento com WhatsApp e modelo reais.
 
 ## Carga do histórico inteiro (primeira vez) — como acompanhar
 Testes automáticos (sem WhatsApp real, dados sintéticos): `sh tests/carga/check_carga.sh` (padrão moderado) ou, para ver o limite, `HEIMDALL_CARGA_MENSAGENS=100000 HEIMDALL_CARGA_MENSAGENS_LLM=20000 sh tests/carga/check_carga.sh`. Cobrem: entrada de lotes grandes, reenvio total, queda no meio, lotes fora de ordem, falha de gravação, edição antes da original, e o processamento pelo modelo e pelo Hindsight com falhas (fora do ar, resposta inválida, recusa definitiva), queda com trabalho preso e reenvio de metade para o Hindsight.

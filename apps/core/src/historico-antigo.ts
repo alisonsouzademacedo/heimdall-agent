@@ -5,7 +5,8 @@
 import type { Banco } from './db.ts';
 
 export interface ConfigHistorico { liberado: boolean; ritmoMs: number; tamanhoPagina: number; maxPaginas: number; esperaRespostaMs: number }
-const PADRAO: ConfigHistorico = { liberado: false, ritmoMs: 30_000, tamanhoPagina: 50, maxPaginas: 40, esperaRespostaMs: 45_000 };
+// 60 s e o ritmo conservador sugerido ao dono (o risco de o WhatsApp limitar a conta nao foi medido).
+const PADRAO: ConfigHistorico = { liberado: false, ritmoMs: 60_000, tamanhoPagina: 50, maxPaginas: 40, esperaRespostaMs: 45_000 };
 const CHAVE = 'historico.antigo';
 export const PRAZO_PEDIDO_PRESO_MS = 10 * 60_000;
 export const MAX_FALHAS = 3;
@@ -82,10 +83,17 @@ export function falharPedido(db: Banco, conversaId: number, agora: number): void
 
 export interface ResumoHistorico { conversas: number; pendentes: number; emAndamento: number; concluidas: number; esgotadas: number; pedidos: number; novas: number; liberado: boolean }
 export function resumoHistoricoAntigo(db: Banco): ResumoHistorico {
-  const r: ResumoHistorico = { conversas: 0, pendentes: 0, emAndamento: 0, concluidas: 0, esgotadas: 0, pedidos: 0, novas: 0, liberado: lerConfigHistorico(db).liberado };
+  // O total e o de TODAS as conversas elegiveis (dm e grupo com mensagem), nao so das que ja ganharam linha em
+  // historico_pedidos: antes de liberar, a tela precisa mostrar o tamanho real do trabalho (as ainda nao pedidas).
+  const total = (db.prepare(
+    "SELECT COUNT(*) AS n FROM conversas cv WHERE cv.tipo IN ('dm','grupo') AND EXISTS (SELECT 1 FROM mensagens m WHERE m.conversa_id = cv.id)"
+  ).get() as { n: number }).n;
+  const r: ResumoHistorico = { conversas: total, pendentes: 0, emAndamento: 0, concluidas: 0, esgotadas: 0, pedidos: 0, novas: 0, liberado: lerConfigHistorico(db).liberado };
   for (const l of db.prepare('SELECT estado, COUNT(*) AS n, SUM(pedidos) AS p, SUM(novas) AS nv FROM historico_pedidos GROUP BY estado').all() as { estado: string; n: number; p: number | null; nv: number | null }[]) {
-    r.conversas += l.n; r.pedidos += l.p ?? 0; r.novas += l.nv ?? 0;
+    r.pedidos += l.p ?? 0; r.novas += l.nv ?? 0;
     if (l.estado === 'pendente') r.pendentes = l.n; else if (l.estado === 'em_andamento') r.emAndamento = l.n; else if (l.estado === 'concluida') r.concluidas = l.n; else if (l.estado === 'esgotada') r.esgotadas = l.n;
   }
+  // Quem ainda nao tem linha (nunca pedida) tambem esta pendente. Nunca negativo, mesmo se sobrar linha de conversa apagada.
+  r.pendentes = Math.max(0, total - r.concluidas - r.esgotadas - r.emAndamento);
   return r;
 }

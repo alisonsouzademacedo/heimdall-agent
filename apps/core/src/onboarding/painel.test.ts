@@ -7,6 +7,7 @@ import { criarEscuta } from '../whatsapp/escuta.ts';
 import { enfileirar } from '../fila.ts';
 import { enfileirarSaida, marcarEnviada } from '../saida.ts';
 import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas, estadosAoVivo } from './painel.ts';
+import { gravarConfigHistorico } from '../historico-antigo.ts';
 import { definirDestinoDeBackup, backupDoDia } from '../backup-copia.ts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -194,6 +195,20 @@ test('sincronizar com historico antigo ligado: enquanto ha conversa a pedir, e p
   const s = estadosAoVivo(montarPainel(db, T)).sincronizar!;
   assert.deepEqual({ e: s.estado, p: s.percentual }, { e: 'processando', p: 25 });
   assert.match(s.detalhe, /1 de 4 conversas/);
+});
+
+test('sincronizar: busca antiga PAUSADA com conversas pendentes nao fica verde; liberada, vira processando', () => {
+  const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1); gravarHistorico(db, { progresso: 100, ultima: true }, 2);
+  const e = criarEscuta(db, DONO, { agora: () => T });
+  for (const n of [1, 2, 3]) e.mensagens([{ key: { id: `P${n}`, remoteJid: `551199999000${n}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(T / 1000) }], 'historico');
+  const pausada = vivo(db).sincronizar!;
+  assert.equal(pausada.estado, 'pendente', 'ha conversas antigas pendentes: o passo nao pode dizer que esta pronto');
+  assert.match(pausada.detalhe, /pausada/i);
+  assert.match(pausada.detalhe, /3 conversa/);
+  gravarConfigHistorico(db, { liberado: true });
+  const liberada = vivo(db).sincronizar!;
+  assert.equal(liberada.estado, 'processando');
+  assert.equal(liberada.percentual, 0);
 });
 
 test('processar: pendente enquanto a trava esta fechada; processando com dias na fila quando aberta; verde quando acaba', () => {

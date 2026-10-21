@@ -6,6 +6,11 @@ import type { Banco } from './db.ts';
 export type Normalizado = { ok: true; variantes: string[]; exibir: string[]; ddd: string } | { ok: false; motivo: string };
 
 const formatar = (ddd: string, n: string): string => `+55 ${ddd} ${n.slice(0, n.length - 4)}-${n.slice(-4)}`;
+// Mostra so o final do numero (a tela e os avisos nunca precisam do numero inteiro).
+const mascarar = (digitos: string): string => {
+  const ddd = digitos.slice(2, 4), num = digitos.slice(4);
+  return `+55 ${ddd} ${'*'.repeat(Math.max(0, num.length - 4))}-${num.slice(-4)}`;
+};
 
 export function normalizarTelefone(entrada: string): Normalizado {
   const bruto = entrada.trim();
@@ -61,13 +66,12 @@ export function cadastrarMembro(db: Banco, entrada: { nome: string; funcao: stri
   db.prepare('INSERT INTO equipe (nome, funcao, contato_id, telefone_digitos, achou_no_acervo, criado_em) VALUES (?, ?, ?, ?, ?, ?)').run(nome, funcao === '' ? null : funcao, contatoId, n.variantes[0]!, achou ? 1 : 0, agora);
   return achou
     ? { ok: true, achou: true, exibir: n.exibir }
-    : { ok: true, achou: false, exibir: n.exibir, aviso: `Nao achei este numero entre os contatos importados do WhatsApp. Guardei as duas formas (${n.exibir.join(' e ')}); quando essa pessoa conversar, as mensagens caem nela.` };
+    : { ok: true, achou: false, exibir: n.exibir, aviso: `Nao achei este numero entre os contatos importados do WhatsApp. Guardei as duas formas (${n.variantes.map(mascarar).join(' e ')}); quando essa pessoa conversar, as mensagens caem nela.` };
 }
 
 export interface MembroListado { id: number; nome: string; funcao: string; telefone: string; achou: boolean }
 export function listarEquipe(db: Banco): MembroListado[] {
   return (db.prepare('SELECT id, nome, funcao, telefone_digitos AS tel, achou_no_acervo AS achou FROM equipe ORDER BY id').all() as { id: number; nome: string; funcao: string | null; tel: string; achou: number }[]).map((l) => {
-    const ddd = l.tel.slice(2, 4); const num = l.tel.slice(4);
-    return { id: l.id, nome: l.nome, funcao: l.funcao ?? '', telefone: `+55 ${ddd} ${'*'.repeat(num.length - 4)}-${num.slice(-4)}`, achou: l.achou === 1 };
+    return { id: l.id, nome: l.nome, funcao: l.funcao ?? '', telefone: mascarar(l.tel), achou: l.achou === 1 };
   });
 }

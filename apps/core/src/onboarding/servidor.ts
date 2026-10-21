@@ -86,7 +86,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
     const membros = listarEquipe(op.banco).length;
     vivo.cadastro = { estado: membros > 0 ? 'verde' : 'pendente', percentual: null, detalhe: membros > 0 ? `${membros} membro(s) da equipe cadastrado(s)` : 'Nenhum membro da equipe cadastrado ainda.' };
     const tm = lerTesteDoModelo(op.banco);
-    vivo.modelo = { estado: tm.estado === 'ok' ? 'verde' : tm.estado === 'pedido' ? 'processando' : 'pendente', percentual: null, detalhe: tm.estado === 'ok' ? `Chamada de teste ok (${tm.ms} ms)` : tm.estado === 'falhou' ? `A chamada de teste falhou: ${tm.motivo}` : tm.estado === 'pedido' ? 'Teste pedido; aguardando a ponte responder.' : 'Ainda sem chamada de teste.' };
+    vivo.modelo = { estado: tm.estado === 'ok' ? 'verde' : tm.estado === 'pedido' ? 'processando' : tm.estado === 'falhou' ? 'vermelho' : 'pendente', percentual: null, detalhe: tm.estado === 'ok' ? `Chamada de teste ok (${tm.ms} ms)` : tm.estado === 'falhou' ? `A chamada de teste falhou: ${tm.motivo}` : tm.estado === 'pedido' ? 'Teste pedido; aguardando a ponte responder.' : 'Ainda sem chamada de teste.' };
     return {
       passos: PASSOS.map((p) => {
         const v = vivo[p.id];
@@ -123,6 +123,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/') return responder(res, 200, 'text/html; charset=utf-8', HTML);
         if (url.pathname === '/app.css') return responder(res, 200, 'text/css; charset=utf-8', CSS);
         if (url.pathname === '/app.js') return responder(res, 200, 'application/javascript; charset=utf-8', JS);
+        if (url.pathname === '/favicon.ico') return responder(res, 204, 'image/x-icon', '');
         if (url.pathname === '/api/estado') return json(res, 200, estado());
         if (url.pathname === '/api/historico-antigo') {
           const c = lerConfigHistorico(op.banco);
@@ -131,11 +132,11 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/api/cadastro') return json(res, 200, { equipe: listarEquipe(op.banco) });
         if (url.pathname === '/api/modelo') {
           return json(res, 200, { teste: lerTesteDoModelo(op.banco), passos: [
-            'O login e feito por voce, no terminal, nunca nesta tela: abra um terminal e rode  docker exec -it heimdall-hermes-1 hermes model  (runbooks/07-logins.md, secao A). Esta tela nunca ve nem guarda senha, token ou chave.',
+            'O login e feito por voce, no terminal, nunca nesta tela. Abra um terminal e rode: docker exec -it heimdall-hermes-1 hermes model (esta tela nunca ve nem guarda senha, token ou chave).',
             'Para trocar de conta: rode o mesmo comando e escolha a nova conta; depois volte aqui e clique em "Fazer chamada de teste".',
             'A cota de 5 horas do plano do ChatGPT e compartilhada com os outros aplicativos que usam a mesma conta: se voce usar o ChatGPT ao mesmo tempo, o Heimdall pode esperar.',
-            'Alternativa: chave de API (decisao D26). Tambem se configura no terminal, no Hermes; esta tela nunca recebe a chave.',
-            'O Hindsight fica sem modelo proprio (decisao sua): ele guarda e busca trechos; a extracao de compromissos usa o Hermes.'
+            'Alternativa: usar uma chave de API, tambem configurada no terminal; esta tela nunca recebe a chave.',
+            'O Hindsight guarda e busca trechos; a extracao de compromissos usa o Hermes.'
           ] });
         }
         if (url.pathname === '/api/processamento') {

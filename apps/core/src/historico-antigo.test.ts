@@ -30,6 +30,15 @@ test('configuracao: por padrao o historico antigo NAO roda (o dono libera e esco
   assert.equal(lerConfigHistorico(db).ritmoMs, 40_000);
 });
 
+test('resumo ANTES de liberar: conta todas as conversas elegiveis como pendentes (a tela mostra o tamanho real)', () => {
+  const { db, msg } = novo();
+  msg('A1', A, seg(10)); msg('B1', B, seg(20)); msg('G1', GRUPO, seg(30)); msg('S1', DONO.pn, seg(5), true);
+  const r = resumoHistoricoAntigo(db);
+  assert.equal(r.conversas, 3, 'dm e grupo entram; self-chat fica de fora');
+  assert.equal(r.pendentes, 3, 'nada foi pedido ainda');
+  assert.equal(r.concluidas + r.esgotadas + r.emAndamento, 0);
+});
+
 test('pede mensagens mais antigas que a mais antiga guardada (chave e data em milissegundos); self-chat e conversa sem mensagem ficam de fora', () => {
   const { db, msg } = novo();
   msg('A1', A, seg(1)); msg('A2', A, seg(5), true); msg('A3', A, seg(3));

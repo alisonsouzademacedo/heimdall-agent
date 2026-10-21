@@ -17,7 +17,7 @@ section{flex:999 1 520px;min-width:0;background:rgba(27,35,54,.8);border:1px sol
 nav button.passo{display:flex;gap:10px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:12px;color:var(--fg);padding:8px 10px;min-height:44px;cursor:pointer;font:inherit}
 nav button.passo[aria-current=step]{background:rgba(212,168,75,.14);border-color:rgba(212,168,75,.55)}
 .no{flex:0 0 28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--muted);color:var(--mfg);font:12px ui-monospace,monospace;border:1px solid var(--line)}
-.no.verde{background:var(--ok);color:#0F172A}.no.vermelho{background:var(--bad);color:#0F172A}
+.no.verde{background:var(--ok);color:#0F172A}.no.vermelho{background:var(--bad);color:#0F172A}.no.processando{background:var(--warn);color:#0F172A}
 .mito{display:block;font-size:12.5px;color:#C9B27A}
 h1{margin:0 0 2px;font-size:38px;line-height:1.1}
 .lead{color:#CBD5E1;max-width:70ch}
@@ -28,23 +28,29 @@ h1{margin:0 0 2px;font-size:38px;line-height:1.1}
 .det{color:var(--mfg);font-size:13.5px}
 button.acao{min-height:44px;border:0;border-radius:12px;padding:0 20px;font:600 16px system-ui;background:var(--gold);color:#0F172A;cursor:pointer}
 button.sec{min-height:44px;border:1px solid var(--line);border-radius:12px;padding:0 18px;background:transparent;color:var(--fg);font:inherit;cursor:pointer}
-button:focus-visible,textarea:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
 input.txt{width:100%;max-width:520px;min-height:44px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit}
 textarea{width:100%;min-height:90px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit}
 .aviso{background:var(--muted);border:1px solid rgba(251,191,36,.35);border-radius:14px;padding:12px 16px;margin:16px 0;max-width:70ch}
 .estado{display:inline-block;border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600;border:1px solid var(--warn);color:var(--warn)}
-.estado.verde{border-color:var(--ok);color:var(--ok)}.estado.vermelho{border-color:var(--bad);color:var(--bad)}
+.estado.verde{border-color:var(--ok);color:var(--ok)}.estado.vermelho{border-color:var(--bad);color:var(--bad)}.estado.processando{border-color:var(--warn);color:var(--warn)}.estado.neutro{border-color:var(--line);color:var(--mfg)}
+.bom,.verde{color:var(--ok)}.ruim,.vermelho{color:var(--bad)}
 .barra{height:14px;border-radius:999px;background:var(--muted);border:1px solid var(--line);overflow:hidden;margin:6px 0 2px}
+.barra.mini{height:6px;margin:4px 0 2px}
 .barra>i{display:block;height:100%;background:linear-gradient(90deg,#2DD4BF,#60A5FA,#A78BFA);width:0}
 .qr{background:#fff;border-radius:16px;padding:10px;width:280px;height:280px;display:block;margin:12px 0}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
 .kpi{background:var(--muted);border:1px solid var(--line);border-radius:14px;padding:12px 14px}.kpi b{display:block;font-size:26px}
+.campo{margin:10px 0}
+.campo label{display:block;font-size:13.5px;color:var(--mfg);margin-bottom:4px}
+.item-lista{background:var(--muted);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0}
+.item-lista b{display:inline-block;margin-right:8px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
 
 export const JS = `
 (function(){
-  var passos=[],atual=0,verifs=[],perfilAtual=null,pn=null,resTeste=null,msgSelf='';
+  var passos=[],atual=0,verifs=[],perfilAtual=null,pn=null,resTeste=null,msgSelf='',timerModelo=null,atualizarSincronizar=null;
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e}
   function api(m,u,corpo){
     var o={method:m,headers:{'X-Heimdall':'1'},credentials:'same-origin'};
@@ -56,21 +62,38 @@ export const JS = `
     var t=el('div','marca','A Ponte');t.style.fontSize='22px';nav.appendChild(t);
     passos.forEach(function(p,i){
       var b=el('button','passo');b.type='button';if(i===atual)b.setAttribute('aria-current','step');
-      b.appendChild(el('span','no '+p.estado,p.estado==='verde'?'\\u2713':String(i+1)));
-      var d=el('span');d.appendChild(el('span','',p.titulo));d.appendChild(el('span','mito',p.mito));b.appendChild(d);
+      var icone=p.estado==='verde'?'\\u2713':(p.estado==='processando'?'\\u2026':String(i+1));
+      b.appendChild(el('span','no '+p.estado,icone));
+      var d=el('span');d.style.flex='1';d.style.minWidth='0';
+      d.appendChild(el('span','',p.titulo));
+      d.appendChild(el('span','mito',p.mito));
+      if(p.detalhe||p.percentual!=null){
+        var info=el('div','det');info.style.fontSize='12px';
+        info.textContent=p.detalhe||(p.percentual!=null?(p.percentual+'%'):'');
+        d.appendChild(info);
+      }
+      if(p.percentual!=null){
+        var mini=el('div','barra mini');var mi=document.createElement('i');
+        mi.style.width=Math.max(0,Math.min(100,Math.round(p.percentual)))+'%';
+        mini.appendChild(mi);d.appendChild(mini);
+      }
+      b.appendChild(d);
       b.addEventListener('click',function(){atual=i;tudo()});nav.appendChild(b);
     });
   }
   function painel(){
+    if(timerModelo){clearInterval(timerModelo);timerModelo=null}
+    atualizarSincronizar=null;
     var p=passos[atual],s=document.getElementById('painel');s.textContent='';
     s.appendChild(el('div','sub','PASSO '+(atual+1)+' DE '+passos.length));
     s.appendChild(el('h1','',p.titulo));s.appendChild(el('div','mito',p.mito));
-    var st=el('span','estado '+p.estado,p.estado==='verde'?'Verde \\u00b7 pronto':p.estado==='vermelho'?'Vermelho \\u00b7 precisa de atencao':'Aguardando');
+    var rotEstado=p.id==='pronto'?'Painel de status':(p.estado==='verde'?'Verde \\u00b7 pronto':(p.estado==='processando'?'Amarelo \\u00b7 processando':(p.estado==='vermelho'?'Vermelho \\u00b7 precisa de atencao':'Aguardando')));
+    var st=el('span','estado '+(p.id==='pronto'?'neutro':p.estado),rotEstado);
     s.appendChild(st);s.appendChild(el('p','lead',p.explicacao));
     if(p.id==='ambiente'){ambiente(s)}
     else if(p.pronto&&pn){var f=RENDER[p.id];if(f)f(s,pn)}
     else if(p.pronto){s.appendChild(el('div','aviso','Carregando os dados...'))}
-    else{var a=el('div','aviso','Este passo ainda nao esta ligado nesta versao. A IA que acompanha a primeira instalacao constroi e testa este passo a seguir (docs/plano/fase-1-onboarding-visual.md).');s.appendChild(a)}
+    else{var a=el('div','aviso','Este passo sera ativado em uma versao futura.');s.appendChild(a)}
     bug(s,p.id);
   }
   function ambiente(s){
@@ -116,18 +139,258 @@ export const JS = `
     }
     if(w.aviso)s.appendChild(el('div','det','Aviso: '+w.aviso.motivo));
   }
+  function cadastro(s,d){
+    s.appendChild(el('p','','Cadastre os membros da equipe interna (nao clientes): nome, funcao e telefone. Voce digita do jeito de sempre; o Heimdall entende o formato e procura a pessoa entre os contatos que ja vieram do WhatsApp.'));
+    var g=el('div');g.style.maxWidth='520px';
+    var cNome=el('div','campo');
+    var lNome=el('label','','Nome:');lNome.htmlFor='membro-nome';cNome.appendChild(lNome);
+    var inNome=el('input','txt');inNome.id='membro-nome';inNome.type='text';inNome.autocomplete='name';inNome.setAttribute('aria-label','Nome do membro');inNome.placeholder='Exemplo: Maria Souza';cNome.appendChild(inNome);g.appendChild(cNome);
+    var cFuncao=el('div','campo');
+    var lFuncao=el('label','','Funcao:');lFuncao.htmlFor='membro-funcao';cFuncao.appendChild(lFuncao);
+    var inFuncao=el('input','txt');inFuncao.id='membro-funcao';inFuncao.type='text';inFuncao.setAttribute('aria-label','Funcao do membro');inFuncao.placeholder='Exemplo: SDR ou Vendas';cFuncao.appendChild(inFuncao);g.appendChild(cFuncao);
+    var cTel=el('div','campo');
+    var lTel=el('label','','Telefone com DDD:');lTel.htmlFor='membro-telefone';cTel.appendChild(lTel);
+    var inTel=el('input','txt');inTel.id='membro-telefone';inTel.type='tel';inTel.inputMode='tel';inTel.autocomplete='tel';inTel.setAttribute('aria-label','Telefone com DDD');inTel.placeholder='Exemplo: (11) 99999-0000';cTel.appendChild(inTel);g.appendChild(cTel);
+
+    var resEnt=el('div','det');resEnt.style.margin='6px 0';resEnt.setAttribute('role','status');resEnt.setAttribute('aria-live','polite');
+    var bEnt=el('button','sec','Entender o numero');bEnt.type='button';
+    bEnt.addEventListener('click',function(){
+      if(!inTel.value.trim()){resEnt.textContent='Digite um telefone primeiro.';return}
+      bEnt.disabled=true;
+      api('POST','/api/cadastro/entender',{telefone:inTel.value}).then(function(r){
+        resEnt.textContent='Entendido como: '+(r.exibir?r.exibir.join(' e '):'formato valido');
+      }).catch(function(e){resEnt.textContent='Erro no numero: '+e.message}).then(function(){bEnt.disabled=false});
+    });
+
+    var bSalvar=el('button','acao','Salvar membro');bSalvar.type='button';bSalvar.style.marginLeft='8px';
+    var avisoMembro=el('div');avisoMembro.setAttribute('role','status');avisoMembro.setAttribute('aria-live','polite');
+    bSalvar.addEventListener('click',function(){
+      if(!inNome.value.trim()||!inTel.value.trim()){avisoMembro.textContent='Preencha nome e telefone.';return}
+      bSalvar.disabled=true;
+      api('POST','/api/cadastro/membro',{nome:inNome.value,funcao:inFuncao.value,telefone:inTel.value}).then(function(r){
+        avisoMembro.textContent='';
+        if(r.aviso){var av=el('div','aviso','Aviso: '+r.aviso);avisoMembro.appendChild(av)}
+        inNome.value='';inFuncao.value='';inTel.value='';resEnt.textContent='';
+        carregarEquipe();
+        return atualizarMenu();
+      }).catch(function(e){avisoMembro.textContent='Nao consegui salvar: '+e.message}).then(function(){bSalvar.disabled=false});
+    });
+
+    var botoes=el('div');botoes.style.marginTop='10px';botoes.appendChild(bEnt);botoes.appendChild(bSalvar);
+    g.appendChild(resEnt);g.appendChild(botoes);g.appendChild(avisoMembro);s.appendChild(g);
+
+    var titEquipe=el('h2','','Equipe cadastrada');titEquipe.style.marginTop='24px';s.appendChild(titEquipe);
+    var divLista=el('div');s.appendChild(divLista);
+    function carregarEquipe(){
+      divLista.textContent='Carregando equipe...';
+      api('GET','/api/cadastro').then(function(r){
+        divLista.textContent='';
+        if(!r.equipe||!r.equipe.length){divLista.appendChild(el('div','det','Nenhum membro da equipe cadastrado ainda.'));return}
+        r.equipe.forEach(function(m){
+          var item=el('div','item-lista');
+          item.appendChild(el('b','',m.nome));
+          if(m.funcao)item.appendChild(el('span','det','('+m.funcao+') '));
+          item.appendChild(el('span','det',m.telefone));
+          if(!m.achou)item.appendChild(el('span','det',' \\u00b7 [numero ainda nao visto no WhatsApp]'));
+          divLista.appendChild(item);
+        });
+      }).catch(function(e){divLista.textContent='Erro ao carregar equipe: '+e.message});
+    }
+    carregarEquipe();
+  }
   function sincronizar(s,d){
-    var w=d.whatsapp,h=w.historico,c=w.contagem;
-    if(w.estado!=='conectado'){s.appendChild(el('div','aviso','Conecte o WhatsApp primeiro (passo anterior).'));return}
-    barra(s,h&&h.ultima?'Historico recebido por inteiro':'Recebendo o historico do telefone',h&&h.ultima?100:(h&&h.progresso!=null?h.progresso:0),h?(h.ultima?'Concluido.':'Deixe o celular ligado e com internet.'):'Aguardando o WhatsApp mandar o historico. Isso pode levar alguns minutos.');
-    var g=el('div','kpis');kpi(g,'conversas',d.acervo.conversas);kpi(g,'mensagens guardadas',d.acervo.mensagens);if(c){kpi(g,'repetidas ignoradas',c.duplicadas);kpi(g,'editadas / apagadas',c.editadas+' / '+c.apagadas)}s.appendChild(g);
-    s.appendChild(el('div','det','O WhatsApp so entrega o que o telefone tem disponivel; o que nao vier, nao da para recuperar.'));
+    var topo=el('div');s.appendChild(topo);
+    function pintarTopo(p){
+      topo.textContent='';
+      var w=p.whatsapp,h=w.historico,c=w.contagem,ha=p.historicoAntigo||{};
+      if(w.estado!=='conectado')topo.appendChild(el('div','aviso','Conecte o WhatsApp primeiro (passo anterior).'));
+      barra(topo,h&&h.ultima?'Historico recebido por inteiro':'Recebendo o historico do telefone',h&&h.ultima?100:(h&&h.progresso!=null?h.progresso:0),h?(h.ultima?'Concluido.':'Deixe o celular ligado e com internet.'):'Aguardando o WhatsApp mandar o historico. Isso pode levar alguns minutos.');
+      var g=el('div','kpis');
+      kpi(g,'conversas',p.acervo.conversas);
+      kpi(g,'mensagens guardadas',p.acervo.mensagens);
+      kpi(g,'conversas em andamento',ha.emAndamento||0);
+      kpi(g,'conversas ainda nao pedidas',ha.pendentes||0);
+      kpi(g,'conversas concluidas',ha.concluidas||0);
+      kpi(g,'atingiram o limite',ha.esgotadas||0);
+      if(c){kpi(g,'repetidas ignoradas',c.duplicadas);kpi(g,'editadas / apagadas',c.editadas+' / '+c.apagadas)}
+      topo.appendChild(g);
+      topo.appendChild(el('div','det','O WhatsApp so entrega o que o telefone tem disponivel; o que nao vier, nao da para recuperar.'));
+    }
+    pintarTopo(d);
+    // Atualiza so os numeros do topo: o campo de intervalo e os botoes nao podem ser apagados pelo relogio da tela.
+    atualizarSincronizar=function(){
+      return api('GET','/api/painel').then(function(r){pn=r;pintarTopo(r);return atualizarMenu()}).catch(function(){});
+    };
+
+    var cartao=el('div','aviso');cartao.style.marginTop='20px';
+    cartao.appendChild(el('h2','','Buscar mensagens antigas conversa por conversa'));
+    cartao.appendChild(el('p','det','O WhatsApp entrega cerca de 3 meses ao conectar. Para conversas mais antigas, o Heimdall pode pedir mensagens aos poucos direto ao seu proprio celular. Este pedido vai SO ao seu telefone (mensagem peer). O risco de o WhatsApp limitar a conta por excesso de pedidos NAO foi medido.'));
+    var infoAntigo=el('div');infoAntigo.setAttribute('aria-live','polite');cartao.appendChild(infoAntigo);
+
+    var cRitmo=el('div','campo');
+    var lRitmo=el('label','','Intervalo entre pedidos (segundos, minimo 15; sugerido 60):');lRitmo.htmlFor='ritmo-antigo';cRitmo.appendChild(lRitmo);
+    var inRitmo=el('input','txt');inRitmo.id='ritmo-antigo';inRitmo.type='number';inRitmo.min='15';inRitmo.max='3600';inRitmo.value='60';inRitmo.setAttribute('aria-label','Intervalo entre pedidos em segundos');
+    cRitmo.appendChild(inRitmo);cartao.appendChild(cRitmo);
+    var ritmoEditado=false;
+    inRitmo.addEventListener('input',function(){ritmoEditado=true});
+
+    var bts=el('div');bts.style.marginTop='10px';
+    var bLibAnt=el('button','acao','Liberar busca antiga');bLibAnt.type='button';
+    var bPausarAnt=el('button','sec','Pausar busca antiga');bPausarAnt.type='button';bPausarAnt.style.marginLeft='8px';
+    bts.appendChild(bLibAnt);bts.appendChild(bPausarAnt);cartao.appendChild(bts);
+
+    function carregarAntigo(){
+      infoAntigo.textContent='Carregando estado da busca antiga...';
+      api('GET','/api/historico-antigo').then(function(r){
+        infoAntigo.textContent='';
+        var cfg=r.config||{},res=r.resumo||{};
+        if(cfg.ritmoSegundos&&!ritmoEditado)inRitmo.value=String(cfg.ritmoSegundos);
+        var st=el('div','det');
+        st.textContent=cfg.liberado?'Trava: BUSCA ABERTA (pedindo ao telefone)':'Trava: BUSCA PAUSADA (fechada por padrao)';
+        st.style.fontWeight='600';st.style.marginBottom='8px';
+        infoAntigo.appendChild(st);
+        var kg=el('div','kpis');
+        kpi(kg,'conversas no total',res.conversas||0);
+        kpi(kg,'conversas pendentes',res.pendentes||0);
+        kpi(kg,'conversas em andamento',res.emAndamento||0);
+        kpi(kg,'conversas concluidas',res.concluidas||0);
+        kpi(kg,'atingiram o limite',res.esgotadas||0);
+        kpi(kg,'mensagens novas trazidas',res.novas||0);
+        infoAntigo.appendChild(kg);
+        bLibAnt.disabled=!!cfg.liberado;
+        bPausarAnt.disabled=!cfg.liberado;
+      }).catch(function(e){infoAntigo.textContent='Erro ao carregar busca antiga: '+e.message});
+    }
+
+    bLibAnt.addEventListener('click',function(){
+      var seg=parseInt(inRitmo.value,10);
+      if(!seg||seg<15||seg>3600){alert('O intervalo precisa ficar entre 15 e 3600 segundos.');return}
+      if(!window.confirm('O pedido de historico antigo vai direto ao seu proprio celular. O risco de o WhatsApp limitar a conta NAO foi medido. Deseja mesmo liberar?'))return;
+      bLibAnt.disabled=true;
+      api('POST','/api/historico-antigo/liberar',{liberar:true,confirmar:true,ritmoSegundos:seg}).then(function(){
+        return atualizarPainel();
+      }).catch(function(e){alert(e.message)}).then(function(){carregarAntigo()});
+    });
+
+    bPausarAnt.addEventListener('click',function(){
+      bPausarAnt.disabled=true;
+      api('POST','/api/historico-antigo/liberar',{liberar:false}).then(function(){
+        return atualizarPainel();
+      }).catch(function(e){alert(e.message)}).then(function(){carregarAntigo()});
+    });
+
+    carregarAntigo();
+    s.appendChild(cartao);
   }
   function extrair(s,d){
     var f=d.fila.porTipo,b=f.baixar_midia||{},ok=b.ok||0,tot=ok+(b.pendente||0)+(b.em_andamento||0)+(b.erro||0)+(b.abandonada||0);
     var g=el('div','kpis');kpi(g,'mensagens',d.acervo.mensagens);kpi(g,'audios',d.acervo.audios);kpi(g,'PDFs',d.acervo.pdfs);kpi(g,'downloads com falha definitiva',b.abandonada||0);s.appendChild(g);
     barra(s,'Baixando audios e PDFs originais',tot?ok*100/tot:(d.acervo.mensagens?100:0),ok+' de '+tot+' arquivos');
     s.appendChild(el('div','det','Arquivos expirados no WhatsApp nao podem mais ser baixados; o Heimdall tenta uma vez pedir de novo ao celular.'));
+  }
+  function modelo(s,d){
+    s.appendChild(el('p','','O login do modelo e feito exclusivamente por voce no terminal. A tela nunca ve, recebe nem guarda token, senha ou chave.'));
+    var boxInst=el('div','aviso');
+    boxInst.appendChild(el('div','','Instrucoes de conexao do modelo:'));
+    var ul=el('ul');ul.appendChild(el('li','det','Carregando instrucoes...'));boxInst.appendChild(ul);
+    var resTeste=el('div','aviso');resTeste.style.marginTop='14px';resTeste.setAttribute('role','status');resTeste.setAttribute('aria-live','polite');
+    var bTestar=el('button','acao','Fazer chamada de teste');bTestar.type='button';
+
+    function mostrarTeste(t){
+      resTeste.textContent='';
+      if(!t||t.estado==='nenhum'){
+        resTeste.appendChild(el('div','','Ainda nao ha chamada de teste realizada.'));
+      }else if(t.estado==='pedido'){
+        resTeste.appendChild(el('div','','Chamada de teste em andamento... aguardando resposta do Hermes (verificando a cada 2 segundos).'));
+      }else if(t.estado==='ok'){
+        resTeste.appendChild(el('div','verde','Chamada de teste com sucesso! Respondeu em '+t.ms+' ms.'));
+      }else if(t.estado==='falhou'){
+        resTeste.appendChild(el('div','vermelho','A chamada de teste falhou: '+(t.motivo||'erro')));
+      }
+    }
+
+    function sondarTeste(){
+      if(timerModelo)clearInterval(timerModelo);
+      timerModelo=setInterval(function(){
+        api('GET','/api/modelo').then(function(r){
+          mostrarTeste(r.teste);
+          if(r.teste&&r.teste.estado!=='pedido'){
+            clearInterval(timerModelo);timerModelo=null;bTestar.disabled=false;
+            atualizarMenu();
+          }
+        }).catch(function(){});
+      },2000);
+    }
+
+    api('GET','/api/modelo').then(function(r){
+      ul.textContent='';
+      (r.passos||[]).forEach(function(txt){ul.appendChild(el('li','',txt))});
+      mostrarTeste(r.teste);
+      if(r.teste&&r.teste.estado==='pedido'){bTestar.disabled=true;sondarTeste()}
+    }).catch(function(e){ul.textContent='Erro ao carregar instrucoes: '+e.message});
+
+    s.appendChild(boxInst);
+
+    bTestar.addEventListener('click',function(){
+      bTestar.disabled=true;
+      api('POST','/api/modelo/testar',{}).then(function(r){
+        mostrarTeste({estado:'pedido'});
+        sondarTeste();
+      }).catch(function(e){
+        bTestar.disabled=false;alert(e.message);
+      });
+    });
+
+    s.appendChild(bTestar);
+    s.appendChild(resTeste);
+  }
+  function processar(s,d){
+    s.appendChild(el('p','','A extracao de compromissos e sinais usa o modelo (Hermes) e gasta a cota do plano do ChatGPT. So comeca depois do seu OK.'));
+    var boxDados=el('div');boxDados.setAttribute('aria-live','polite');s.appendChild(boxDados);
+    var boxAviso=el('div','aviso');
+    boxAviso.appendChild(el('div','','Atencao: cada dia processado consulta o modelo. Se voce pausar, o Heimdall para de pegar novos dias; o dia que ja comecou termina antes de parar. Ao liberar de novo, retoma de onde parou.'));
+    s.appendChild(boxAviso);
+
+    var divBotoes=el('div');divBotoes.style.margin='14px 0';
+    var bLiberar=el('button','acao','Liberar o processamento');bLiberar.type='button';
+    var bPausar=el('button','sec','Pausar processamento');bPausar.type='button';bPausar.style.marginLeft='8px';
+    divBotoes.appendChild(bLiberar);divBotoes.appendChild(bPausar);
+    s.appendChild(divBotoes);
+
+    function carregarProc(){
+      boxDados.textContent='Carregando estimativas...';
+      api('GET','/api/processamento').then(function(r){
+        boxDados.textContent='';
+        var st=el('div','aviso');
+        st.appendChild(el('div','',r.liberada?'Estado: Processamento LIBERADO':'Estado: Processamento PAUSADO (trava fechada)'));
+        boxDados.appendChild(st);
+        var g=el('div','kpis');
+        kpi(g,'dias novos para extrair',r.diasNovos);
+        kpi(g,'dias refeitos (mudaram)',r.diasRefeitos);
+        kpi(g,'trabalhos na fila',r.naFila);
+        kpi(g,'consultas previstas ao modelo',r.consultasPrevistas);
+        boxDados.appendChild(g);
+        bLiberar.disabled=r.liberada;
+        bPausar.disabled=!r.liberada;
+      }).catch(function(e){boxDados.textContent='Erro ao carregar dados: '+e.message});
+    }
+
+    bLiberar.addEventListener('click',function(){
+      if(!window.confirm('Deseja liberar o processamento pelo modelo? Isso vai iniciar a extracao dos dias previstos e consumir cota do seu plano.'))return;
+      bLiberar.disabled=true;
+      api('POST','/api/processamento/liberar',{liberar:true,confirmar:true}).then(function(){
+        return atualizarPainel();
+      }).catch(function(e){alert(e.message)}).then(function(){carregarProc()});
+    });
+
+    bPausar.addEventListener('click',function(){
+      bPausar.disabled=true;
+      api('POST','/api/processamento/liberar',{liberar:false}).then(function(){
+        return atualizarPainel();
+      }).catch(function(e){alert(e.message)}).then(function(){carregarProc()});
+    });
+
+    carregarProc();
   }
   function selfchat(s,d){
     var T={nao_feito:'Ainda nao testei.',aguardando_envio:'Mensagem de teste na fila; sai quando o listener estiver conectado.',aguardando_resposta:'Enviei. Agora responda a mensagem no seu WhatsApp (conversa com voce mesmo) com qualquer texto.',ok:'Ida e volta funcionando.',falhou:'Nao consegui enviar. Confira o listener.'};
@@ -156,7 +419,7 @@ export const JS = `
   function backup(s,d){
     var b=d.backup;
     s.appendChild(el('p','',b.destino?('Destino atual: '+b.destino):'Escolha onde guardar o backup: um HD externo, um segundo disco ou um pen drive (nao a mesma pasta do projeto).'));
-    var ent=el('input','txt');ent.type='text';ent.placeholder='Exemplo: E:\\Backup-Heimdall (a pasta precisa existir)';ent.setAttribute('aria-label','Pasta do backup');if(b.destino)ent.value=b.destino;s.appendChild(ent);
+    var ent=el('input','txt');ent.type='text';ent.placeholder='Exemplo: E:\\\\Backup-Heimdall (a pasta precisa existir)';ent.setAttribute('aria-label','Pasta do backup');if(b.destino)ent.value=b.destino;s.appendChild(ent);
     var linha=el('div');linha.style.marginTop='10px';
     var ok=el('button','acao','Salvar destino');ok.type='button';
     ok.addEventListener('click',function(){ok.disabled=true;api('POST','/api/backup/destino',{pasta:ent.value}).then(function(){msgBackup='Destino salvo.';return atualizarPainel()}).catch(function(e){msgBackup='Nao salvei: '+e.message;tudo()}).then(function(){ok.disabled=false})});
@@ -167,8 +430,9 @@ export const JS = `
     s.appendChild(el('div','det',b.ultimoEm?('Ultimo backup: '+new Date(b.ultimoEm).toLocaleString('pt-BR')+(b.erro?' - ATENCAO: '+b.erro:'')):(b.erro?'Erro: '+b.erro:'Ainda nao ha backup.')));
     s.appendChild(el('div','aviso','O backup e feito sozinho no primeiro uso de cada dia (uma copia do acervo com a data no nome). Para apagar dados de um cliente: voce pede no WhatsApp e confirma com um codigo de seis letras (duas etapas).'));
   }
-  var RENDER={backup:backup,whatsapp:whatsapp,sincronizar:sincronizar,extrair:extrair,selfchat:selfchat,agenda:agenda,pronto:pronto};
+  var RENDER={backup:backup,whatsapp:whatsapp,sincronizar:sincronizar,extrair:extrair,selfchat:selfchat,agenda:agenda,pronto:pronto,cadastro:cadastro,modelo:modelo,processar:processar};
   function atualizarPainel(){return api('GET','/api/painel').then(function(r){pn=r;return api('GET','/api/estado')}).then(function(r){passos=r.passos;tudo()}).catch(function(){})}
+  function atualizarMenu(){return api('GET','/api/estado').then(function(r){passos=r.passos;lateral()}).catch(function(){})}
   function bug(s,id){
     var box=el('div','aviso');box.appendChild(el('div','','Algo deu errado ou estranho neste passo?'));
     var ta=el('textarea');ta.setAttribute('aria-label','Descreva o problema');ta.placeholder='Conte o que aconteceu. Nao escreva senhas nem chaves.';box.appendChild(ta);
@@ -182,7 +446,18 @@ export const JS = `
   }
   function tudo(){lateral();painel()}
   function carregar(){return api('GET','/api/estado').then(function(r){passos=r.passos;if(!verifs.length)verifs=r.verificacoes||[];document.getElementById('bugs').textContent='relatorios de bug abertos: '+r.bugsAbertos;tudo()})}
-  setInterval(function(){var p=passos[atual];if(p&&p.pronto&&p.id!=='ambiente'&&p.id!=='cadastro'&&p.id!=='backup'&&!document.hidden){atualizarPainel()}},3000);
+  setInterval(function(){
+    var p=passos[atual];
+    if(!document.hidden){
+      if(p&&p.id==='sincronizar'){
+        if(atualizarSincronizar)atualizarSincronizar();else atualizarMenu();
+      }else if(p&&(p.id==='cadastro'||p.id==='modelo'||p.id==='backup'||p.id==='ambiente')){
+        atualizarMenu();
+      }else if(p&&p.pronto){
+        atualizarPainel();
+      }
+    }
+  },3000);
   carregar().then(atualizarPainel).then(function(){return api('POST','/api/ambiente/testar',{})}).then(function(r){verifs=r.verificacoes;perfilAtual=r.perfil||null;return carregar()}).catch(function(){});
 })();
 `;

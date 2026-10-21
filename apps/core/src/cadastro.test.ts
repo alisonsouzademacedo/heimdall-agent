@@ -57,6 +57,7 @@ test('cadastrar numero que nao esta entre os contatos: guarda as duas variantes 
   const r = cadastrarMembro(db, { nome: 'Carla', funcao: '', telefone: '(11) 99999-0002' }, T);
   assert.ok(r.ok && r.achou === false);
   if (r.ok) assert.match(r.aviso ?? '', /nao achei/i);
+  assert.doesNotMatch(r.ok ? (r.aviso ?? '') : '', /99999-0002|9999-0002/, 'o aviso nao pode mostrar o numero inteiro');
   assert.equal(contar(db, 'contatos'), 1);
   assert.equal(contar(db, 'contato_jids'), 2);
   escuta.mensagens([{ key: { id: 'M9', remoteJid: '551199990002@s.whatsapp.net', fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: 1_760_000_000 }], 'historico'); // chegou pela forma SEM o 9

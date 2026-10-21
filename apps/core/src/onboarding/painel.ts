@@ -114,7 +114,7 @@ export function atualizarEtapas(db: Banco, p: Painel, agora: number = Date.now()
 
 // Estado "ao vivo" dos passos que dependem de trabalho em andamento: calculado a cada leitura, NUNCA gravado (verde nao fica pegajoso).
 // Porcentagem so onde existe total conhecido (arquivos da fila; progresso que o WhatsApp informa; conversas do historico antigo); senao null.
-export interface EstadoAoVivo { estado: 'pendente' | 'processando' | 'verde'; percentual: number | null; detalhe: string }
+export interface EstadoAoVivo { estado: 'pendente' | 'processando' | 'verde' | 'vermelho'; percentual: number | null; detalhe: string }
 type EntradaAoVivo = Pick<Painel, 'whatsapp' | 'fila' | 'acervo' | 'historicoAntigo' | 'processamento'>;
 const soma = (o: Record<string, number> | undefined): number => Object.values(o ?? {}).reduce((a, b) => a + b, 0);
 const pct = (parte: number, total: number): number => (total > 0 ? Math.floor((parte * 100) / total) : 0);
@@ -128,8 +128,13 @@ export function estadosAoVivo(p: EntradaAoVivo): { sincronizar: EstadoAoVivo; ex
   const ha = p.historicoAntigo;
   if (!conectado) sincronizar = { estado: 'pendente', percentual: null, detalhe: 'Conecte o WhatsApp primeiro.' };
   else if (!recebido) sincronizar = { estado: 'processando', percentual: w.historico?.progresso ?? null, detalhe: `${p.acervo.mensagens} mensagens em ${p.acervo.conversas} conversas recebidas ate agora` };
-  else if (ha.liberado && ha.pendentes + ha.emAndamento > 0) sincronizar = { estado: 'processando', percentual: pct(ha.concluidas + ha.esgotadas, ha.conversas), detalhe: `Buscando mensagens mais antigas: ${ha.concluidas + ha.esgotadas} de ${ha.conversas} conversas (${ha.novas} mensagens novas)` };
-  else sincronizar = { estado: 'verde', percentual: 100, detalhe: ha.liberado && ha.conversas > 0 ? `Historico recebido; conversas antigas: ${ha.concluidas} concluidas, ${ha.esgotadas} no limite` : 'Historico recebido.' };
+  else if (ha.pendentes + ha.emAndamento > 0) {
+    // Ha conversa antiga por pedir: o passo NAO pode ficar verde. Amarelo so quando a busca esta liberada;
+    // pausada, fica cinza com o numero real do que falta (o dono ve o tamanho do trabalho e decide).
+    sincronizar = ha.liberado
+      ? { estado: 'processando', percentual: pct(ha.concluidas + ha.esgotadas, ha.conversas), detalhe: `Buscando mensagens mais antigas: ${ha.concluidas + ha.esgotadas} de ${ha.conversas} conversas (${ha.novas} mensagens novas)` }
+      : { estado: 'pendente', percentual: null, detalhe: `Busca de mensagens antigas pausada: ${ha.pendentes} conversa(s) ainda nao pedida(s).` };
+  } else sincronizar = { estado: 'verde', percentual: 100, detalhe: ha.liberado && ha.conversas > 0 ? `Historico recebido; conversas antigas: ${ha.concluidas} concluidas, ${ha.esgotadas} no limite` : 'Historico recebido.' };
 
   const b = p.fila.porTipo.baixar_midia ?? {};
   const total = soma(b), ok = b.ok ?? 0, pend = (b.pendente ?? 0) + (b.em_andamento ?? 0), sem = (b.abandonada ?? 0) + (b.erro ?? 0);

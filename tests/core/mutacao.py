@@ -128,6 +128,15 @@ MUTACOES = [
     ("src/bugs.ts", "t = t.replace(/\\bBearer", "t = t; t.replace(/\\bBearer", "bugs: Bearer mascarado"),
     ("src/bugs.ts", "existentes.has(nome); n++", "false; n++", "bugs: repeticoes no mesmo segundo ganham numero"),
     ("src/mcp-contrato.ts", "escreve: true, escreveEm: ['feedback']", "escreve: true, escreveEm: ['feedback', 'mensagens']", "MCP so escreve em feedback"),
+    ("src/historico-antigo.ts", "if (!c.liberado) return null;", "", "historico antigo: trava fechada nao pede"),
+    ("src/historico-antigo.ts", "const estado = vazias >= VAZIAS_PARA_CONCLUIR ? 'concluida' : h.pedidos >= c.maxPaginas ? 'esgotada' : 'pendente';", "const estado = 'concluida';", "historico antigo: precisa de 2 vazias para concluir"),
+    ("src/extracao.ts", "return r?.valor === 'true';", "return true;", "extracao: padrao fechado se nao configurado"),
+    ("src/onboarding/painel.ts", "if (!p.processamento.liberada) processar = { estado: 'pendente', percentual: null, detalhe: 'Aguardando o seu OK para liberar o processamento.' };", "if (false) processar = { estado: 'pendente', percentual: null, detalhe: 'Aguardando o seu OK para liberar o processamento.' };", "estadosAoVivo: processar fica pendente com trava fechada"),
+    ("src/onboarding/painel.ts", "else if (!recebido || pend > 0) extrair = { estado: 'processando'", "else if (false) extrair = { estado: 'processando'", "estadosAoVivo: extrair fica processando com pendencias"),
+    ("src/cadastro.ts", "if (c.cliente !== null) return { ok: false, motivo: 'Este numero e de um cliente; o cadastro aqui e so da equipe interna.' };", "", "cadastro: recusa numero de cliente"),
+    ("src/cadastro.ts", "if (n.length === 9) {", "if (false) {", "cadastro: celular de 9 digitos gera variante sem 9"),
+    ("src/modelo-teste.ts", "if (lerTesteDoModelo(db).estado !== 'pedido') return false;", "", "modelo-teste: executarTeste so age se ha pedido"),
+    ("src/modelo-teste.ts", "if (t.estado === 'pedido' && t.pedidoEm !== null && agora - t.pedidoEm < PEDIDO_VALE_MS) return false;", "", "modelo-teste: pedido recente nao empilha"),
 ]
 
 falhas = 0
