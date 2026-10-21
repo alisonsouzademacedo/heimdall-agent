@@ -36,11 +36,11 @@ construir infra/hindsight heimdall-hindsight:1.0.0-onnx ghcr.io/vectorize-io/hin
 construir apps/media-worker heimdall-media-worker:1.0.0 python:3.12-slim && pass "imagem do trabalhador de audio construida (modelo small embutido)" || { fail "imagem do trabalhador de audio nao construiu"; tail -5 "$T/build.txt"; }
 
 # ---- Hindsight: o que o runbook 02 descobriu ----
-docker run --rm heimdall-hindsight:1.0.0-onnx /app/api/.venv/bin/python -c "import onnxruntime, transformers, safetensors" >/dev/null 2>&1 && pass "Hindsight: onnxruntime, transformers e safetensors importam (o provedor onnx pode subir)" || fail "Hindsight: faltam pacotes do onnx"
-[ "$(docker run --rm --entrypoint id heimdall-hindsight:1.0.0-onnx -un 2>/dev/null)" = hindsight ] && pass "Hindsight roda como usuario nao-root" || fail "Hindsight roda como root"
+drun --rm heimdall-hindsight:1.0.0-onnx /app/api/.venv/bin/python -c "import onnxruntime, transformers, safetensors" >/dev/null 2>&1 && pass "Hindsight: onnxruntime, transformers e safetensors importam (o provedor onnx pode subir)" || fail "Hindsight: faltam pacotes do onnx"
+[ "$(drun --rm --entrypoint id heimdall-hindsight:1.0.0-onnx -un 2>/dev/null)" = hindsight ] && pass "Hindsight roda como usuario nao-root" || fail "Hindsight roda como root"
 
 # ---- Trabalhador de audio: o que o runbook 06 descobriu ----
-MW="docker run --rm --network none heimdall-media-worker:1.0.0"
+MW="drun --rm --network none heimdall-media-worker:1.0.0"
 [ "$($MW python -c 'import av; print(av.__version__)' 2>/dev/null)" = "16.1.0" ] && pass "audio: av 16.1.0 (sem o erro 'metadata_errors' do av 19)" || fail "audio: av diferente de 16.1.0"
 cat > "$T/audio.py" <<'PY'
 import math, struct, wave, numpy as np
@@ -57,7 +57,7 @@ segs, info = m.transcribe(a, language='pt', vad_filter=True)
 list(segs)
 print('ok', info.language)
 PY
-docker run --rm --network none -v "$T/audio.py:/tmp/audio.py:ro" heimdall-media-worker:1.0.0 python /tmp/audio.py 2>&1 | tail -1 | grep -q '^ok pt' && pass "audio: decodifica WAV e carrega o modelo small SEM internet (rede desligada)" || fail "audio: decodificar/carregar o modelo falhou"
+drun --rm --network none -v "$(hpath "$T")/audio.py:/tmp/audio.py:ro" heimdall-media-worker:1.0.0 python /tmp/audio.py 2>&1 | tail -1 | grep -q '^ok pt' && pass "audio: decodifica WAV e carrega o modelo small SEM internet (rede desligada)" || fail "audio: decodificar/carregar o modelo falhou"
 cat > "$T/pdf.py" <<'PY'
 import io
 from markitdown import MarkItDown
@@ -74,7 +74,7 @@ t = MarkItDown().convert_stream(io.BytesIO(pdf), file_extension='.pdf').text_con
 assert 'Ola Heimdall' in t, t
 print('ok')
 PY
-docker run --rm --network none -v "$T/pdf.py:/tmp/pdf.py:ro" heimdall-media-worker:1.0.0 python /tmp/pdf.py 2>&1 | tail -1 | grep -q '^ok' && pass "PDF: o markitdown le o texto de um PDF sintetico (convert_stream)" || fail "PDF: markitdown nao leu o PDF sintetico"
+drun --rm --network none -v "$(hpath "$T")/pdf.py:/tmp/pdf.py:ro" heimdall-media-worker:1.0.0 python /tmp/pdf.py 2>&1 | tail -1 | grep -q '^ok' && pass "PDF: o markitdown le o texto de um PDF sintetico (convert_stream)" || fail "PDF: markitdown nao leu o PDF sintetico"
 
 # ---- Compose: PostgreSQL + Hindsight de verdade ----
 SERV="postgres hindsight"; [ "${SMOKE_HERMES:-0}" = 1 ] && SERV="$SERV hermes"

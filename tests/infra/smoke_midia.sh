@@ -34,7 +34,7 @@ open(pasta + '/ata.pdf', 'wb').write(pdf)
 open(pasta + '/lixo.pdf', 'wb').write(b"isto nao e um pdf de verdade")
 PY
 chmod -R a+rX "$T/entrada"
-run() { docker run --rm --network none -v "$T/entrada:/entrada:ro" "$IMG" python "$@"; }
+run() { drun --rm --network none -v "$(hpath "$T")/entrada:/entrada:ro" "$IMG" python "$@"; }
 
 SAIDA=$(run /app/transcrever.py /entrada/tom.wav 2>"$T/err1.txt"); COD=$?
 [ "$COD" = 0 ] && pass "transcrever: sai com codigo 0 num tom de 2 s, sem internet" || { fail "transcrever saiu com $COD"; cat "$T/err1.txt" | head -3; }
@@ -61,9 +61,9 @@ run /app/converter_pdf.py /entrada/lixo.pdf >"$T/out4.txt" 2>"$T/err4.txt"; COD=
 run /app/converter_pdf.py /etc/passwd >/dev/null 2>/dev/null; [ "$?" = 3 ] && pass "PDF: arquivo fora de /entrada e recusado (3)" || fail "PDF aceitou arquivo fora de /entrada"
 
 # o contêiner nao consegue gravar na entrada (somente leitura) nem acessar a rede
-docker run --rm --network none -v "$T/entrada:/entrada:ro" "$IMG" sh -c 'touch /entrada/x' >/dev/null 2>&1 && fail "a pasta de entrada aceitou escrita" || pass "a pasta de entrada e somente leitura"
-docker run --rm --network none "$IMG" python -c "import socket; socket.create_connection(('1.1.1.1', 443), timeout=3)" >/dev/null 2>&1 && fail "o contêiner alcancou a internet" || pass "sem internet dentro do contêiner"
-[ "$(docker run --rm "$IMG" id -u)" != 0 ] && pass "o trabalhador roda sem root" || fail "o trabalhador roda como root"
+drun --rm --network none -v "$(hpath "$T")/entrada:/entrada:ro" "$IMG" sh -c 'touch /entrada/x' >/dev/null 2>&1 && fail "a pasta de entrada aceitou escrita" || pass "a pasta de entrada e somente leitura"
+drun --rm --network none "$IMG" python -c "import socket; socket.create_connection(('1.1.1.1', 443), timeout=3)" >/dev/null 2>&1 && fail "o contêiner alcancou a internet" || pass "sem internet dentro do contêiner"
+[ "$(drun --rm "$IMG" id -u)" != 0 ] && pass "o trabalhador roda sem root" || fail "o trabalhador roda como root"
 
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"
 [ "$FAIL" -eq 0 ]

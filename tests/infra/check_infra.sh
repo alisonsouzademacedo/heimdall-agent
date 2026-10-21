@@ -81,6 +81,12 @@ grep -qE 'internal:\s*true' "$DC" && pass "existe uma rede interna (sem internet
 grep -qE 'profiles:' "$DC" && pass "o trabalhador de audio so roda sob demanda (profile), um audio por vez" || fail "trabalhador de audio sobe sozinho"
 grep -q 'ENV_EXEMPLO_SEM_SEGREDO' "$ENVX" && pass "modelo.env so traz valores de mentira" || fail "modelo.env sem a marca de valores de mentira"
 
+# ---- Git Bash no Windows converte /app/... em C:/Program Files/Git/app/... antes de o Docker ver (LICOES.md, 2026-10-20) ----
+# Por isso os smokes nunca chamam "docker run" solto: usam drun (sem conversao de caminho) e hpath (caminho nativo das pastas do computador).
+SOLTO=$(grep -nE '^[^#]*\bdocker run\b' tests/infra/smoke_*.sh | grep -v 'drun()' | grep -v '^\s*#')
+[ -z "$SOLTO" ] && pass "os smokes nao chamam docker run solto (usam drun/hpath, que funcionam no Git Bash do Windows)" || { fail "docker run solto nos smokes (no Windows o Git Bash estraga os caminhos): use drun e hpath de tests/infra/lib_docker.sh"; echo "$SOLTO" | cut -c1-140; }
+grep -q '^drun()' tests/infra/lib_docker.sh && grep -q '^hpath()' tests/infra/lib_docker.sh && pass "lib_docker.sh define drun e hpath" || fail "lib_docker.sh sem drun/hpath"
+
 # ---- Compose: o proprio Docker valida (portas, interpolacao, redes) ----
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   CFG=$(docker compose --env-file "$ENVX" -f "$DC" --profile trabalho config --format json 2>/tmp/heimdall-compose-erro.txt)

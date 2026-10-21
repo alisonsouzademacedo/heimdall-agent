@@ -15,3 +15,9 @@ construir() {
     docker build -t "$tag" "$ctx" >"$T/build.txt" 2>&1
   fi
 }
+
+# Git Bash (Windows): converte argumentos que parecem caminho, como /app/api/... (vira C:/Program Files/Git/app/api/...), antes de o Docker ver.
+# LICOES.md, 2026-10-20. drun = "docker run" sem essa conversao; hpath = caminho nativo de uma pasta do COMPUTADOR (C:/... no Windows) para -v.
+# Os demais comandos (docker compose --env-file, docker cp) precisam da conversao e seguem normais.
+drun() { MSYS_NO_PATHCONV=1 docker run "$@"; }
+hpath() { case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) cygpath -m "$1" ;; *) printf '%s' "$1" ;; esac; }

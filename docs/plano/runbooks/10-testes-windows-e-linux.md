@@ -54,5 +54,6 @@ Todos só valem com `HEIMDALL_TESTE=1` (exceto onde indicado) e existem para o t
 - Falso sem extensão no Windows → janelas "escolher programa" para `node` e `python` e dezenas de falhas falsas.
 - `AtualizaPath` troca o PATH inteiro pelo do sistema: no teste, apagava os falsos (instalou 1 de 3 programas). Em teste ele não troca.
 - Git real com PATH restrito → `git fetch` trava com código `-1073741819` (violação de acesso). Use `PATH_GIT`.
+- Git Bash converte `/app/...` em `C:/Program Files/Git/app/...` nos argumentos de `docker run`. Nos smokes use `drun` e `hpath` de `tests/infra/lib_docker.sh` (nunca `docker run` solto; o `check_infra.sh` confere).
 - `$?` depois de um pipe é do último comando do pipe (era o `tr`, não o programa testado).
 - O comando `python3` no Windows é o atalho falso da Loja (`LICOES.md`, 2026-10-19).
