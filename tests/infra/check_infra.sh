@@ -13,6 +13,9 @@ MW=apps/media-worker/Dockerfile
 REQ=apps/media-worker/requirements.txt
 DC=infra/compose/docker-compose.yml
 ENVX=infra/compose/modelo.env
+# No Windows "python3" costuma ser o atalho falso da Loja: usa o primeiro interpretador que RODA de verdade (LICOES.md, 2026-10-19 e 2026-10-20).
+PY=""; for c in python3 python py; do if "$c" -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)" >/dev/null 2>&1; then PY="$c"; break; fi; done
+[ -n "$PY" ] || { fail "Python 3 nao encontrado (o teste da infra precisa dele)"; PY=false; }
 for f in "$HS" "$MW" "$REQ" "$DC" "$ENVX"; do [ -s "$f" ] && pass "existe $f" || fail "falta $f"; done
 [ "$FAIL" -eq 0 ] || { echo "RESULTADO: $FAIL falha(s)"; exit 1; }
 
@@ -62,7 +65,7 @@ grep -qE 'HINDSIGHT_API_RERANKER_PROVIDER:\s*rrf' "$DC" && pass "reranker rrf (s
 grep -qE 'HINDSIGHT_API_LLM_PROVIDER:\s*\$\{HINDSIGHT_API_LLM_PROVIDER:\?' "$DC" && pass "provedor de LLM do Hindsight sempre explicito (nao fica 'none' por esquecimento)" || fail "provedor de LLM do Hindsight nao e obrigatorio"
 grep -qE 'API_SERVER_ENABLED:\s*"?true' "$DC" && grep -qE 'command:\s*gateway run' "$DC" && pass "Hermes com gateway run e API ligada" || fail "Hermes sem gateway run/API"
 # O Hermes so liga o MCP do Hindsight na partida; se o Hindsight ainda estiver carregando o modelo, o servidor MCP fica "estacionado" e nao volta (descoberto no smoke_hermes.sh, 2026-10-20).
-python3 -I - "$DC" <<'PY' && pass "o Hermes espera o Hindsight ficar SAUDAVEL (healthcheck + depends_on service_healthy)" || fail "o Hermes nao espera o Hindsight ficar saudavel (o MCP da memoria fica estacionado)"
+"$PY" -I - "$DC" <<'PY' && pass "o Hermes espera o Hindsight ficar SAUDAVEL (healthcheck + depends_on service_healthy)" || fail "o Hermes nao espera o Hindsight ficar saudavel (o MCP da memoria fica estacionado)"
 import re, sys
 t = open(sys.argv[1], encoding='utf-8').read()
 def bloco(nome):
@@ -83,7 +86,7 @@ if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; 
   CFG=$(docker compose --env-file "$ENVX" -f "$DC" --profile trabalho config --format json 2>/tmp/heimdall-compose-erro.txt)
   if [ -n "$CFG" ]; then
     pass "docker compose config aceita o arquivo"
-    echo "$CFG" | python3 -I -c "
+    echo "$CFG" | "$PY" -I -c "
 import sys, json
 c = json.load(sys.stdin); bad = []
 for nome, s in c['services'].items():
@@ -96,7 +99,7 @@ for nome, s in c['services'].items():
 if bad: print('\n'.join(bad))
 " > /tmp/heimdall-compose-regras.txt
     if [ -s /tmp/heimdall-compose-regras.txt ]; then fail "regras do Compose violadas:"; cat /tmp/heimdall-compose-regras.txt; else pass "portas so em 127.0.0.1; sem pasta do computador (exceto a entrada do audio); todo servico com limite de memoria"; fi
-    echo "$CFG" | python3 -I -c "
+    echo "$CFG" | "$PY" -I -c "
 import sys, json
 c = json.load(sys.stdin)
 ok = c['networks'].get('isolada', {}).get('internal') is True and list(c['services']['media-worker']['networks']) == ['isolada']

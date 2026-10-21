@@ -31,7 +31,10 @@ done
 # 2d. Texto do projeto sem caracteres de controle nem UTF-8 invalido. Caso real (2026-10-20): o PowerShell comeu "`v" e "`0" dentro de aspas
 # duplas ao gravar docs/plano/runbooks/08-testes-de-fumaca.md ("vmmemWSL" virou "<VT>mmemWSL"; "runbooks/0" virou <NUL>) e o Git passou a tratar o arquivo como binario.
 # Vale para o que e nosso (nao para docs/<ferramenta>/, que sao copias de terceiros).
-CTRL=$(git ls-files -- . ':!docs/antigravity' ':!docs/baileys' ':!docs/claude-code' ':!docs/docker' ':!docs/faster-whisper' ':!docs/hermes-agent' ':!docs/hindsight' ':!docs/krayin' ':!docs/markitdown' ':!docs/openai-codex' ':!docs/strix' ':!docs/whisper' ':!docs/wsl' | python3 -I -c "
+# Python que RODA de verdade (no Windows "python3" e o atalho falso da Loja e a checagem passaria vazia; LICOES.md, 2026-10-20).
+PY=""; for c in python3 python py; do if "$c" -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)" >/dev/null 2>&1; then PY="$c"; break; fi; done
+[ -n "$PY" ] || { fail "Python 3 nao encontrado (a checagem de caracteres de controle precisa dele)"; PY=false; }
+CTRL=$(git ls-files -- . ':!docs/antigravity' ':!docs/baileys' ':!docs/claude-code' ':!docs/docker' ':!docs/faster-whisper' ':!docs/hermes-agent' ':!docs/hindsight' ':!docs/krayin' ':!docs/markitdown' ':!docs/openai-codex' ':!docs/strix' ':!docs/whisper' ':!docs/wsl' | "$PY" -I -c "
 import sys,re
 bad=[]
 for p in sys.stdin.read().split('\n'):
