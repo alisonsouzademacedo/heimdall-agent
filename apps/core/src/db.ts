@@ -313,6 +313,9 @@ CREATE TABLE nomes_pendentes (
 
 export function abrirBanco(caminho: string = ':memory:'): Banco {
   const db = new DatabaseSync(caminho);
+  // Primeiro comando: os 5 processos abrem o mesmo arquivo juntos e o primeiro precisa recuperar o WAL; sem a espera ja definida o outro leva
+  // "database is locked" (errcode 261) na subida (LICOES.md, 2026-10-21).
+  db.exec('PRAGMA busy_timeout = 5000;');
   db.exec('PRAGMA foreign_keys = ON;');
   return db;
 }

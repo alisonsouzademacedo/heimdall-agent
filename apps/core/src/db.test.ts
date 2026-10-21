@@ -134,3 +134,19 @@ test('migrar: outro processo aplica as migracoes entre a leitura da versao e o B
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// 2026-10-21: no 1o uso real, o executor morreu na subida com "database is locked" (errcode 261, SQLITE_BUSY_RECOVERY). Os 5 processos abrem o mesmo
+// acervo.sqlite ao mesmo tempo (o primeiro precisa recuperar o WAL) e o primeiro comando de cada um rodava ANTES de definir a espera por trava.
+// A espera tem de valer desde a abertura, para qualquer comando.
+test('abrirBanco define a espera por trava (busy_timeout = 5000) logo na abertura, antes de qualquer outro comando', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hm-busy-'));
+  const db = abrirBanco(join(dir, 'acervo.sqlite'));
+  try {
+    const r = db.prepare('PRAGMA busy_timeout').get() as { timeout: number };
+    assert.equal(r.timeout, 5000);
+  } finally {
+    db.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
