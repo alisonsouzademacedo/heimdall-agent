@@ -59,3 +59,18 @@ test('rodarCiclo tambem executa os pedidos de "apagar memoria" (o cliente apagad
   await rodarCiclo(c.db, porta, HOJE);
   assert.deepEqual(apagados, ['conv:7:2025-10-10']);
 });
+
+// Carga do historico (LICOES.md, 2026-10-21): reanalisar o acervo INTEIRO a cada trabalho leva dezenas de horas com milhares de dias.
+test('rodarCiclo: com trabalho na fila nao reanalisa o acervo a cada trabalho; so agenda de novo quando a fila esvazia', async () => {
+  const c = cenario();
+  const escuta = criarEscuta(c.db, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => HOJE });
+  const msg = (id: string, jid: string, ts: number) => ({ key: { id, remoteJid: `${jid}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(ts / 1000) });
+  escuta.mensagens([msg('B', '5511999990002', D10)], 'notify');
+  assert.equal(await rodarCiclo(c.db, c.porta, HOJE), 'ok'); // fila vazia: agenda os 2 dias e envia o primeiro
+  escuta.mensagens([msg('C', '5511999990003', D10 - 86_400_000)], 'notify'); // chega enquanto ainda ha 1 trabalho na fila
+  assert.equal(await rodarCiclo(c.db, c.porta, HOJE + 1), 'ok'); // envia o segundo SEM varrer o acervo
+  const conversaNova = (c.db.prepare("SELECT c.id AS id FROM conversas c JOIN contato_jids j ON j.jid = c.jid WHERE j.jid = '5511999990003@s.whatsapp.net'").get() as { id: number }).id;
+  assert.equal((c.db.prepare('SELECT COUNT(*) AS n FROM fila WHERE referencia LIKE ?').get(`conv:${conversaNova}:%`) as { n: number }).n, 0, 'o dia novo ainda nao foi agendado');
+  assert.equal(await rodarCiclo(c.db, c.porta, HOJE + 2), 'ok'); // fila vazia: agenda o dia novo e envia
+  assert.equal(c.enviados.length, 3);
+});

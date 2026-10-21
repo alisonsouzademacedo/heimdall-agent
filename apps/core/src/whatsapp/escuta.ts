@@ -4,7 +4,7 @@
 import type { Banco } from '../db.ts';
 import type { IdentidadeDono } from '../envio.ts';
 import type { OrigemEvento } from '../ingestao.ts';
-import { registrarMensagem, registrarEdicao, registrarApagada, idDaMensagem, resolverContato } from '../ingestao.ts';
+import { registrarMensagem, registrarEdicao, registrarApagada, idDaMensagem, resolverContato, guardarAlteracaoPendente, aplicarAlteracoesPendentes } from '../ingestao.ts';
 import { normalizarJid, tipoDoJid } from '../jid.ts';
 import { traduzirMensagem, traduzirAtualizacao, type MensagemBaileys, type AtualizacaoBaileys, type Acao } from './traduzir.ts';
 
@@ -72,6 +72,7 @@ export function criarEscuta(db: Banco, dono: IdentidadeDono, opcoes: { agora?: (
       const res = emSavepoint(r, () => {
         const status = registrarMensagem(db, a.evento, dono);
         if (status !== 'inserida') return { status, midia: false };
+        aplicarAlteracoesPendentes(db, a.evento.waMsgId, agora());
         if (a.midia) {
           const id = idDaMensagem(db, a.evento.remoteJid, a.evento.waMsgId);
           if (id === undefined) throw new Error('mensagem recem-gravada nao encontrada');
@@ -92,7 +93,11 @@ export function criarEscuta(db: Banco, dono: IdentidadeDono, opcoes: { agora?: (
     }
     const resultado = emSavepoint(r, () => (a.tipo === 'editar' ? registrarEdicao(db, a.remoteJid, a.waMsgId, a.novoTexto) : registrarApagada(db, a.remoteJid, a.waMsgId)));
     if (resultado === 'alterada') { if (a.tipo === 'editar') r.editadas++; else r.apagadas++; }
-    else if (resultado === 'nao_encontrada') r.naoEncontradas++;
+    else if (resultado === 'nao_encontrada') {
+      r.naoEncontradas++;
+      // A original ainda nao chegou (carga do historico em andamento): guarda para aplicar quando ela entrar.
+      emSavepoint(r, () => guardarAlteracaoPendente(db, a.tipo === 'editar' ? 'editar' : 'apagar', a.remoteJid, a.waMsgId, a.tipo === 'editar' ? a.novoTexto : null, agora()));
+    }
   }
 
   function lote(fn: (r: Resumo) => void): Resumo {

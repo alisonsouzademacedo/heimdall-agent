@@ -40,6 +40,10 @@ Antes de subir os serviços: gerar o `config.yaml` do Hermes e gravá-lo no volu
 ## Não implementado ainda (ver `PROGRESS.md`)
 Servidor MCP próprio do Heimdall (adiado: ver `fase-1-mcp.md`, seção "Decisão de 2026-10-20"), relatórios como arquivo `.md` anexo (hoje saem como texto), os passos Cadastro, Conectar o modelo, Processar, Voz e Backup da tela (os demais passos e o painel já funcionam: QR, progresso, teste do self-chat, relatório de teste, painel).
 
+## Carga do histórico inteiro (primeira vez) — como acompanhar
+Testes automáticos (sem WhatsApp real, dados sintéticos): `sh tests/carga/check_carga.sh` (padrão moderado) ou, para ver o limite, `HEIMDALL_CARGA_MENSAGENS=100000 HEIMDALL_CARGA_MENSAGENS_LLM=20000 sh tests/carga/check_carga.sh`. Cobrem: entrada de lotes grandes, reenvio total, queda no meio, lotes fora de ordem, falha de gravação, edição antes da original, e o processamento pelo modelo e pelo Hindsight com falhas (fora do ar, resposta inválida, recusa definitiva), queda com trabalho preso e reenvio de metade para o Hindsight.
+Na prática (precisa do dono): parear o QR; acompanhar na tela o contador de mensagens e `whatsapp.estado`; **não fechar o listener durante a carga**; ver em `docs/plano/runbooks/08-testes-de-fumaca.md` (linhas 21 a 24) o que conferir e anotar. O processamento pelo modelo começa só nos **dias fechados** (hoje fica de fora) e anda **um dia por vez**: com muitos dias antigos leva horas, de propósito e sem perder nada (a fila continua de onde parou).
+
 ## Extração de compromissos e sinais (novo)
 A ponte, a cada giro, agenda os dias fechados de conversas de cliente que mudaram e processa até 2 trabalhos `extrair`, perguntando ao Hermes (sessão `heimdall:extracao:<ref>`) com as regras de `prompts/extracao/compromissos-e-sinais.md`. O código valida a resposta (ids de mensagem reais, confiança mínima 0,6, só o mesmo cliente) antes de gravar. **Não verificado:** a qualidade do modelo em português real; confira nos primeiros dias se os itens "H1…" e as dúvidas do diário fazem sentido e, se não, ajuste o prompt (não o código).
 

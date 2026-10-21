@@ -111,3 +111,28 @@ test('laco: depois de fazer o backup do dia, apaga os backups invalidos e velhos
     db.close();
   } finally { rmSync(pasta, { recursive: true, force: true }); }
 });
+
+test('laco: com extracao pendente nao reanalisa o acervo a cada giro; o dia novo so e agendado quando a fila esvazia', async () => {
+  const db = abrirBanco(); migrar(db);
+  const D10 = Date.UTC(2025, 9, 10, 15, 0, 0);
+  const HOJE = D10 + 30 * 3_600_000;
+  const escuta = criarEscuta(db, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => HOJE });
+  db.prepare('INSERT INTO clientes (id, nome) VALUES (1, ?)').run('Alfa');
+  const por = (id: string, jid: string, ts: number) => {
+    escuta.mensagens([{ key: { id, remoteJid: `${jid}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(ts / 1000) }], 'notify');
+    db.prepare("UPDATE contatos SET cliente_id = 1, papel = 'cliente' WHERE id = (SELECT contato_id FROM contato_jids WHERE jid = ?)").run(`${jid}@s.whatsapp.net`);
+  };
+  for (const [i, jid] of ['5511999990001', '5511999990002', '5511999990003'].entries()) por(`M${i}`, jid, D10);
+  const extracao = { instrucoes: 'REGRAS', porta: { extrair: async () => '{}' } };
+  const novas = () => (db.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair' AND referencia LIKE ?").get(`ext:${(db.prepare("SELECT c.id AS id FROM conversas c WHERE c.jid = '5511999990004@s.whatsapp.net'").get() as { id: number } | undefined)?.id ?? -1}:%`) as { n: number }).n;
+  const vistas: number[] = [];
+  let giros = 0;
+  const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, extracao, agora: () => HOJE, intervaloMs: 1, esperar: async () => {
+    giros++;
+    if (giros === 1) por('N', '5511999990004', D10 - 86_400_000); // chega enquanto ainda sobra 1 trabalho (3 agendados, 2 por giro)
+    vistas.push(novas());
+    if (giros >= 3) p.parar();
+  } });
+  await p.terminou;
+  assert.deepEqual(vistas, [0, 0, 1], 'giro 2: a fila ainda tinha trabalho, nao varreu; giro 3: fila vazia, agendou o dia novo');
+});

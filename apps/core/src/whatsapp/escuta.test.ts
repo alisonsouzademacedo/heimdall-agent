@@ -153,3 +153,45 @@ test('nome de grupo vindo das conversas do historico', () => {
   escuta.conversas([{ id: '120363000000000009@g.us', name: 'Obra Fabrica Norte' }, { id: '5511999990007@s.whatsapp.net', name: 'nao e grupo' }]);
   assert.equal((db.prepare("SELECT nome FROM conversas WHERE tipo = 'grupo'").get() as { nome: string }).nome, 'Obra Fabrica Norte');
 });
+
+const pendentes = (db: ReturnType<typeof novo>['db']) => (db.prepare('SELECT COUNT(*) AS n FROM alteracoes_pendentes WHERE aplicada_em IS NULL').get() as { n: number }).n;
+// Ressincronizacao: durante a carga do historico o WhatsApp pode entregar a edicao/apagada ANTES da mensagem original (LICOES.md, 2026-10-21).
+test('edicao que chega antes da mensagem original e guardada e aplicada quando a original entra', () => {
+  const { db, escuta } = novo();
+  const r0 = escuta.atualizacoes([up('P1', { message: { editedMessage: { message: { conversation: 'texto corrigido' } } } })]);
+  assert.equal(r0.naoEncontradas, 1);
+  assert.equal(contar(db, 'mensagens'), 0, 'a edicao sozinha nao cria mensagem');
+  escuta.mensagens([m('P1', { conversation: 'texto original' })], 'historico');
+  const l = db.prepare("SELECT texto, texto_original AS o, estado FROM mensagens WHERE wa_msg_id = 'P1'").get() as { texto: string; o: string; estado: string };
+  assert.deepEqual({ ...l }, { texto: 'texto corrigido', o: 'texto original', estado: 'editada' });
+  assert.equal(pendentes(db), 0, 'depois de aplicada, a pendencia fica marcada como aplicada (nada e apagado)');
+});
+
+test('apagada que chega antes da mensagem original: a mensagem entra ja marcada como apagada (o texto continua guardado)', () => {
+  const { db, escuta } = novo();
+  escuta.atualizacoes([up('P2', { message: null, messageStubType: 1 })]);
+  escuta.mensagens([m('P2', { conversation: 'texto que foi apagado' })], 'historico');
+  const l = db.prepare("SELECT texto, estado FROM mensagens WHERE wa_msg_id = 'P2'").get() as { texto: string; estado: string };
+  assert.deepEqual({ ...l }, { texto: 'texto que foi apagado', estado: 'apagada' });
+});
+
+test('varias edicoes antes da original: vale a ultima recebida; a mesma original de novo nao reaplica nada', () => {
+  const { db, escuta } = novo();
+  escuta.atualizacoes([up('P3', { message: { editedMessage: { message: { conversation: 'primeira edicao' } } } })]);
+  escuta.atualizacoes([up('P3', { message: { editedMessage: { message: { conversation: 'segunda edicao' } } } })]);
+  assert.equal(contar(db, 'alteracoes_pendentes'), 1, 'uma pendencia por mensagem e tipo');
+  assert.equal(pendentes(db), 1);
+  escuta.mensagens([m('P3', { conversation: 'original' })], 'historico');
+  escuta.mensagens([m('P3', { conversation: 'original' })], 'historico');
+  const l = db.prepare("SELECT texto, texto_original AS o FROM mensagens WHERE wa_msg_id = 'P3'").get() as { texto: string; o: string };
+  assert.deepEqual({ ...l }, { texto: 'segunda edicao', o: 'original' });
+});
+
+test('edicao de uma mensagem que nunca chega fica so como pendencia (nao inventa mensagem) e a pendencia de outra conversa nao e aplicada por engano', () => {
+  const { db, escuta } = novo();
+  escuta.atualizacoes([up('P4', { message: { editedMessage: { message: { conversation: 'x' } } } }, '5511999990002@s.whatsapp.net')]);
+  escuta.mensagens([m('P4', { conversation: 'mesma id, outro cliente' })], 'historico'); // CLIENTE (0001), nao o 0002
+  const l = db.prepare("SELECT texto, estado FROM mensagens WHERE wa_msg_id = 'P4'").get() as { texto: string; estado: string };
+  assert.deepEqual({ ...l }, { texto: 'mesma id, outro cliente', estado: 'ativa' });
+  assert.equal(pendentes(db), 1, 'a pendencia do outro cliente continua esperando');
+});

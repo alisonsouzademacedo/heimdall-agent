@@ -35,6 +35,23 @@ export function pegarProximo(db: Banco, tipos: readonly TipoTrabalho[], agora: n
   return r ?? null;
 }
 
+// Registra o hash do conteudo de um trabalho recem-abandonado; "abandonadaComEsteConteudo" diz se vale tentar de novo (so se o conteudo mudou).
+export function registrarAbandono(db: Banco, id: number, hashConteudo: string): void {
+  db.prepare("UPDATE fila SET hash_abandono = ? WHERE id = ? AND estado = 'abandonada'").run(hashConteudo, id);
+}
+export function abandonadaComEsteConteudo(db: Banco, tipo: TipoTrabalho, referencia: string, hashConteudo: string): boolean {
+  const r = db.prepare("SELECT hash_abandono AS h FROM fila WHERE tipo = ? AND referencia = ? AND estado = 'abandonada'").get(tipo, referencia) as { h: string | null } | undefined;
+  return r !== undefined && r.h === hashConteudo;
+}
+
+// Ha trabalho pronto agora para algum destes tipos? Os agendadores varrem o acervo INTEIRO: so valem a pena quando a fila esvazia
+// (o trabalho remonta o conteudo na hora de rodar, entao nada fica desatualizado esperando). LICOES.md, 2026-10-21.
+export function haProntos(db: Banco, tipos: readonly TipoTrabalho[], agora: number = Date.now()): boolean {
+  if (tipos.length === 0) return false;
+  const marcas = tipos.map(() => '?').join(',');
+  return db.prepare(`SELECT 1 AS x FROM fila WHERE estado = 'pendente' AND proximo_em <= ? AND tipo IN (${marcas}) LIMIT 1`).get(agora, ...tipos) !== undefined;
+}
+
 export function concluir(db: Banco, id: number, agora: number = Date.now()): void {
   db.prepare("UPDATE fila SET estado = 'ok', erro = NULL, atualizado_em = ? WHERE id = ?").run(agora, id);
 }

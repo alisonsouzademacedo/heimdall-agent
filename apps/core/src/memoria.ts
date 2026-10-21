@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import type { Banco } from './db.ts';
 import { diaLocal, FUSO_PADRAO, type Dia } from './calendario.ts';
-import { concluir, falhar, reenfileirar, type Trabalho } from './fila.ts';
+import { abandonadaComEsteConteudo, concluir, falhar, registrarAbandono, reenfileirar, type Trabalho } from './fila.ts';
 import { FalhaDefinitiva, type Resultado } from './midia.ts';
 
 export interface ItemRetain {
@@ -105,7 +105,9 @@ export function agendarRetain(db: Banco, agora: number, fuso: string = FUSO_PADR
     const item = montarItem(db, documentId, fuso);
     if (!item) continue;
     const s = db.prepare("SELECT hash_conteudo FROM sync_hindsight WHERE tipo = 'conv' AND referencia = ?").get(documentId) as { hash_conteudo: string } | undefined;
-    if (s?.hash_conteudo === hashDe(item)) continue;
+    const hash = hashDe(item);
+    if (s?.hash_conteudo === hash) continue;
+    if (abandonadaComEsteConteudo(db, 'retain', documentId, hash)) continue; // o Hindsight ja recusou este conteudo: so tenta de novo se ele mudar
     if (reenfileirar(db, 'retain', documentId, agora)) novos.push(documentId);
   }
   return novos;
@@ -121,8 +123,9 @@ export async function processarRetain(db: Banco, job: Trabalho, porta: PortaMemo
     await porta.reter(item);
   } catch (e) {
     // So o MOTIVO vai para a fila: a mensagem de um erro de rede pode repetir o conteudo enviado (regra 2).
-    if (e instanceof FalhaDefinitiva) return falhar(db, job.id, e.message, agora, { definitiva: true });
-    return falhar(db, job.id, 'falha_ao_enviar_ao_hindsight', agora);
+    const r = e instanceof FalhaDefinitiva ? falhar(db, job.id, e.message, agora, { definitiva: true }) : falhar(db, job.id, 'falha_ao_enviar_ao_hindsight', agora);
+    if (r === 'abandonada') registrarAbandono(db, job.id, hash);
+    return r;
   }
   db.prepare(
     `INSERT INTO sync_hindsight (tipo, referencia, document_id, hash_conteudo, sincronizado_em) VALUES ('conv', ?, ?, ?, ?)

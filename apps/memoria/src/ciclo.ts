@@ -1,13 +1,13 @@
 // O laco da memoria: de tempos em tempos agenda os dias fechados que mudaram e envia um trabalho "retain" por vez ao Hindsight.
 import type { Banco } from '../../core/src/db.ts';
-import { pegarProximo, recuperarTravados } from '../../core/src/fila.ts';
+import { haProntos, pegarProximo, recuperarTravados } from '../../core/src/fila.ts';
 import { agendarRetain, processarApagarMemoria, processarRetain, type PortaApagarMemoria, type PortaMemoria } from '../../core/src/memoria.ts';
 import type { Resultado } from '../../core/src/midia.ts';
 import { gravarServico } from '../../core/src/whatsapp/estado.ts';
 
 export async function rodarCiclo(db: Banco, porta: PortaMemoria & Partial<PortaApagarMemoria>, agora: number = Date.now()): Promise<'vazio' | Resultado> {
   if (porta.apagarDocumento) await processarApagarMemoria(db, { apagarDocumento: porta.apagarDocumento.bind(porta) }, agora); // esquecer primeiro: nunca reenviar o que acabou de ser apagado
-  agendarRetain(db, agora);
+  if (!haProntos(db, ['retain'], agora)) agendarRetain(db, agora); // varre o acervo todo: so quando a fila esvaziou
   const job = pegarProximo(db, ['retain'], agora);
   if (!job) return 'vazio';
   return processarRetain(db, job, porta, agora);

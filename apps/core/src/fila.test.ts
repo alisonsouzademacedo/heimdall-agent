@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { abrirBanco, migrar } from './db.ts';
-import { enfileirar, reenfileirar, pegarProximo, concluir, falhar, recuperarTravados, resumoDaFila, ESPERAS_RETENTATIVA_MS, MAX_TENTATIVAS } from './fila.ts';
+import { enfileirar, reenfileirar, pegarProximo, concluir, falhar, recuperarTravados, resumoDaFila, haProntos, registrarAbandono, abandonadaComEsteConteudo, ESPERAS_RETENTATIVA_MS, MAX_TENTATIVAS } from './fila.ts';
 
 const novo = () => { const db = abrirBanco(); migrar(db); return db; };
 const T0 = 1_760_000_000_000;
@@ -128,4 +128,36 @@ test('reenfileirar: trabalho concluido ou abandonado volta a pendente com tentat
   assert.equal(reenfileirar(db, 'retain', 'conv:1:2025-10-10', 4000), true, 'abandonado: volta');
   assert.equal(resumoDaFila(db).pendente, 1);
   assert.equal(reenfileirar(db, 'retain', 'conv:1:2025-10-10', 4100), false, 'pendente: nao mexe');
+});
+
+// Carga do historico (LICOES.md, 2026-10-21): os agendadores varrem o acervo todo, entao so rodam quando a fila esvazia; e o que foi abandonado
+// nao volta a cada varredura.
+test('haProntos: so conta trabalho pendente, ja no horario e do tipo pedido', () => {
+  const db = novo();
+  assert.equal(haProntos(db, ['retain'], T0), false);
+  enfileirar(db, 'retain', 'a', T0 + 1000);
+  assert.equal(haProntos(db, ['retain'], T0), false, 'ainda nao esta na hora');
+  assert.equal(haProntos(db, ['retain'], T0 + 1000), true);
+  assert.equal(haProntos(db, ['extrair'], T0 + 1000), false, 'outro tipo');
+  assert.equal(haProntos(db, [], T0 + 1000), false);
+  const j = pegarProximo(db, ['retain'], T0 + 1000)!;
+  assert.equal(haProntos(db, ['retain'], T0 + 1000), false, 'em andamento nao conta');
+  concluir(db, j.id, T0 + 1000);
+  assert.equal(haProntos(db, ['retain'], T0 + 2000), false);
+});
+
+test('abandonado guarda o hash do conteudo: igual = nao tenta de novo; conteudo diferente = tenta', () => {
+  const db = novo();
+  enfileirar(db, 'extrair', 'ext:1:2025-10-10', T0);
+  let t = T0; let r: 'reagendada' | 'abandonada' = 'reagendada'; let id = 0;
+  for (let i = 0; i < MAX_TENTATIVAS; i++) { const j = pegarProximo(db, ['extrair'], t)!; id = j.id; r = falhar(db, j.id, 'x', t); t += 3 * 60 * 60_000; }
+  assert.equal(r, 'abandonada');
+  assert.equal(abandonadaComEsteConteudo(db, 'extrair', 'ext:1:2025-10-10', 'H1'), false, 'sem hash registrado nao da para afirmar');
+  registrarAbandono(db, id, 'H1');
+  assert.equal(abandonadaComEsteConteudo(db, 'extrair', 'ext:1:2025-10-10', 'H1'), true);
+  assert.equal(abandonadaComEsteConteudo(db, 'extrair', 'ext:1:2025-10-10', 'H2'), false, 'a conversa mudou');
+  assert.equal(abandonadaComEsteConteudo(db, 'retain', 'ext:1:2025-10-10', 'H1'), false, 'outro tipo');
+  // so vale para o que esta de fato abandonado
+  reenfileirar(db, 'extrair', 'ext:1:2025-10-10', t);
+  assert.equal(abandonadaComEsteConteudo(db, 'extrair', 'ext:1:2025-10-10', 'H1'), false);
 });

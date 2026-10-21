@@ -133,6 +133,29 @@ export function registrarApagada(db: Banco, remoteJid: string, waMsgId: string):
   return 'alterada';
 }
 
+// Edicao/apagada que chegou ANTES da mensagem original (acontece na carga do historico): fica guardada e e aplicada quando a original entrar.
+// A ultima edicao recebida vale. Nada e removido: a linha ganha "aplicada_em".
+export function guardarAlteracaoPendente(db: Banco, tipo: 'editar' | 'apagar', remoteJid: string, waMsgId: string, novoTexto: string | null, agora: number): void {
+  const jid = normalizarJid(remoteJid);
+  if (!jid) return;
+  db.prepare(
+    `INSERT INTO alteracoes_pendentes (remote_jid, wa_msg_id, tipo, novo_texto, recebida_em) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (remote_jid, wa_msg_id, tipo) DO UPDATE SET novo_texto = excluded.novo_texto, recebida_em = excluded.recebida_em, aplicada_em = NULL`
+  ).run(jid, waMsgId, tipo, novoTexto, agora);
+}
+
+// Chamada logo depois de gravar uma mensagem nova: aplica as alteracoes que estavam esperando por ela (edicao primeiro, depois apagada).
+// Uma pendencia de OUTRA conversa com o mesmo id continua esperando (acharMensagem confere a conversa).
+export function aplicarAlteracoesPendentes(db: Banco, waMsgId: string, agora: number): number {
+  const linhas = db.prepare("SELECT id, remote_jid AS jid, tipo, novo_texto AS texto FROM alteracoes_pendentes WHERE wa_msg_id = ? AND aplicada_em IS NULL ORDER BY CASE tipo WHEN 'editar' THEN 0 ELSE 1 END, recebida_em").all(waMsgId) as { id: number; jid: string; tipo: string; texto: string | null }[];
+  let aplicadas = 0;
+  for (const l of linhas) {
+    const r = l.tipo === 'editar' ? registrarEdicao(db, l.jid, waMsgId, l.texto ?? '') : registrarApagada(db, l.jid, waMsgId);
+    if (r === 'alterada') { db.prepare('UPDATE alteracoes_pendentes SET aplicada_em = ? WHERE id = ?').run(agora, l.id); aplicadas++; }
+  }
+  return aplicadas;
+}
+
 // Mensagens de DM de um cliente (todos os contatos dele) no formato do motor de regras.
 // Decisao desta implementacao (a confirmar com o dono): mensagem APAGADA do cliente ainda conta como resposta dele,
 // mas deixa de cobrar resposta do dono. Self-chat e grupos nunca entram.

@@ -165,3 +165,15 @@ test('apagar memoria: id de documento fora do formato conv:<n>:<dia> nunca vai a
   assert.deepEqual(chamados, []);
   assert.equal((c.db.prepare("SELECT COUNT(*) AS n FROM memoria_apagar WHERE estado = 'feito'").get() as { n: number }).n, 0);
 });
+
+// Carga do historico (LICOES.md, 2026-10-21): o que o Hindsight recusou de vez nao pode voltar a cada varredura.
+test('recusado de vez (falha definitiva) nao volta para a fila enquanto a conversa nao mudar; se mudar, volta', async () => {
+  const c = cenario();
+  c.texto('M1', D10, 'Oi, quero o orçamento');
+  assert.deepEqual(agendarRetain(c.db, HOJE), ['conv:1:2025-10-10']);
+  const job = pegarProximo(c.db, ['retain'], HOJE)!;
+  assert.equal(await processarRetain(c.db, job, { reter: async () => { throw new FalhaDefinitiva('conteudo_recusado'); } }, HOJE), 'abandonada');
+  assert.deepEqual(agendarRetain(c.db, HOJE + 1000), [], 'mesma conversa: nao adianta mandar de novo');
+  c.texto('M2', D10 + 60_000, 'Segue o valor', true);
+  assert.deepEqual(agendarRetain(c.db, HOJE + 2000), ['conv:1:2025-10-10'], 'a conversa mudou: tenta de novo');
+});

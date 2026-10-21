@@ -172,3 +172,16 @@ test('sinal ligado a mensagem DO DONO (M2) e descartado: sinal de potencial so v
   await processarExtrair(db, pegarProximo(db, ['extrair'], HOJE)!, porta(s), instr, HOJE);
   assert.equal((db.prepare('SELECT COUNT(*) AS n FROM sinais_potencial').get() as { n: number }).n, 0);
 });
+
+// Carga do historico (LICOES.md, 2026-10-21): dia que o modelo nunca acertou nao volta a cada varredura (cada volta e uma consulta ao modelo).
+test('dia abandonado pelo modelo nao volta para a fila enquanto a conversa nao mudar; se mudar, volta', async () => {
+  const { db, msg } = cenario();
+  const ruim: PortaExtracao = { extrair: async () => 'isto nao e JSON' };
+  assert.equal(agendarExtracao(db, HOJE).length, 1);
+  let t = HOJE; let r = '';
+  for (let i = 0; i < 5; i++) { const j = pegarProximo(db, ['extrair'], t)!; r = await processarExtrair(db, j, ruim, instr, t); t += 3 * 3_600_000; }
+  assert.equal(r, 'abandonada');
+  assert.deepEqual(agendarExtracao(db, t), [], 'mesmo conteudo: nao adianta consultar o modelo de novo');
+  msg('M4', D10 + 240_000, 'Mudei de ideia, pode ser quinta');
+  assert.equal(agendarExtracao(db, t + 1000).length, 1, 'o dia mudou: tenta de novo');
+});

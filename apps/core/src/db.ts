@@ -269,6 +269,32 @@ CREATE TABLE duvidas (
   UNIQUE (cliente_id, texto)
 );
 `
+  },
+  {
+    versao: 9,
+    descricao: 'edicao/apagada que chega antes da mensagem original (carga do historico): espera a original e e aplicada quando ela entra',
+    sql: `
+-- Nada e apagado daqui (D16): depois de aplicada a linha so ganha "aplicada_em". Uma linha por mensagem e tipo: a ultima edicao recebida vale.
+CREATE TABLE alteracoes_pendentes (
+  id INTEGER PRIMARY KEY,
+  remote_jid TEXT NOT NULL,
+  wa_msg_id TEXT NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('editar','apagar')),
+  novo_texto TEXT,
+  recebida_em INTEGER NOT NULL,
+  aplicada_em INTEGER,
+  UNIQUE (remote_jid, wa_msg_id, tipo)
+);
+CREATE INDEX idx_alteracoes_pendentes_msg ON alteracoes_pendentes (wa_msg_id);
+`
+  },
+  {
+    versao: 10,
+    descricao: 'trabalho abandonado guarda o hash do conteudo: so volta para a fila se a conversa mudar (antes voltava a cada varredura)',
+    sql: `
+-- Hash (sem texto de conversa) do conteudo no momento em que o trabalho foi abandonado. Os agendadores comparam: igual = nao adianta tentar de novo.
+ALTER TABLE fila ADD COLUMN hash_abandono TEXT;
+`
   }
 ];
 

@@ -1,0 +1,12 @@
+import { performance } from 'node:perf_hooks';
+import { abrirBanco, migrar } from '../../apps/core/src/db.ts';
+import { criarEscuta } from '../../apps/core/src/whatsapp/escuta.ts';
+import { montarItem } from '../../apps/core/src/memoria.ts';
+import { gerarHistorico, emLotes, DONO } from './gerador.ts';
+const db = abrirBanco(); migrar(db); const e = criarEscuta(db, DONO);
+for (const l of emLotes(gerarHistorico({ mensagens: 20000, clientes: 666 }), 500)) e.mensagens(l, 'historico');
+const refs = db.prepare("SELECT conversa_id c, enviada_em t FROM mensagens").all() as {c:number;t:number}[];
+let t = performance.now(); const s = new Set<string>(); for (const r of refs) s.add(`${r.c}:${new Date(r.t).toISOString().slice(0,10)}`); console.log('so varrer', Math.round(performance.now()-t),'ms', s.size);
+const ids = [...s].slice(0, 2000).map((x) => { const [c, d] = x.split(':'); return `conv:${c}:${d}`; });
+t = performance.now(); for (const id of ids) montarItem(db, id); console.log('2000 montarItem', Math.round(performance.now()-t),'ms');
+t = performance.now(); const q = db.prepare("SELECT hash_conteudo FROM sync_hindsight WHERE tipo='conv' AND referencia=?"); for (const id of ids) q.get(id); console.log('2000 consultas sync', Math.round(performance.now()-t),'ms');

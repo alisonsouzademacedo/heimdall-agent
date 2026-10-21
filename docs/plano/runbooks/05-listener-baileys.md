@@ -33,6 +33,8 @@ Parear por QR (usuário); ver `connection: open`; receber uma mensagem de teste 
 
 ## Armadilhas
 - **WhatsApp recusa `browser[1] = 'Desktop'` com histórico completo (428 em 0,6 s, QR nunca aparece; provado em 2026-10-20).** O Baileys envia `webSubPlatform = DARWIN/WIN32` nessa combinação. `'DESKTOP'` (maiúsculo) e `'Chrome'` recebem o QR. Correção **pendente de OK do dono**: `docs/plano/pendencias/2026-10-21-whatsapp-428-desktop.md`. Para ver o motivo de um corte, ligar o registro do Baileys **só num teste isolado** (sessão nova, sem mensagens); o listener real fica em silêncio de propósito.
+- **Na carga do histórico a ordem dos eventos não é garantida:** a edição/apagada pode chegar antes da mensagem original. A escuta guarda a alteração em `alteracoes_pendentes` e aplica quando a original entra (2026-10-21; teste: `tests/carga/ingestao-historico.test.ts`).
+- **Se a carga cair no meio, o WhatsApp pode NÃO reenviar o histórico** (a documentação fala em histórico "na primeira sincronização": `docs/baileys/authentication/qr-code.md`). Os testes provam que reenviar é seguro (nada duplica), mas **não** provam que o WhatsApp reenvia. Não verificado; o recurso sob demanda existe (`fetchMessageHistory`, `docs/baileys/advanced/history-sync.md`) e ainda não é usado.
 - Mensagens recebidas com o núcleo desligado e histórico chegam como `append`; guardar ambos e deduplicar por `key.id`.
 - O Baileys **não reconecta sozinho** (`troubleshooting.md`).
 - Todo processo com banco aberto precisa de `parar()` que **espera** o laço terminar e fecha o banco antes de devolver; no Windows um arquivo SQLite aberto impede apagar a pasta (EBUSY) e os testes só ficam vermelhos lá.

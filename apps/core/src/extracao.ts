@@ -5,7 +5,7 @@
 import { createHash } from 'node:crypto';
 import type { Banco } from './db.ts';
 import { diaLocal, FUSO_PADRAO } from './calendario.ts';
-import { concluir, falhar, reenfileirar, type Trabalho } from './fila.ts';
+import { abandonadaComEsteConteudo, concluir, falhar, registrarAbandono, reenfileirar, type Trabalho } from './fila.ts';
 import type { Resultado } from './midia.ts';
 
 export interface PortaExtracao { extrair(pedido: string, sessao: string): Promise<string> }
@@ -68,6 +68,7 @@ export function agendarExtracao(db: Banco, agora: number, fuso: string = FUSO_PA
     if (!c) continue;
     const s = db.prepare("SELECT hash_conteudo AS h FROM sync_hindsight WHERE tipo = 'ext' AND referencia = ?").get(ref) as { h: string } | undefined;
     if (s?.h === c.hash) continue;
+    if (abandonadaComEsteConteudo(db, 'extrair', ref, c.hash)) continue; // o modelo ja desistiu deste conteudo: so tenta de novo se ele mudar
     if (reenfileirar(db, 'extrair', ref, agora)) novos.push(ref);
   }
   return novos;
@@ -131,10 +132,11 @@ export async function processarExtrair(db: Banco, job: Trabalho, porta: PortaExt
   if (!p) { concluir(db, job.id, agora); return 'ok'; }
   const s = db.prepare("SELECT hash_conteudo AS h FROM sync_hindsight WHERE tipo = 'ext' AND referencia = ?").get(job.referencia) as { h: string } | undefined;
   if (s?.h === p.hash) { concluir(db, job.id, agora); return 'ok'; }
+  const falha = (motivo: string): Resultado => { const r = falhar(db, job.id, motivo, agora); if (r === 'abandonada') registrarAbandono(db, job.id, p.hash); return r; };
   let bruto: string;
-  try { bruto = await porta.extrair(p.pedido, `heimdall:extracao:${job.referencia}`); } catch { return falhar(db, job.id, 'falha_ao_consultar_o_modelo', agora); }
+  try { bruto = await porta.extrair(p.pedido, `heimdall:extracao:${job.referencia}`); } catch { return falha('falha_ao_consultar_o_modelo'); }
   const v = validarSaidaDaExtracao(bruto, p.ids);
-  if (!v) return falhar(db, job.id, 'resposta_invalida_do_modelo', agora);
+  if (!v) return falha('resposta_invalida_do_modelo');
 
   const dadosMsg = (id: number) => db.prepare('SELECT de_mim AS d, enviada_em AS t FROM mensagens WHERE id = ?').get(id) as { d: number; t: number } | undefined;
   db.exec('SAVEPOINT extrair');
@@ -165,7 +167,7 @@ export async function processarExtrair(db: Banco, job: Trabalho, porta: PortaExt
     db.exec('RELEASE extrair');
   } catch {
     db.exec('ROLLBACK TO extrair'); db.exec('RELEASE extrair');
-    return falhar(db, job.id, 'falha_ao_gravar_extracao', agora);
+    return falha('falha_ao_gravar_extracao');
   }
   concluir(db, job.id, agora);
   return 'ok';

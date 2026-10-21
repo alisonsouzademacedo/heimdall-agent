@@ -7,7 +7,7 @@ import { backupDoDia, lerBackup } from '../../core/src/backup-copia.ts';
 import { rodizioDeBackups } from '../../core/src/backup-rodizio.ts';
 import { diaLocal } from '../../core/src/calendario.ts';
 import { agendarExtracao, processarExtrair, type PortaExtracao } from '../../core/src/extracao.ts';
-import { pegarProximo } from '../../core/src/fila.ts';
+import { haProntos, pegarProximo } from '../../core/src/fila.ts';
 
 /** Quantos trabalhos de extracao por giro: o modelo e lento; o self-chat nao pode esperar uma fila inteira. */
 export const EXTRACOES_POR_GIRO = 2;
@@ -39,7 +39,7 @@ export function iniciarPonte(o: OpcoesPonte): { parar(): void; terminou: Promise
       if (o.agenda) { try { await gerarRelatorioDoDia(o.banco, o.agenda, agora()); } catch { /* idem */ } }
       if (o.extracao) {
         try {
-          agendarExtracao(o.banco, agora());
+          if (!haProntos(o.banco, ['extrair'], agora())) agendarExtracao(o.banco, agora()); // varre o acervo todo: so quando a fila esvaziou
           for (let i = 0; i < EXTRACOES_POR_GIRO && !parado; i++) {
             const job = pegarProximo(o.banco, ['extrair'], agora());
             if (!job) break;
