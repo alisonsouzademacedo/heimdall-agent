@@ -233,3 +233,5 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - Medida em escala (sintético, em memória): 100 mil mensagens na entrada em 77 s (~1,3 mil/s; cai de ~4 mil/s com 20 mil, ainda com folga). Reenvio total do histórico: 76 s, sem duplicar.
 - Não verificado (só com o WhatsApp real): quanto histórico/contatos o WhatsApp entrega e se reenvia depois de queda (runbook 08, linhas 21 a 25).
 - Ferramenta de teste descartável: PowerShell 7.4.6 e Playwright 1.56.1 só nesta máquina de nuvem.
+- **Teste de mutação (2026-10-21, completo):** 105 quebras detectadas; 1 estava desatualizada (a linha de `memoria.ts` foi reescrita para registrar o abandono), alvo corrigido em `tests/core/mutacao.py` e confirmado à mão (a quebra derruba `memoria.test.ts`). As 2 quebras de contatos também foram confirmadas à mão. Nenhuma sobreviveu.
+- **Carga grande (sintético):** entrada de 100 mil mensagens em 77 s; processamento de 20 mil: 14.023 extrações (21.240 execuções, 27 s) e 15.073 documentos de memória (17 s), com falhas injetadas; todos os 15 cenários passaram.

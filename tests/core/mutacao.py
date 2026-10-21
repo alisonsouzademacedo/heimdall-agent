@@ -103,7 +103,7 @@ MUTACOES = [
     ("src/memoria.ts", "if (dia < hoje) ids.add", "if (dia <= hoje) ids.add", "memoria: o dia de hoje nunca vai ao Hindsight"),
     ("src/memoria.ts", "if (!conv || conv.tipo === 'self') return null;", "if (!conv) return null;", "memoria: o self-chat nao entra na memoria de negocio"),
     ("src/memoria.ts", "if (s?.hash_conteudo === hash) { concluir(db, job.id, agora); return 'ok'; }", "", "memoria: conteudo igual nao e reenviado"),
-    ("src/memoria.ts", "return falhar(db, job.id, 'falha_ao_enviar_ao_hindsight', agora);", "return falhar(db, job.id, (e as Error).message, agora);", "memoria: o conteudo da conversa nao vai para o erro da fila"),
+    ("src/memoria.ts", ": falhar(db, job.id, 'falha_ao_enviar_ao_hindsight', agora);", ": falhar(db, job.id, (e as Error).message, agora);", "memoria: o conteudo da conversa nao vai para o erro da fila"),
     ("src/memoria.ts", "const marca = l.estado === 'editada' ? '[editada] ' : l.estado === 'apagada' ? '[apagada pelo autor] ' : '';", "const marca = '';", "memoria: editada e apagada ficam marcadas"),
     ("src/fila.ts", "AND estado IN ('ok','erro','abandonada')", "AND estado IN ('ok','erro','abandonada','em_andamento')", "fila: reenfileirar nao atropela o que esta em andamento"),
     ("src/saida.ts", "const completo = texto.startsWith(MARCA) ? texto : `${MARCA}${texto}`;", "const completo = texto;", "saida: todo texto nosso leva a marca anti-eco"),
