@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { abrirBanco, migrar, type Banco } from './db.ts';
 import { criarEscuta } from './whatsapp/escuta.ts';
 import { pegarProximo, resumoDaFila } from './fila.ts';
-import { agendarExtracao, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
+import { agendarExtracao, diasDeExtracaoPendentes, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
 
 const DONO = { pn: '5511900000000@s.whatsapp.net' };
 const D10 = Date.UTC(2025, 9, 10, 15, 0, 0); // 10/10/2025 12:00 em SP (sexta)
@@ -184,4 +184,23 @@ test('dia abandonado pelo modelo nao volta para a fila enquanto a conversa nao m
   assert.deepEqual(agendarExtracao(db, t), [], 'mesmo conteudo: nao adianta consultar o modelo de novo');
   msg('M4', D10 + 240_000, 'Mudei de ideia, pode ser quinta');
   assert.equal(agendarExtracao(db, t + 1000).length, 1, 'o dia mudou: tenta de novo');
+});
+
+// Historico antigo (2026-10-21): mensagens antigas que caem em dia NOVO geram trabalho novo; em dia JA extraido mudam o hash e o dia e refeito.
+// O dono precisa ver essa conta ANTES de gastar modelo; a conta nao enfileira nada.
+test('diasDeExtracaoPendentes: separa dias novos de dias ja extraidos que mudaram, sem enfileirar nada', async () => {
+  const { db, msg } = cenario();
+  assert.deepEqual({ novos: 1, refeitos: 0 }, (({ novos, refeitos }) => ({ novos, refeitos }))(diasDeExtracaoPendentes(db, HOJE)));
+  assert.equal(resumoDaFila(db).pendente, 0, 'so conta');
+  agendarExtracao(db, HOJE);
+  const porta: PortaExtracao = { extrair: async () => '{}' };
+  await processarExtrair(db, pegarProximo(db, ['extrair'], HOJE)!, porta, instr, HOJE);
+  assert.equal(diasDeExtracaoPendentes(db, HOJE).refs.length, 0, 'tudo extraido: nada pendente');
+  msg('OLD9', D10 - 86_400_000, 'mensagem de um dia antigo, ainda nao extraido');
+  let c = diasDeExtracaoPendentes(db, HOJE);
+  assert.deepEqual({ novos: c.novos, refeitos: c.refeitos }, { novos: 1, refeitos: 0 });
+  msg('OLD10', D10 - 3_600_000, 'chegou depois, mas e do MESMO dia que ja foi extraido');
+  c = diasDeExtracaoPendentes(db, HOJE);
+  assert.deepEqual({ novos: c.novos, refeitos: c.refeitos }, { novos: 1, refeitos: 1 }, 'o dia ja extraido muda e sera refeito');
+  assert.equal(agendarExtracao(db, HOJE).length, 2, 'o que se conta e o que se enfileira');
 });

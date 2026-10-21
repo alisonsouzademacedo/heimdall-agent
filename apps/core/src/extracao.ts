@@ -56,22 +56,36 @@ export function montarPedidoDeExtracao(db: Banco, referencia: string, instrucoes
   return { pedido, ids: new Set(c.linhas.map((l) => l.id)), clienteId: c.clienteId, papel: c.papel, hash: c.hash };
 }
 
-// Varre os dias fechados das conversas DM com cliente e enfileira o que ainda nao foi extraido ou mudou (hash do conteudo).
-export function agendarExtracao(db: Banco, agora: number, fuso: string = FUSO_PADRAO): string[] {
+// Varre os dias fechados das conversas DM com cliente e lista o que ainda nao foi extraido ou mudou (hash do conteudo).
+// "jaExtraido" = o dia ja tinha extracao e o conteudo mudou (sera REFEITO); falso = dia novo.
+function diasPendentes(db: Banco, agora: number, fuso: string): { ref: string; jaExtraido: boolean }[] {
   const hoje = diaLocal(agora, fuso);
   const msgs = db.prepare("SELECT m.conversa_id AS c, m.enviada_em AS t FROM mensagens m JOIN conversas c ON c.id = m.conversa_id WHERE c.tipo = 'dm' AND m.tipo <> 'ignorada' AND m.texto IS NOT NULL").all() as { c: number; t: number }[];
   const refs = new Set<string>();
   for (const m of msgs) { const dia = diaLocal(m.t, fuso); if (dia < hoje) refs.add(`ext:${m.c}:${dia}`); }
-  const novos: string[] = [];
+  const saida: { ref: string; jaExtraido: boolean }[] = [];
   for (const ref of [...refs].sort()) {
     const c = carregar(db, ref, fuso);
     if (!c) continue;
     const s = db.prepare("SELECT hash_conteudo AS h FROM sync_hindsight WHERE tipo = 'ext' AND referencia = ?").get(ref) as { h: string } | undefined;
     if (s?.h === c.hash) continue;
     if (abandonadaComEsteConteudo(db, 'extrair', ref, c.hash)) continue; // o modelo ja desistiu deste conteudo: so tenta de novo se ele mudar
-    if (reenfileirar(db, 'extrair', ref, agora)) novos.push(ref);
+    saida.push({ ref, jaExtraido: s !== undefined });
   }
+  return saida;
+}
+
+// Varre os dias fechados e enfileira o que ainda nao foi extraido ou mudou.
+export function agendarExtracao(db: Banco, agora: number, fuso: string = FUSO_PADRAO): string[] {
+  const novos: string[] = [];
+  for (const d of diasPendentes(db, agora, fuso)) if (reenfileirar(db, 'extrair', d.ref, agora)) novos.push(d.ref);
   return novos;
+}
+
+// So CONTA (nao enfileira): quantos dias seriam extraidos pela primeira vez e quantos ja extraidos mudaram e seriam refeitos.
+export function diasDeExtracaoPendentes(db: Banco, agora: number, fuso: string = FUSO_PADRAO): { novos: number; refeitos: number; refs: string[] } {
+  const d = diasPendentes(db, agora, fuso);
+  return { novos: d.filter((x) => !x.jaExtraido).length, refeitos: d.filter((x) => x.jaExtraido).length, refs: d.map((x) => x.ref) };
 }
 
 // ---------- validacao do que o modelo devolveu ----------

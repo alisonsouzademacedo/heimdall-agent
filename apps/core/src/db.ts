@@ -308,6 +308,24 @@ CREATE TABLE nomes_pendentes (
   aplicada_em INTEGER
 );
 `
+  },
+  {
+    versao: 12,
+    descricao: 'historico antigo sob demanda: estado por conversa, para retomar depois de queda sem repetir pedido concluido',
+    sql: `
+-- Uma linha por conversa (DM ou grupo; o self-chat nunca). Sem texto de conversa: so contadores e a data (ms) da mais antiga antes do ultimo pedido.
+CREATE TABLE historico_pedidos (
+  conversa_id INTEGER PRIMARY KEY REFERENCES conversas(id),
+  estado TEXT NOT NULL DEFAULT 'pendente' CHECK (estado IN ('pendente','em_andamento','concluida','esgotada')),
+  pedidos INTEGER NOT NULL DEFAULT 0,
+  vazias INTEGER NOT NULL DEFAULT 0,
+  falhas INTEGER NOT NULL DEFAULT 0,
+  novas INTEGER NOT NULL DEFAULT 0,
+  cursor_antes INTEGER,
+  ultima_resposta_em INTEGER,
+  atualizado_em INTEGER NOT NULL DEFAULT 0
+);
+`
   }
 ];
 

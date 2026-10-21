@@ -10,6 +10,7 @@ import { gravarEstado, gravarQr, gravarHistorico, gravarContagem } from '../../c
 import { ligarEventos, type SocketMinimo } from './ligar.ts';
 import { criarTransporte, type SocketEnvio } from './transporte.ts';
 import { supervisionar } from './supervisor.ts';
+import { iniciarHistoricoAntigo, type SockHistorico } from './historico-antigo.ts';
 import { iniciarBaixador } from './ciclo.ts';
 import { iniciarEntregador } from './entrega.ts';
 import { qrParaSvg } from './qr.ts';
@@ -119,10 +120,12 @@ export async function iniciarListener(o: OpcoesListener): Promise<{ envio(): Env
     }
   });
   const entregador = iniciarEntregador({ banco, envio: () => envio, ultimoId: () => ultimoIdEnviado, intervaloMs: o.intervaloEntregaMs });
+  // Historico antigo: so roda com a trava aberta pelo dono (padrao fechada) e com o WhatsApp conectado.
+  const historicoAntigo = iniciarHistoricoAntigo({ banco, sock: () => (conexaoAberta ? (conexaoAberta.sock as unknown as SockHistorico) : null) });
   await supervisor.iniciar();
   return {
     envio: () => envio,
-    parar: async () => { baixador.parar(); entregador.parar(); supervisor.parar(); envio = null; conexaoAberta = null; await Promise.all([baixador.terminou, entregador.terminou]); banco.close(); },
+    parar: async () => { baixador.parar(); entregador.parar(); historicoAntigo.parar(); supervisor.parar(); envio = null; conexaoAberta = null; await Promise.all([baixador.terminou, entregador.terminou, historicoAntigo.terminou]); banco.close(); },
     banco
   };
 }

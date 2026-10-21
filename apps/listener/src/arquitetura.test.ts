@@ -37,3 +37,33 @@ test('makeWASocket so e chamado em conectar.ts; o listener nao abre servidor, na
 test('envio so por criarEnvio (a trava do nucleo): ninguem fora de iniciar.ts monta o Envio', () => {
   for (const f of fontes) if (f !== 'iniciar.ts') assert.doesNotMatch(codigo(f), /criarEnvio\s*\(/, f);
 });
+
+// Historico antigo (2026-10-21): fetchMessageHistory envia uma mensagem "peer" para a PROPRIA conta do dono (messages-send.js do Baileys instalado:
+// relayMessage(meJid, ..., category 'peer')), nao a um contato. Mesmo assim, e a unica chamada de socket nova permitida e fica em UM arquivo.
+test('fetchMessageHistory so e chamado em historico-antigo.ts (nenhum outro arquivo de nenhum pacote)', async () => {
+  const { readdirSync: ls, statSync } = await import('node:fs');
+  const raiz = fileURLToPath(new URL('../../', import.meta.url));
+  const achados: string[] = [];
+  for (const pacote of ls(raiz)) {
+    const src = join(raiz, pacote, 'src');
+    try { if (!statSync(src).isDirectory()) continue; } catch { continue; }
+    const varrer = (d: string): void => {
+      for (const n of ls(d)) {
+        const p = join(d, n);
+        if (statSync(p).isDirectory()) { if (n !== 'node_modules') varrer(p); continue; }
+        if (n.endsWith('.ts') && !n.endsWith('.test.ts') && /\bfetchMessageHistory\b/.test(sem(readFileSync(p, 'utf8')))) achados.push(`${pacote}/${p.slice(src.length + 1).replace(/\\/g, '/')}`);
+      }
+    };
+    varrer(src);
+  }
+  assert.deepEqual(achados, ['listener/historico-antigo.ts']);
+});
+
+test('historico-antigo.ts: so chama fetchMessageHistory no socket (nenhum sendMessage, nenhum outro metodo), e so com a trava e a conexao conferidas', () => {
+  const c = codigo('historico-antigo.ts');
+  assert.doesNotMatch(c, /sendMessage|criarEnvio|relayMessage|sendPeerDataOperationMessage/);
+  assert.match(c, /sock\.fetchMessageHistory\(/);
+  assert.equal((c.match(/\.fetchMessageHistory\(/g) ?? []).length, 1, 'uma unica chamada');
+  assert.match(c, /cfg\.liberado/, 'so com a trava aberta pelo dono');
+  assert.match(c, /!== 'conectado'/, 'so conectado');
+});
