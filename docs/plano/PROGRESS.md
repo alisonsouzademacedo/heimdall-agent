@@ -187,3 +187,9 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 **Como o Superpowers foi trazido (para registro honesto):** `git clone` do repositório oficial (leitura), **não** pelo Firecrawl; o clone dá o Markdown original, que o `AGENTS.md` prefere à raspagem. Regra para qualquer IA agora no `AGENTS.md` (seção Skills).
 **Não verificado:** rodízio com HD externo real no Windows (pasta desconectada: o rodízio simplesmente não roda); a versão exata de Hermes e Baileys contra a documentação.
 
+
+## 2026-10-21 (nuvem) — parada limpa dos contêineres
+- Feito: `stop_grace_period` no Compose (Postgres 30 s; Hindsight e Hermes 60 s) para não repetir o código 137 ao parar. Teste novo em `tests/infra/check_infra.sh` (falhou antes, passa agora). Lição registrada em `LICOES.md`.
+- Arquivos lidos: `AGENTS.md`, `PROGRESS.md`, `pendencias/2026-10-21-whatsapp-428-desktop.md`, `infra/compose/docker-compose.yml`, `tests/infra/check_infra.sh`.
+- Não verificado: se 30 s / 60 s bastam na máquina do dono (só o Docker real mostra; conferir o código de saída depois de `docker compose stop`).
+- A decisão do WhatsApp (`'DESKTOP'`) continua aguardando o OK do dono.

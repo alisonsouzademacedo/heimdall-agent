@@ -23,6 +23,7 @@ services:
       timeout: 5s
       retries: 12
     mem_limit: 1g
+    stop_grace_period: 30s
 
   hindsight:
     build: ../hindsight
@@ -59,6 +60,7 @@ services:
       retries: 40
       start_period: 120s
     mem_limit: 2g
+    stop_grace_period: 60s
 
   hermes:
     image: nousresearch/hermes-agent:v0.22.2
@@ -77,6 +79,7 @@ services:
       - hermes-data:/opt/data
     networks: [interna]
     mem_limit: 1g
+    stop_grace_period: 60s
 
   # Sob demanda, um audio ou PDF por vez:  docker compose run --rm media-worker <comando>   (nao sobe com "up")
   media-worker:

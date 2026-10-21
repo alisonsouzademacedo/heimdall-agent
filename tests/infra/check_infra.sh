@@ -75,6 +75,20 @@ h, r = bloco('hindsight'), bloco('hermes')
 ok = 'healthcheck:' in h and '/health' in h and re.search(r'depends_on:\s*\n\s+hindsight:\s*\n\s+condition:\s*service_healthy', r) is not None
 sys.exit(0 if ok else 1)
 PY
+# Os 3 servicos de estado precisam de tempo para fechar limpo: com os 10 s padrao do Compose, Hindsight e Hermes sairam com codigo 137 (morte forcada) em 2026-10-21.
+"$PY" -I - "$DC" <<'PY' && pass "postgres, hindsight e hermes tem stop_grace_period de pelo menos 30 s (parada limpa, sem codigo 137)" || fail "algum servico de estado (postgres/hindsight/hermes) sem stop_grace_period >= 30s"
+import re, sys
+t = open(sys.argv[1], encoding='utf-8').read()
+def seg(v):
+    m = re.fullmatch(r'(\d+)(s|m)', v.strip())
+    return int(m.group(1)) * (60 if m.group(2) == 'm' else 1) if m else 0
+ok = True
+for nome in ('postgres', 'hindsight', 'hermes'):
+    m = re.search(r'^  %s:\n(.*?)(?=^  \S|\Z)' % nome, t, re.S | re.M)
+    g = re.search(r'^    stop_grace_period:\s*(\S+)', m.group(1) if m else '', re.M)
+    ok = ok and g is not None and seg(g.group(1)) >= 30
+sys.exit(0 if ok else 1)
+PY
 grep -qE 'hermes-data:/opt/data' "$DC" && grep -qE '^volumes:' "$DC" && grep -qE '^\s+hermes-data:' "$DC" && pass "estado do Hermes em volume NOMEADO (nao pasta do Windows: corrompe o state.db)" || fail "estado do Hermes nao esta em volume nomeado"
 grep -qE 'pg_data:/var/lib/postgresql/18/docker' "$DC" && pass "Postgres 18 em volume nomeado, no caminho da receita oficial" || fail "Postgres fora do volume nomeado da receita"
 grep -qE 'internal:\s*true' "$DC" && pass "existe uma rede interna (sem internet) para o trabalhador de audio" || fail "sem rede interna"
