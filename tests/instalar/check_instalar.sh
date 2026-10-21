@@ -21,6 +21,12 @@ pass "o unico repositorio GitHub citado e o do projeto"
 grep -q 'Git.Git' "$PS1" && grep -q 'OpenJS.NodeJS.LTS' "$PS1" && grep -q 'Python.Python.3.14' "$PS1" && pass "IDs do winget iguais aos da documentacao (codex-manual.md)" || fail "IDs do winget diferem da documentacao"
 grep -qF 'instalar\instalar.ps1' iniciar.cmd && grep -q "ExecutionPolicy Bypass" iniciar.cmd && grep -q "pause" iniciar.cmd && pass "iniciar.cmd chama o instalador e pausa" || fail "iniciar.cmd incompleto"
 grep -qx 'instalar-relatorio.txt' .gitignore && pass ".gitignore cobre o relatorio do instalador" || fail ".gitignore sem instalar-relatorio.txt"
+# Os minimos de versao existem em dois lugares (a tela em TypeScript e o instalador): precisam ser IGUAIS (windows-install.md: WSL 2.1.5; Windows 10 build 19045; Windows 11 build 22631).
+TS=apps/core/src/onboarding/ambiente.ts
+TS_WSL=$(sed -nE 's/^const WSL_MINIMO = \[([0-9]+), ([0-9]+), ([0-9]+)\].*/\1.\2.\3/p' "$TS")
+PS_WSL=$(sed -nE "s/^\\\$WslMinimo = '([0-9.]+)'.*/\\1/p" "$PS1")
+[ -n "$TS_WSL" ] && [ "$TS_WSL" = "$PS_WSL" ] && pass "minimo do WSL igual na tela e no instalador ($TS_WSL)" || fail "minimo do WSL diverge: tela='$TS_WSL' instalador='$PS_WSL'"
+grep -q 'b >= 19045' "$TS" && grep -q 'b >= 22631' "$TS" && grep -qE "\\\$Win10Minimo = 19045" "$PS1" && grep -qE "\\\$Win11Minimo = 22631" "$PS1" && pass "compilacoes minimas do Windows (19045 e 22631) iguais na tela e no instalador" || fail "compilacoes minimas do Windows divergem entre tela e instalador"
 # O texto inicial da IA precisa apontar para o que JA existe (Compose e imagens no repositorio) e para a meta combinada (D30: validar no Windows, depois a VPS).
 if grep -q 'infra/compose' instalar/PROMPT-IA.txt && grep -q 'tests/infra' instalar/PROMPT-IA.txt && grep -q 'fase-2-migracao-para-vps' instalar/PROMPT-IA.txt; then pass "PROMPT-IA.txt aponta para o Compose do repositorio, os testes de infra e o plano da VPS (D30)"; else fail "PROMPT-IA.txt desatualizado: nao cita infra/compose, tests/infra e fase-2-migracao-para-vps"; fi
 # Os testes do nucleo (node --test) nao usam pacote nenhum: o instalador nao deve baixar dependencias (npm ci) antes deles (PROGRESS.md, pendencias 2026-10-19).
@@ -94,6 +100,26 @@ N
   # H) Docker instalado mas parado: avisa e termina com pendencia
   fake "$T/e" python "Python 3.12.1"; fake "$T/e" docker "erro" 1; roda "$T/e" "" -SomenteMostrar; C=$?
   grep -q "NAO esta rodando" "$T/saida.txt" && pass "H) Docker parado e avisado" || fail "H) Docker parado nao avisado"
+
+  # W) versao do WSL e do Windows (so avisa; os valores sao FIXADOS por variavel de teste, sem depender da maquina). Minimos: windows-install.md.
+  WSLENV="HEIMDALL_TESTE_VIRT=1 HEIMDALL_TESTE_WSL=1"
+  w() { printf '' | env $WSLENV "$@" PATH="$T/a" "$PW" -NoProfile -File "$PWD/$PS1" -SemPausa -SemTestes -SemClipboard -SomenteMostrar > "$T/saida.txt" 2>&1; }
+  w HEIMDALL_TESTE_WSLVER=2.1.4 HEIMDALL_TESTE_WINBUILD=22631
+  grep -q "wsl --update" "$T/saida.txt" && grep -q "2.1.4" "$T/saida.txt" && pass "W) WSL 2.1.4 e avisado, com o comando wsl --update" || fail "W) WSL antigo nao avisado"
+  w HEIMDALL_TESTE_WSLVER=2.1.5 HEIMDALL_TESTE_WINBUILD=22631
+  grep -q "wsl --update" "$T/saida.txt" && fail "W) WSL 2.1.5 avisado sem precisar" || pass "W) WSL 2.1.5 passa"
+  w HEIMDALL_TESTE_WSLVER=2.6.0 HEIMDALL_TESTE_WINBUILD=22631
+  grep -q "wsl --update" "$T/saida.txt" && fail "W) WSL 2.6.0 avisado sem precisar" || pass "W) WSL 2.6.0 passa"
+  w HEIMDALL_TESTE_WSLVER=2.1.5 HEIMDALL_TESTE_WINBUILD=19044
+  grep -q "Windows Update" "$T/saida.txt" && pass "W) Windows build 19044 e avisado (Windows Update)" || fail "W) Windows antigo nao avisado"
+  w HEIMDALL_TESTE_WSLVER=2.1.5 HEIMDALL_TESTE_WINBUILD=22000
+  grep -q "Windows Update" "$T/saida.txt" && pass "W) Windows 11 antigo (22000) e avisado" || fail "W) Windows 11 antigo nao avisado"
+  w HEIMDALL_TESTE_WSLVER=2.1.5 HEIMDALL_TESTE_WINBUILD=19045
+  grep -q "Windows Update" "$T/saida.txt" && fail "W) Windows 10 22H2 (19045) avisado sem precisar" || pass "W) Windows 10 22H2 passa"
+  w HEIMDALL_TESTE_WSLVER=2.1.5 HEIMDALL_TESTE_WINBUILD=22631
+  grep -q "Windows Update" "$T/saida.txt" && fail "W) Windows 11 23H2 avisado sem precisar" || pass "W) Windows 11 23H2 (22631) passa"
+  w HEIMDALL_TESTE_WSLVER=ilegivel HEIMDALL_TESTE_WINBUILD=22631
+  grep -q "wsl --version" "$T/saida.txt" && pass "W) versao do WSL ilegivel: pede para conferir com wsl --version" || fail "W) versao ilegivel nao tratada"
 
   # L) memoria livre (a medicao so existe no Windows): pouca memoria avisa; bastante memoria mostra OK. Em teste a medida e FIXADA.
   if [ "$SO" = windows ]; then

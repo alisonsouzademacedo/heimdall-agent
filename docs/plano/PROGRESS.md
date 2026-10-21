@@ -207,3 +207,8 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - Testes: `apps/core` 364/364, `tsc --noEmit` limpo.
 - **Não verificado** (só no Windows do dono): o formato real da saída de `wsl --version` (o leitor pega o primeiro `x.y.z`, tolera UTF-16 e outro idioma); se o `docker image inspect` reconhece as imagens construídas localmente na máquina dele.
 - **Fora de escopo, ainda não feito:** o `instalar.ps1` continua só conferindo Node e Python (as versões do WSL/Windows/imagens estão só na tela); teste da tela em Chrome/Edge/Firefox (Playwright). Navegador de cliente final não se aplica: o Heimdall só lê o WhatsApp do dono.
+
+## 2026-10-21 (nuvem) — versões também no instalador (`instalar/instalar.ps1`)
+- Feito: o instalador confere a **versão do WSL** (mínimo 2.1.5; antiga = FALTA com `wsl --update` e o Docker passa a ser tratado como "ainda não abre") e a **compilação do Windows** (10: 19045; 11: 22631; antiga = só aviso). Mínimos iguais aos da tela (`ambiente.ts`); **teste de trava** em `tests/instalar/check_instalar.sh` falha se os dois lugares divergirem. Cenários W) com valores fixados por `HEIMDALL_TESTE_WSLVER` e `HEIMDALL_TESTE_WINBUILD`.
+- Testes: escritos antes (6 falhas), depois `check_instalar.sh` todo verde com **PowerShell 7.4.6 real** (baixado só nesta máquina de nuvem para testar; não instala nada no computador do dono).
+- Não verificado: leitura do `wsl --version` real no Windows do dono (há tratamento de UTF-16, mas só a máquina dele confirma).

@@ -112,6 +112,30 @@ function WslOk {
   try { & wsl --version *> $null; return ($LASTEXITCODE -eq 0) } catch { return $false }
 }
 
+# Minimos do Docker Desktop (docs/docker/desktop/setup/install/windows-install.md). Os MESMOS numeros ficam em apps/core/src/onboarding/ambiente.ts;
+# tests/instalar/check_instalar.sh confere que os dois lugares nao divergem.
+$WslMinimo = '2.1.5'
+$Win10Minimo = 19045   # Windows 10 22H2
+$Win11Minimo = 22631   # Windows 11 23H2
+# Versao do WSL: x.y.z. A saida do "wsl --version" e UTF-16 (nulos entre as letras) e pode vir em outro idioma: tira os nulos e pega o primeiro x.y.z.
+# Devolve '' quando nao leu. Em teste: HEIMDALL_TESTE=1 com HEIMDALL_TESTE_WSLVER.
+function WslVersao {
+  if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_WSLVER) { $txt = $env:HEIMDALL_TESTE_WSLVER }
+  else { try { $txt = (& wsl --version 2>$null | Out-String) } catch { return '' } }
+  $txt = $txt -replace [char]0, ''
+  if ($txt -match '(\d+)\.(\d+)\.(\d+)') { return "$($Matches[1]).$($Matches[2]).$($Matches[3])" }
+  return ''
+}
+function WslVersaoOk($v) { return ([version]$v -ge [version]$WslMinimo) }
+# Compilacao do Windows (0 = nao leu). Em teste: HEIMDALL_TESTE=1 com HEIMDALL_TESTE_WINBUILD.
+function WindowsBuild {
+  if ($env:HEIMDALL_TESTE -eq '1' -and $env:HEIMDALL_TESTE_WINBUILD) { return [int]$env:HEIMDALL_TESTE_WINBUILD }
+  if (-not $ehWindows) { return 0 }
+  try { return [int][Environment]::OSVersion.Version.Build } catch { return 0 }
+}
+# 10 precisa de 22H2 (19045); 11, de 23H2 (22631). Compilacoes 22000 a 22630 sao Windows 11 mais antigo que o minimo.
+function WindowsBuildOk($b) { if ($b -lt 22000) { return ($b -ge $Win10Minimo) } else { return ($b -ge $Win11Minimo) } }
+
 # ---------- itens ----------
 # IDs do winget: documentados em docs/openai-codex/docs/codex-manual.md (Git.Git, OpenJS.NodeJS.LTS, Python.Python.3.14).
 # Docker Desktop: instalador oficial e comando de instalacao em docs/docker/desktop/setup/install/windows-install.md.
@@ -137,6 +161,17 @@ if ($ehWindows -or $env:HEIMDALL_TESTE_VIRT -or $env:HEIMDALL_TESTE_WSL) {
   Titulo 'Virtualizacao e WSL (o Docker Desktop precisa dos dois)'
   if ($virtOk) { Ok 'Virtualizacao ligada' } else { Falta 'Virtualizacao DESLIGADA. Ligue na BIOS/UEFI: reinicie o computador e entre na configuracao da placa (a tecla e o nome da opcao variam: Intel VT-x, Virtualization Technology ou SVM). Isso so voce pode fazer.' }
   if ($wslOk) { Ok 'WSL 2 instalado' } else { Falta 'WSL 2 nao instalado. Depois da virtualizacao ligada: abra o PowerShell como administrador, rode "wsl --install" e reinicie o computador.' ; Info 'Se "wsl --install" responder em circulo ("instale executando wsl.exe --install"), use o caminho manual da Microsoft (docs/wsl/install-manual.md): como administrador, rode dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart e depois dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart; reinicie e rode "wsl --update".' }
+  if ($wslOk) {
+    $wv = WslVersao
+    if ($wv -eq '') { Info 'Nao consegui ler a versao do WSL. Rode "wsl --version" e confira se e 2.1.5 ou mais nova.' }
+    elseif (WslVersaoOk $wv) { Ok "WSL na versao $wv (minimo $WslMinimo)" }
+    else { Falta "WSL na versao $wv e antigo demais (o Docker Desktop pede $WslMinimo ou mais nova). Abra o PowerShell como administrador, rode `"wsl --update`" e reinicie o computador."; $semDockerPronto = $true }
+  }
+  $wb = WindowsBuild
+  if ($wb -gt 0) {
+    if (WindowsBuildOk $wb) { Ok "Windows compilacao $wb" }
+    else { Info "Windows compilacao $wb abaixo do que a documentacao do Docker pede (Windows 10 22H2 = $Win10Minimo, Windows 11 23H2 = $Win11Minimo). Atualize pelo Windows Update; o Heimdall segue, mas o Docker pode nao abrir." }
+  }
   if ($semDockerPronto) { Info 'Atencao: o Docker Desktop nao vai abrir ate resolver isso. Pode instalar o resto agora e deixar o Docker para depois.' }
 }
 
