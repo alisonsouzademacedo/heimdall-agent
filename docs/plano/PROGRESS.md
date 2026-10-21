@@ -193,3 +193,9 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - Arquivos lidos: `AGENTS.md`, `PROGRESS.md`, `pendencias/2026-10-21-whatsapp-428-desktop.md`, `infra/compose/docker-compose.yml`, `tests/infra/check_infra.sh`.
 - Não verificado: se 30 s / 60 s bastam na máquina do dono (só o Docker real mostra; conferir o código de saída depois de `docker compose stop`).
 - A decisão do WhatsApp (`'DESKTOP'`) continua aguardando o OK do dono.
+
+## 2026-10-21 (nuvem) — correção do 428 do WhatsApp
+- Feito: `Browsers.macOS('DESKTOP')` em `apps/listener/src/conectar.ts`; `conectar.test.ts` com o valor `'DESKTOP'` e o teste novo do registro (`webSubPlatform`). Teste novo falhou antes e passa; listener 63/63; `tsc --noEmit` limpo.
+- O OK do dono foi inferido de uma instrução geral, não de um "sim" à pergunta; se ele preferir `'Chrome'`, basta reverter este commit.
+- Não verificado (só no Windows do dono): QR lido no celular, quanto histórico chega, e se o 428 some de fato com o servidor real.
+- Próximo: reiniciar o listener (`instalar\heimdall.ps1 -Acao iniciar`), abrir a tela, escanear o QR e anotar o histórico recebido.

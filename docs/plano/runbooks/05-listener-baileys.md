@@ -10,7 +10,7 @@ A documentação recomenda a versão **estável**; a borda (`master` do GitHub) 
 
 ## Configuração do socket (justificativa de cada item na documentação)
 - `auth`: **estado de login em banco** (SQLite separado do acervo), com `makeCacheableSignalKeyStore`. **Não usar `useMultiFileAuthState` em produção** ("não recomendado... causará erros de autenticação"). A pasta de login contém chaves de longa duração (tratar como chave SSH).
-- `browser: Browsers.macOS('Desktop')` e `syncFullHistory: true` para receber o histórico completo (a FAQ e `history-sync.md`); aumenta tempo de início e memória.
+- `browser: Browsers.macOS('DESKTOP')` (maiúsculo; ver Armadilhas) e `syncFullHistory: true` para receber o histórico completo (a FAQ e `history-sync.md`); aumenta tempo de início e memória.
 - `markOnlineOnConnect: false` para o telefone continuar recebendo notificações.
 - `shouldIgnoreJid`: descartar listas de transmissão, canais e status (`isJidBroadcast`, `isJidNewsletter`); descarta eventos e a decifragem.
 - `getMessage`: devolver a mensagem original a partir do nosso banco (a documentação a chama de passo mais importante para reenvios).

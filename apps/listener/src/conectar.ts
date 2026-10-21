@@ -19,8 +19,9 @@ export function montarConfig(o: OpcoesConfig) {
   return {
     logger,
     auth: { creds: o.auth.creds, keys: makeCacheableSignalKeyStore(o.auth.keys, logger) },
-    // Documentado: so a identidade de desktop recebe o historico estendido. NAO verificado: se o nome ("Desktop") muda algo alem disso.
-    browser: Browsers.macOS('Desktop'),
+    // Documentado: so a identidade de desktop recebe o historico estendido. Em MAIUSCULAS de proposito: com 'Desktop' exato o Baileys
+    // envia webSubPlatform de desktop nativo e o WhatsApp corta a conexao (428). Ver docs/plano/pendencias/2026-10-21-whatsapp-428-desktop.md.
+    browser: Browsers.macOS('DESKTOP'),
     syncFullHistory: true,
     // Documentado: online ao conectar faz o celular parar de notificar.
     markOnlineOnConnect: false,

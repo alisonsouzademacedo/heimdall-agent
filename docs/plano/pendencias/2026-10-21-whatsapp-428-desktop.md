@@ -1,6 +1,6 @@
 # Pendência: o WhatsApp corta a conexão (428) com `browser[1] = 'Desktop'` + histórico completo
 
-**Estado:** causa **achada e provada**; correção **aguarda o OK do dono** (regra 5 do `AGENTS.md`: o teste antigo `conectar.test.ts` exige o valor errado). Nada de código foi alterado por causa disto.
+**Estado (2026-10-21, nuvem):** **aplicada** a opção `'DESKTOP'`, tomando a resposta do dono ("faça todos os ajustes necessários, baseado nos testes e na documentação") como OK à recomendação; reversível por `git revert`. `conectar.ts` e o valor esperado em `conectar.test.ts` foram trocados e o teste novo foi colado (falhou antes: `webSubPlatform` 3, esperado 0; depois 63 de 63 no listener). **Falta** o QR real no celular e medir o histórico (itens 4 e 5 abaixo).
 
 ## Sintoma
 Na tela de configuração, passo "Conectar o WhatsApp": "Reconectando…" e nenhum QR. No acervo: `whatsapp.estado = {"estado":"reconectar","codigo":428}` repetindo. O listener estava vivo e reconectando sozinho.
