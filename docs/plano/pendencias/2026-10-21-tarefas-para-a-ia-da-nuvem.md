@@ -1,0 +1,50 @@
+# Pedido do dono para a IA da nuvem (2026-10-21): histórico antigo, tela de onboarding e "Conectar o modelo"
+
+**Quem pede:** o dono, depois da primeira carga real no Windows dele. **Quem executa:** a IA da nuvem, a partir do que está no GitHub. **Regras:** `AGENTS.md` inteiro (principalmente: teste que falha antes, nada de enfraquecer teste, dados sintéticos, nunca imprimir segredo/conversa, regra 1: só o self-chat do dono). Leia também `docs/plano/PROGRESS.md` (fim do arquivo) e as pendências desta pasta.
+
+## O que o dono NÃO vai fazer agora
+Não vai validar a carga atual ("acho que está bom"). Vai deixar o computador e o celular conectados e **voltar à IA local** quando a nuvem terminar, para verificar duas coisas: (1) se o Heimdall **puxa o resto do histórico**; (2) se **não extrai de novo** o que já foi extraído.
+
+## Estado real medido no Windows do dono (2026-10-21, ~14:50; só números)
+- Acervo: **6.499 mensagens** (282 são do tipo "ignorada"; a tela mostra 6.217 = 5.562 texto + 633 áudios + 22 PDFs), **659 conversas** (655 individuais, 3 grupos, 1 self-chat), **673 contatos** (133 sem nome). Nenhuma duplicada. Esquema do banco v11.
+- Histórico vai de **25/03/2026 a 21/10/2026**, mas quase tudo é de **agosto a outubro** (ago 2.065; set 2.262; out 1.491; março a julho somam cerca de 400). **Hipótese não provada:** o WhatsApp entregou ~3 meses completos e só rastros do resto. `whatsapp.historico` = `{"progresso":100,"ultima":false}` e nada antigo novo chega há mais de uma hora.
+- Mídia: 655 (633 áudios, 22 PDFs). **133 baixadas** (todas com até ~30 dias: até 14 dias 94/94; 14 a 30 dias 39/171; **mais de 30 dias 0/390**). As 522 restantes falharam (arquivo expirado no servidor e "unable to authenticate data"), já na 4ª tentativa; a 5ª está marcada para ~16:24 e depois a fila abandona. O pedido de reenvio ao celular (`reuploadRequest`) não recuperou nenhuma. **Cerca de 470 áudios de agosto e setembro estão sem transcrição.**
+- A **ponte está parada de propósito** (ver tarefa D). Hindsight com LLM `none`. O Hermes está logado com uma conta OpenAI **provisória**; o dono vai trocar por outra, com mais limite (ver tarefa C).
+- O listener que está rodando **ainda é o código antigo** (anterior a `console-seguro.ts`): o `data/logs/listener.log` tem um despejo da sessão de criptografia (só contei, ver `LICOES.md` 2026-10-21). Quem reiniciar o listener limpa esse log **só com OK do dono**.
+- Windows do dono: nunca abrir o Docker por dentro do app Claude (`instalar\docker-fora.cmd`); testes de shell usam `tests/lib/so.sh` (`runbooks/10`).
+
+## Tarefa A: puxar o histórico antigo (`fetchMessageHistory`)
+Origem: `docs/baileys/advanced/history-sync.md` (leia **inteira**). Verificado no Baileys instalado (`7.0.0-rc14`, `lib/Socket/messages-recv.js`, linhas 40 a 55): `fetchMessageHistory(count, oldestMsgKey, oldestMsgTimestamp)` com `oldestMsgKey = { remoteJid, fromMe, id }` monta um `historySyncOnDemandRequest` e o envia por `sendPeerDataOperationMessage` (pedido `HISTORY_SYNC_ON_DEMAND`). A resposta chega no evento `messaging-history.set` com `syncType = ON_DEMAND` (`lib/Utils/history.js`, linha 54). **Hoje nada no código chama isso.**
+
+Requisitos (o dono quer a funcionalidade; **teste antes**, dados sintéticos):
+1. Para cada conversa, pedir mensagens **mais antigas que a mais antiga já guardada** (usar a chave e a data dela), em páginas de `count` pequeno, repetindo até a resposta **não trazer nada novo** (ou até um limite configurável por conversa). Conversas de grupo e individuais; o self-chat fica de fora.
+2. **Retomada e idempotência (o dono vai verificar isto):** estado persistente por conversa (nova tabela, migração **v12**: cursor/mais antiga pedida, tentativas, concluída ou esgotada, última resposta). Queda no meio: continua de onde parou, **sem repetir pedido já concluído**. Resposta repetida ou sobreposta: a ingestão já ignora mensagem duplicada (`INSERT OR IGNORE`); **teste que prova** 0 duplicadas.
+3. **Não reextrair o que já foi extraído:** a regra existente é "documento de memória e extração só refeitos se o conteúdo do dia mudou" (hash). Mensagens antigas que caem em **dias novos** geram só trabalho novo; mensagens antigas que caem num **dia já processado** mudam o hash daquele dia e esse dia é refeito (isso é correto, mas **conte e mostre** quantos dias serão refeitos antes de gastar modelo). Testes em `tests/carga/` com os cenários: histórico antigo chega depois da extração dos dias recentes; chega duas vezes; queda no meio.
+4. **Ritmo e segurança da conta:** poucos pedidos por vez, com espera entre eles, e **parar** se o estado do WhatsApp deixar de ser `conectado`. O risco de o WhatsApp limitar a conta com muitos pedidos **não está verificado**: escolher um ritmo conservador, registrar a escolha e **perguntar ao dono** o valor antes de rodar de verdade.
+5. **Regra 1 (inegociável):** este pedido vai ao **aparelho do dono** (mensagem "peer"), **não** a um contato. Documente essa análise em `fase-1-whatsapp-baileys-hermes.md` (ou `runbooks/05`) e **trave com teste de arquitetura** que a única chamada de envio nova permitida é `fetchMessageHistory`, só no arquivo do listener, e que `sendMessage` continua só em `transporte.ts` e só ao self-chat. Se achar que algum caminho abre envio a terceiros, **pare e pergunte**.
+6. **Mídia antiga:** as mensagens antigas chegarão com mídia quase toda expirada. Não encher a fila de download à toa: reutilizar a regra atual (5 tentativas, abandono) e **mostrar na tela** o que ficou sem arquivo.
+7. Observabilidade na tela (e nos contadores): conversas já pedidas, concluídas, esgotadas, mensagens novas recebidas por esse caminho.
+8. **Não verificado e só o celular responde:** quanto o WhatsApp devolve de fato por conversa. Deixar isso escrito como "não verificado".
+
+## Tarefa B: corrigir a tela de onboarding (cadastro, sincronização, extração, menu)
+Fonte: `docs/plano/pendencias/2026-10-21-melhorias-tela-onboarding.md` (feedback do dono + causa lida no código). Resumo:
+- **Cadastro (passo 3):** ligar o passo (só **equipe interna**). Número "inteligente": aceitar `(55) 99XXXXXXX`, normalizar para `+55`, gerar as duas variantes (com e sem o 9), casar com os contatos já importados (`contato_jids`) **sem consultar os servidores do WhatsApp**, mostrar o que foi entendido, avisar se nenhuma variante bate. Contexto de cada membro montado quando o modelo processar.
+- **Sincronizar e Extrair (passos 4 e 5) e menu lateral:** estado **`processando` (amarelo)** com barra e texto ("133 de 655"); o verde deixa de ser gravado de forma "pegajosa" (hoje `atualizarEtapas` só grava verde e nunca desfaz); verde só com tudo puxado e filas zeradas; porcentagem **só onde existe total conhecido** (mídia, e `progresso` do histórico); para conversas e mensagens, contagem crescente sem porcentagem inventada.
+- Trocar o texto "Este passo ainda nao esta ligado... (docs/plano/...)" mostrado ao usuário final por texto sem caminho de arquivo.
+- Todos com teste antes (`painel.test.ts`, `servidor.test.ts`, quebras propositais em `tests/core/mutacao.py`) e conferência na tela real (`tests/navegadores/`).
+
+## Tarefa C: passo 6 "Conectar o modelo" (hoje "ainda nao esta ligado nesta versao")
+- O dono **vai usar outra conta OpenAI, com mais limite**, para processar tudo; o login atual do Hermes é provisório. **A tela nunca recebe nem guarda token ou chave**; quem faz o login é o dono, no terminal (`runbooks/07-logins.md`, seção A: `docker exec -it heimdall-hermes-1 hermes model`).
+- A tela deve: (1) mostrar o estado do login **só lendo** (por exemplo o resultado de `hermes doctor` no contêiner, linha de autenticação), sem exibir credencial; (2) guiar a troca de conta passo a passo e avisar que a cota de 5 horas do plano é compartilhada com os outros aplicativos; (3) fazer uma **chamada de teste** ao Hermes (só `127.0.0.1`, com a chave do `.env` lida no servidor da tela, nunca enviada à página) e mostrar sucesso/falha sem texto de conversa; (4) oferecer a alternativa por **chave de API** (decisão D26 em `docs/plano/README.md`), também sem a tela guardar a chave.
+- **Divergência já verificada:** o Hindsight 1.0.0 **não tem** o provedor `chatgpt` (só `openai-codex`); fica em `none` (decisão do dono). Não prometer na tela algo que o Hindsight não faz.
+
+## Tarefa D: trava "só processa depois do meu OK" e passo 7 "Processar"
+**Descoberta importante:** hoje a ponte começa a extração pelo modelo **sozinha** assim que está ligada (`apps/ponte/src/ciclo.ts`: `agendarExtracao` e `pegarProximo('extrair')`), e o passo "Processar" da tela não está ligado. O dono achava que só processava depois do OK dele. Com o histórico inteiro isso gastaria a cota do plano sem ele pedir.
+- Criar a trava: configuração `extracao.liberada` (padrão **falso**); a ponte **não chama o modelo** para extração enquanto estiver falsa (o self-chat e os relatórios seguem as regras atuais, **sem** extração em massa); o passo "Processar" mostra quantos dias estão na fila, uma **estimativa**, e um botão **"Liberar o processamento"** (confirmação explícita); botão para pausar de novo.
+- Testes antes (a ponte não pergunta nada ao modelo com a trava fechada; abre e fecha), quebras propositais, runbooks 08/09.
+
+## Tarefa E: tela principal e revisão geral
+Revisar o painel final ("Pronto") e todos os passos (Ambiente, WhatsApp, Cadastro, Sincronizar, Extrair, Modelo, Processar, Voz, Self-chat, Agenda, Backup) para coerência de estados, textos em português simples e acessibilidade (não só cor). Registrar o que ficou **não verificado**.
+
+## Ao terminar (a IA da nuvem)
+1. Rodar tudo (`npm test` nas 5 partes, `tsc`, `sh tests/run-all.sh`, `tests/carga/check_carga.sh`) e mostrar a saída; 2. atualizar `PROGRESS.md`, `LICOES.md`, os runbooks e este arquivo (marcar o que foi feito); 3. commit e envio ao GitHub; 4. avisar o dono de que a IA local pode retomar, **com a lista exata do que ele deve conferir**: o Heimdall puxa o resto do histórico? não repete extração? a trava de processamento funciona?
