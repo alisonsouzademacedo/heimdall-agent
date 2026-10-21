@@ -8,6 +8,7 @@ import { abrirBanco, migrar } from '../../apps/core/src/db.ts';
 import { iniciarServidor } from '../../apps/core/src/onboarding/servidor.ts';
 import { avaliar } from '../../apps/core/src/onboarding/ambiente.ts';
 import { gravarEstado, gravarHistorico } from '../../apps/core/src/whatsapp/estado.ts';
+import { criarEscuta } from '../../apps/core/src/whatsapp/escuta.ts';
 import { enfileirar } from '../../apps/core/src/fila.ts';
 
 const GIB = 1024 ** 3;
@@ -32,6 +33,13 @@ const T = Date.parse('2026-10-19T20:00:00Z');
 gravarEstado(banco, { estado: 'conectado', dono: { pn: '5511900000000@s.whatsapp.net' } }, T);
 gravarHistorico(banco, { progresso: 100, ultima: true }, T);
 enfileirar(banco, 'baixar_midia', 'sintetico-midia-1', T);
+// Duas conversas de cliente com UMA mensagem cada: a busca antiga tem o que mostrar (2 pendentes) e o teste
+// prova que os numeros do cartao andam sozinhos depois de liberar (a tela nao pode parecer parada).
+const escuta = criarEscuta(banco, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => T });
+escuta.mensagens([
+  { key: { id: 'SINT-C1', remoteJid: '5511999900001@s.whatsapp.net', fromMe: false }, message: { conversation: 'cliente um' }, messageTimestamp: Math.floor(T / 1000) },
+  { key: { id: 'SINT-C2', remoteJid: '5511999900002@s.whatsapp.net', fromMe: false }, message: { conversation: 'cliente dois' }, messageTimestamp: Math.floor(T / 1000) }
+], 'historico', () => '{}');
 const s = await iniciarServidor({ banco, codigo: CODIGO, pastaBugs: join(dir, 'bugs'), sondar: () => verificacoes, agora: () => T });
 let falhas = 0, rodou = 0;
 const passou = (m) => console.log(`  [PASSOU] ${m}`);
@@ -93,10 +101,49 @@ for (const [nome, abrir] of MOTORES) {
         (txtSinc.includes('proprio celular') && txtSinc.includes('NAO foi medido'))
           ? passou(`${nome}: Sincronizar explica o pedido ao proprio celular e o risco nao medido`)
           : falhou(`${nome}: Sincronizar sem o aviso de risco/peer`);
+        try { await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('BUSCA PAUSADA'), { timeout: 8000 }); passou(`${nome}: Sincronizar mostra a trava fechada por padrao`); }
+        catch { falhou(`${nome}: Sincronizar nao mostra o estado da trava (pausada)`); }
         await pagina.fill('input[aria-label="Intervalo entre pedidos em segundos"]', '75');
         await pagina.waitForTimeout(3500);
         const valor = await pagina.inputValue('input[aria-label="Intervalo entre pedidos em segundos"]');
         valor === '75' ? passou(`${nome}: o intervalo digitado nao e apagado pelo timer`) : falhou(`${nome}: o timer apagou o intervalo (ficou ${valor})`);
+
+        // Liberar: o estado muda, o botao muda de texto, aparece a barra de progresso e a estimativa honesta.
+        pagina.once('dialog', (d) => d.accept());
+        await pagina.locator('#painel').getByRole('button', { name: 'Liberar busca antiga', exact: true }).click();
+        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('BUSCA ABERTA'), { timeout: 10000 });
+        const aindaLibera = await pagina.locator('#painel').getByRole('button', { name: 'Liberar busca antiga', exact: true }).count();
+        const barras = await pagina.locator('#painel [role="progressbar"]').count();
+        const txtLib = await pagina.innerText('#painel');
+        (aindaLibera === 0 && barras > 0 && /0 de 2 conversas/.test(txtLib) && txtLib.includes('Estimativa'))
+          ? passou(`${nome}: liberar muda o botao, mostra a barra (0 de 2) e a estimativa`)
+          : falhou(`${nome}: depois de liberar faltou botao mudado (${aindaLibera}), barra (${barras}) ou estimativa`);
+
+        // Os numeros do cartao andam SOZINHOS (a tela nao pode parecer parada): a conversa concluida aparece sem clique.
+        // ATENCAO: o predicado e FUNCAO de verdade. Texto (string) aqui trava os relogios da pagina e o teste nunca ve
+        // a atualizacao (LICOES.md, 2026-10-21).
+        banco.prepare("INSERT INTO historico_pedidos (conversa_id, estado, pedidos, novas) SELECT id, 'concluida', 3, 5 FROM conversas WHERE tipo = 'dm' ORDER BY id LIMIT 1").run();
+        try {
+          await pagina.waitForFunction(() => {
+            const ks = [...document.querySelectorAll('#painel .aviso .kpi')];
+            const k = ks.find((x) => x.querySelector('.det') && x.querySelector('.det').textContent === 'conversas concluidas');
+            return !!k && k.querySelector('b').textContent === '1';
+          }, undefined, { timeout: 12000 });
+          passou(`${nome}: os numeros do cartao se atualizam sozinhos (sem clique)`);
+        } catch {
+          const agora = await pagina.evaluate(() => {
+            const ks = [...document.querySelectorAll('#painel .aviso .kpi')];
+            const k = ks.find((x) => x.querySelector('.det') && x.querySelector('.det').textContent === 'conversas concluidas');
+            return k ? k.querySelector('b').textContent : 'sem kpi';
+          });
+          falhou(`${nome}: o cartao ficou parado (concluidas = ${agora})`);
+        }
+
+        // Pausar: volta ao estado fechado com o botao de liberar de novo.
+        await pagina.locator('#painel').getByRole('button', { name: 'Pausar busca antiga', exact: true }).click();
+        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('BUSCA PAUSADA'), { timeout: 10000 });
+        const voltou = await pagina.locator('#painel').getByRole('button', { name: 'Liberar busca antiga', exact: true }).count();
+        voltou === 1 ? passou(`${nome}: pausar volta ao estado fechado com o botao de liberar`) : falhou(`${nome}: depois de pausar o botao de liberar nao voltou`);
       } catch (e) { falhou(`${nome}: Sincronizar incompleto: ${String(e).slice(0, 140)}`); }
     }
 

@@ -202,24 +202,23 @@ export const JS = `
     var topo=el('div');s.appendChild(topo);
     function pintarTopo(p){
       topo.textContent='';
-      var w=p.whatsapp,h=w.historico,c=w.contagem,ha=p.historicoAntigo||{};
+      var w=p.whatsapp,h=w.historico,c=w.contagem;
       if(w.estado!=='conectado')topo.appendChild(el('div','aviso','Conecte o WhatsApp primeiro (passo anterior).'));
       barra(topo,h&&h.ultima?'Historico recebido por inteiro':'Recebendo o historico do telefone',h&&h.ultima?100:(h&&h.progresso!=null?h.progresso:0),h?(h.ultima?'Concluido.':'Deixe o celular ligado e com internet.'):'Aguardando o WhatsApp mandar o historico. Isso pode levar alguns minutos.');
       var g=el('div','kpis');
       kpi(g,'conversas',p.acervo.conversas);
       kpi(g,'mensagens guardadas',p.acervo.mensagens);
-      kpi(g,'conversas em andamento',ha.emAndamento||0);
-      kpi(g,'conversas ainda nao pedidas',ha.pendentes||0);
-      kpi(g,'conversas concluidas',ha.concluidas||0);
-      kpi(g,'atingiram o limite',ha.esgotadas||0);
       if(c){kpi(g,'repetidas ignoradas',c.duplicadas);kpi(g,'editadas / apagadas',c.editadas+' / '+c.apagadas)}
       topo.appendChild(g);
       topo.appendChild(el('div','det','O WhatsApp so entrega o que o telefone tem disponivel; o que nao vier, nao da para recuperar.'));
     }
     pintarTopo(d);
-    // Atualiza so os numeros do topo: o campo de intervalo e os botoes nao podem ser apagados pelo relogio da tela.
+    // O relogio da tela atualiza o topo E o cartao da busca antiga (o dono precisa ver o trabalho andando).
+    // O campo de intervalo nao e apagado: a marca ritmoEditado protege o que foi digitado.
     atualizarSincronizar=function(){
-      return api('GET','/api/painel').then(function(r){pn=r;pintarTopo(r);return atualizarMenu()}).catch(function(){});
+      return Promise.all([api('GET','/api/painel'),api('GET','/api/historico-antigo')]).then(function(rs){
+        pn=rs[0];pintarTopo(rs[0]);pintarAntigo(rs[1]);return atualizarMenu();
+      }).catch(function(){});
     };
 
     var cartao=el('div','aviso');cartao.style.marginTop='20px';
@@ -239,27 +238,39 @@ export const JS = `
     var bPausarAnt=el('button','sec','Pausar busca antiga');bPausarAnt.type='button';bPausarAnt.style.marginLeft='8px';
     bts.appendChild(bLibAnt);bts.appendChild(bPausarAnt);cartao.appendChild(bts);
 
+    function pintarAntigo(r){
+      infoAntigo.textContent='';
+      var cfg=r.config||{},res=r.resumo||{};
+      if(cfg.ritmoSegundos&&!ritmoEditado)inRitmo.value=String(cfg.ritmoSegundos);
+      var st=el('div','det');
+      st.textContent=cfg.liberado?('Trava: BUSCA ABERTA - o Heimdall pede ao seu proprio celular de '+cfg.ritmoSegundos+' em '+cfg.ritmoSegundos+' segundos.'):'Trava: BUSCA PAUSADA - nenhum pedido ao telefone ate voce liberar.';
+      st.style.fontWeight='600';st.style.marginBottom='8px';
+      infoAntigo.appendChild(st);
+      var total=res.conversas||0,feitas=(res.concluidas||0)+(res.esgotadas||0);
+      barra(infoAntigo,'Conversas ja atendidas',total?feitas*100/total:0,feitas+' de '+total+' conversas ('+(res.pendentes||0)+' ainda nao pedidas, '+(res.emAndamento||0)+' em andamento)');
+      var kg=el('div','kpis');
+      kpi(kg,'conversas no total',total);
+      kpi(kg,'conversas pendentes',res.pendentes||0);
+      kpi(kg,'conversas em andamento',res.emAndamento||0);
+      kpi(kg,'conversas concluidas',res.concluidas||0);
+      kpi(kg,'atingiram o limite',res.esgotadas||0);
+      kpi(kg,'mensagens novas trazidas',res.novas||0);
+      kpi(kg,'pedidos ja feitos',res.pedidos||0);
+      infoAntigo.appendChild(kg);
+      var faltam=(res.pendentes||0)+(res.emAndamento||0);
+      if(!cfg.liberado)infoAntigo.appendChild(el('div','det','A busca esta pausada: nenhum pedido sai ate voce liberar. O que ja chegou continua guardado.'));
+      else if(faltam===0)infoAntigo.appendChild(el('div','det','Nao ha conversa nova para pedir agora; o Heimdall segue esperando mensagem nova chegar.'));
+      else {
+        var minutos=Math.round(faltam*((cfg.ritmoSegundos||60)+(cfg.esperaRespostaSegundos||45))/60);
+        infoAntigo.appendChild(el('div','det','Estimativa so de tempo: cerca de '+(minutos>=90?Math.round(minutos/60)+' horas':minutos+' minutos')+' para as '+faltam+' conversas que faltam, no ritmo escolhido (depende do tamanho de cada conversa e do ritmo do WhatsApp).'));
+      }
+      bLibAnt.textContent=cfg.liberado?'Busca liberada (em andamento)':'Liberar busca antiga';
+      bLibAnt.disabled=!!cfg.liberado;
+      bPausarAnt.disabled=!cfg.liberado;
+    }
     function carregarAntigo(){
       infoAntigo.textContent='Carregando estado da busca antiga...';
-      api('GET','/api/historico-antigo').then(function(r){
-        infoAntigo.textContent='';
-        var cfg=r.config||{},res=r.resumo||{};
-        if(cfg.ritmoSegundos&&!ritmoEditado)inRitmo.value=String(cfg.ritmoSegundos);
-        var st=el('div','det');
-        st.textContent=cfg.liberado?'Trava: BUSCA ABERTA (pedindo ao telefone)':'Trava: BUSCA PAUSADA (fechada por padrao)';
-        st.style.fontWeight='600';st.style.marginBottom='8px';
-        infoAntigo.appendChild(st);
-        var kg=el('div','kpis');
-        kpi(kg,'conversas no total',res.conversas||0);
-        kpi(kg,'conversas pendentes',res.pendentes||0);
-        kpi(kg,'conversas em andamento',res.emAndamento||0);
-        kpi(kg,'conversas concluidas',res.concluidas||0);
-        kpi(kg,'atingiram o limite',res.esgotadas||0);
-        kpi(kg,'mensagens novas trazidas',res.novas||0);
-        infoAntigo.appendChild(kg);
-        bLibAnt.disabled=!!cfg.liberado;
-        bPausarAnt.disabled=!cfg.liberado;
-      }).catch(function(e){infoAntigo.textContent='Erro ao carregar busca antiga: '+e.message});
+      api('GET','/api/historico-antigo').then(pintarAntigo).catch(function(e){infoAntigo.textContent='Erro ao carregar busca antiga: '+e.message});
     }
 
     bLibAnt.addEventListener('click',function(){

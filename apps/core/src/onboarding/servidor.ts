@@ -127,7 +127,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/api/estado') return json(res, 200, estado());
         if (url.pathname === '/api/historico-antigo') {
           const c = lerConfigHistorico(op.banco);
-          return json(res, 200, { config: { liberado: c.liberado, ritmoSegundos: Math.round(c.ritmoMs / 1000), tamanhoPagina: c.tamanhoPagina, maxPaginas: c.maxPaginas }, resumo: resumoHistoricoAntigo(op.banco) });
+          return json(res, 200, { config: { liberado: c.liberado, ritmoSegundos: Math.round(c.ritmoMs / 1000), esperaRespostaSegundos: Math.round(c.esperaRespostaMs / 1000), tamanhoPagina: c.tamanhoPagina, maxPaginas: c.maxPaginas }, resumo: resumoHistoricoAntigo(op.banco) });
         }
         if (url.pathname === '/api/cadastro') return json(res, 200, { equipe: listarEquipe(op.banco) });
         if (url.pathname === '/api/modelo') {

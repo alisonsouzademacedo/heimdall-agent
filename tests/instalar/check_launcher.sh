@@ -57,9 +57,11 @@ ping -n 26 127.0.0.1 >nul'
   [ "$C" -eq 0 ] && pass "iniciar termina bem" || { fail "iniciar: codigo $C"; head -20 "$T/saida.txt"; }
   [ -s "$R/infra/compose/.env" ] && grep -q '^POSTGRES_PASSWORD=[0-9a-f]\{32\}$' "$R/infra/compose/.env" && grep -q '^API_SERVER_KEY=[0-9a-f]\{64\}$' "$R/infra/compose/.env" && grep -q '^HINDSIGHT_API_LLM_PROVIDER=none$' "$R/infra/compose/.env" && pass "criou o .env com senha e chave aleatorias e LLM = none" || fail ".env criado errado"
   grep -q 'compose --env-file .*\.env -f .*docker-compose.yml up -d' "$T/docker-chamadas.txt" && pass "chamou docker compose up -d com o .env e o arquivo do projeto" || fail "nao chamou docker compose up"
-  N=$(grep -cE '"(tela|listener|executor|memoria|ponte)": *[0-9]{2,}' "$R/data/processos.json"); [ "$N" -eq 5 ] && pass "registrou 5 processos em data/processos.json" || fail "registro de processos: $N"
+  N=$(grep -cE '"(tela|listener|executor|memoria|ponte)": *\{' "$R/data/processos.json")
+  I=$(grep -cE '"inicio": *[0-9]+' "$R/data/processos.json")
+  [ "$N" -eq 5 ] && [ "$I" -eq 5 ] && pass "registrou 5 processos com pid e hora de inicio em data/processos.json" || fail "registro de processos: $N pids, $I horas de inicio"
   grep -q 'http://127.0.0.1:8765/?codigo=teste123' "$T/saida.txt" && pass "mostra o link da tela (com o codigo de uso unico) lido do registro" || fail "nao mostrou o link da tela"
-  PIDS=$(grep -oE ': *[0-9]{2,}' "$R/data/processos.json" | grep -oE '[0-9]+' | tr '\n' ' ')
+  PIDS=$(grep -oE '"pid": *[0-9]+' "$R/data/processos.json" | grep -oE '[0-9]+' | tr '\n' ' ')
   [ "$(echo $PIDS | wc -w)" -eq 5 ] || fail "nao achei os 5 pids no registro"
   ALL=1; for p in $PIDS; do vivo "$p" || ALL=0; done; [ "$ALL" -eq 1 ] && pass "os 5 processos estao vivos" || fail "algum processo nao esta vivo"
   ENV1=$(cat "$R/infra/compose/.env")
@@ -76,13 +78,45 @@ ping -n 26 127.0.0.1 >nul'
   roda -Acao parar -ComDocker; grep -q 'compose --env-file .*stop' "$T/docker-chamadas.txt" && pass "parar -ComDocker tambem para o Docker" || fail "-ComDocker nao parou o Docker"
   rm -f "$T/docker-chamadas.txt"
 
-  # 5) node antigo: recusa iniciar
+  # 5) registro antigo (so o pid): vale se o processo for mesmo um node NOSSO, mas NAO se o Windows reaproveitou
+  #    aquele pid para outro programa (defeito de 2026-10-21: o executor nunca subia porque o pid antigo caiu num alheio).
+  mkdir -p "$T/node-real"
+  if [ "$SO" = windows ]; then
+    cp /c/Windows/System32/ping.exe "$T/node-real/node.exe"
+    ND=$(powershell -NoProfile -Command "\$p = Start-Process -FilePath '$(caminho_nativo "$T/node-real/node.exe")' -ArgumentList @('-n','60','127.0.0.1') -PassThru -WindowStyle Hidden; \$p.Id" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+  else
+    cp /bin/sleep "$T/node-real/node"
+    "$T/node-real/node" 60 >/dev/null 2>&1 & ND=$!
+  fi
+  vivo "$ND" && pass "processo com nome node subiu (pid $ND)" || fail "nao consegui subir o processo chamado node (pid $ND)"
+  printf '{"executor": %s}\n' "$ND" > "$R/data/processos.json"
+  roda -Acao estado -SemDocker
+  grep -q "executor rodando (pid $ND)" "$T/saida.txt" && pass "registro antigo de um node vivo e aceito (compatibilidade)" || { fail "registro antigo de node vivo foi descartado"; grep 'executor' "$T/saida.txt" | head -3; }
+  matar "$ND"
+  if [ "$SO" = windows ]; then
+    D=$(powershell -NoProfile -Command "\$p = Start-Process -FilePath 'ping' -ArgumentList @('-n','60','127.0.0.1') -PassThru -WindowStyle Hidden; \$p.Id" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+  else
+    sleep 60 >/dev/null 2>&1 & D=$!
+  fi
+  vivo "$D" && pass "processo alheio de teste subiu (pid $D)" || fail "nao consegui subir o processo alheio"
+  printf '{"executor": %s}\n' "$D" > "$R/data/processos.json"
+  roda -Acao iniciar -SemDocker; C=$?
+  [ "$C" -eq 0 ] && pass "iniciar com registro antigo de processo alheio termina bem" || { fail "iniciar: codigo $C"; head -20 "$T/saida.txt"; }
+  grep -q 'executor iniciado' "$T/saida.txt" && pass "pid reaproveitado nao engana: o executor sobe de novo" || { fail "o executor NAO subiu (pid alheio valeu como nosso)"; grep 'executor' "$T/saida.txt" | head -3; }
+  E=$(grep -A3 '"executor"' "$R/data/processos.json" | grep -oE '"pid": *[0-9]+' | grep -oE '[0-9]+' | head -1)
+  { [ -n "$E" ] && [ "$E" != "$D" ]; } && pass "registro do executor aponta para o processo novo ($E), nao para o alheio ($D)" || fail "registro do executor errado (E=$E D=$D)"
+  roda -Acao parar -SemDocker; sleep 1
+  vivo "$D" && pass "parar NAO mata o processo alheio" || fail "parar matou o processo alheio"
+  vivo "$E" && fail "o executor novo nao foi parado" || pass "parar encerrou o executor novo"
+  matar "$D"
+
+  # 6) node antigo: recusa iniciar
   falso_script "$B" node 'if [ "$1" = "--version" ]; then echo v20.11.0; exit 0; fi
 exit 0' 'if "%~1"=="--version" (echo v20.11.0& exit /b 0)
 exit /b 0' 
   roda -Acao iniciar -SemDocker; C=$?
   [ "$C" -ne 0 ] && grep -q "Node.js 22.18" "$T/saida.txt" && pass "Node 20 e recusado com explicacao" || fail "Node antigo passou"
-  # 6) config-hermes: gera, copia para o conteiner e reinicia
+  # 7) config-hermes: gera, copia para o conteiner e reinicia
   falso_script "$B" node 'if [ "$1" = "--version" ]; then echo v22.22.0; exit 0; fi
 echo "timezone: x"' 'if "%~1"=="--version" (echo v22.22.0& exit /b 0)
 echo timezone: x' 

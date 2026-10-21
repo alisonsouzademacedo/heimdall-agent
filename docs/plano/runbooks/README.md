@@ -16,6 +16,15 @@
 | Login do ChatGPT (retorno local) | 1455 | só durante o login; fixa |
 | Tela de onboarding do Heimdall | a definir | só local |
 
+## Onde ficam os dados reais (fora do git; nunca em commit, chat ou relatório)
+Tudo o que o Heimdall puxa do WhatsApp vive em `data/` na raiz do projeto (o `.gitignore` ignora a pasta inteira):
+- `data/acervo.sqlite` — o banco completo (conversas, mensagens/texto, contatos, grupos, fila, histórico antigo, lista de esquecimento). Em modo WAL: para copiar com a máquina ligada leve também `acervo.sqlite-wal` e `acervo.sqlite-shm`; para cópia confiável, pare os serviços antes (`instalar\heimdall.ps1 -Acao parar`).
+- `data/midias/` — áudios e PDFs baixados (um arquivo por mídia).
+- `data/auth_info/` — credenciais da sessão do WhatsApp; não é backup útil (depois de formatar, o pareamento é refeito pelo QR).
+- `data/logs/` — registros de operação; `data/bugs/` — relatórios de erro do instalador.
+- Backup diário (quando configurado no passo "Backup" da tela, chave `backup.destino`): cópias `acervo-AAAA-MM-DD.sqlite` na pasta escolhida, com rodízio de 30 dias.
+- **Antes de formatar ou trocar de computador:** copie `data/acervo.sqlite` (+ `-wal`/`-shm`) e `data/midias/` para fora da máquina; o código e os roteiros vêm do GitHub.
+
 ## Regras comuns (cada uma tem origem verificada)
 - **R1. Publicar portas só no `127.0.0.1`** (`-p 127.0.0.1:8642:8642`). Sem isso a porta fica acessível fora da máquina (`docs/docker/engine/network/port-publishing.md`); no Linux, portas publicadas **ignoram as regras do ufw/firewalld** (`docs/docker/engine/install/ubuntu.md`, "Firewall limitations").
 - **R2. Bancos em volumes nomeados do Docker**, não em pastas do computador montadas. No Docker Desktop (Windows e Mac) pastas montadas atravessam uma máquina virtual (virtiofs, 9p) e o modo WAL do SQLite pode corromper com escritores simultâneos (`docs/hermes-agent/user-guide/docker.md`, "Filesystem requirements for state.db"). Vale também para o **nosso** `acervo.sqlite`.

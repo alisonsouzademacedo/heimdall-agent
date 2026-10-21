@@ -24,6 +24,7 @@ A detecção do sistema nos **testes** é separada: `tests/lib/so.sh` define `SO
 | `tests/instalar/check_ambiente_windows.sh`, `check_assinatura.sh` | sim | parte Windows pulada | assinatura digital só existe no Windows |
 | `apps/*` (`npm test`) | sim | sim | sem dependência de sistema |
 | `tests/infra/smoke_*.sh` | sim (**[não verificado]** todos) | sim (rodados na nuvem) | Docker real, pesados, manuais |
+| `tests/navegadores/check_navegadores.sh` (tela) | sim (Chrome instalado; `PLAYWRIGHT_MODULE` apontado à mão) | só onde houver Playwright + navegador; senão `[NAO EXECUTADO]` | `REQUIRE_NAVEGADOR=1` faz a falta contar como falha |
 
 Rodar: `sh tests/run-all.sh` (tudo), ou um conjunto: `REQUIRE_PWSH=1 sh tests/instalar/check_launcher.sh` (`REQUIRE_PWSH=1` faz a falta do PowerShell 7 contar como falha). **PowerShell 7 no Windows:** `winget install --id Microsoft.PowerShell` (instalado nesta máquina em 2026-10-20, versão 7.6.7).
 
@@ -57,3 +58,4 @@ Todos só valem com `HEIMDALL_TESTE=1` (exceto onde indicado) e existem para o t
 - Git Bash converte `/app/...` em `C:/Program Files/Git/app/...` nos argumentos de `docker run`. Nos smokes use `drun` e `hpath` de `tests/infra/lib_docker.sh` (nunca `docker run` solto; o `check_infra.sh` confere).
 - `$?` depois de um pipe é do último comando do pipe (era o `tr`, não o programa testado).
 - O comando `python3` no Windows é o atalho falso da Loja (`LICOES.md`, 2026-10-19).
+- Teste de navegador (`tests/navegadores/tela.mjs`): o predicado de `waitForFunction` tem de ser **função**, nunca texto — com texto os relógios da página PARAM durante a espera (medido: 0 ticks de 1 s e 0 chamadas de rede em 12 s) e o teste falha mesmo com a tela certa (`LICOES.md`, 2026-10-21).

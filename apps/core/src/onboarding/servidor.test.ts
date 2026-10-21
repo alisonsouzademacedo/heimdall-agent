@@ -475,7 +475,7 @@ test('/api/historico-antigo: mostra a trava e o ritmo; liberar exige confirmacao
     assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', POST('hm=' + 'a'.repeat(64)), '{"liberar":true,"confirmar":true}')).status, 401);
     const h = POST(await entrar(c));
     const g = JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto);
-    assert.deepEqual({ l: g.config.liberado, r: g.config.ritmoSegundos >= 15, c: g.resumo.conversas }, { l: false, r: true, c: 0 });
+    assert.deepEqual({ l: g.config.liberado, r: g.config.ritmoSegundos >= 15, e: g.config.esperaRespostaSegundos, c: g.resumo.conversas }, { l: false, r: true, e: 45, c: 0 });
     assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":true}')).status, 400, 'sem confirmar nao libera');
     assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":true,"confirmar":true,"ritmoSegundos":2}')).status, 400, 'ritmo agressivo demais e recusado');
     assert.equal((await req(c, 'POST', '/api/historico-antigo/liberar', h, '{"liberar":true,"confirmar":true,"ritmoSegundos":60}')).status, 200);

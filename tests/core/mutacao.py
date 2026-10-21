@@ -137,6 +137,7 @@ MUTACOES = [
     ("src/cadastro.ts", "if (n.length === 9) {", "if (false) {", "cadastro: celular de 9 digitos gera variante sem 9"),
     ("src/modelo-teste.ts", "if (lerTesteDoModelo(db).estado !== 'pedido') return false;", "", "modelo-teste: executarTeste so age se ha pedido"),
     ("src/modelo-teste.ts", "if (t.estado === 'pedido' && t.pedidoEm !== null && agora - t.pedidoEm < PEDIDO_VALE_MS) return false;", "", "modelo-teste: pedido recente nao empilha"),
+    ("src/onboarding/servidor.ts", "esperaRespostaSegundos: Math.round(c.esperaRespostaMs / 1000),", "esperaRespostaSegundos: 0,", "tela: o tempo de espera por resposta chega ao cartao para a estimativa"),
 ]
 
 falhas = 0

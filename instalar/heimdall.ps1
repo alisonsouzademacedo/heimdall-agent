@@ -29,17 +29,49 @@ function Ok($t) { Write-Host "  [OK]     $t" -ForegroundColor Green }
 function Aviso($t) { Write-Host "  [ATENCAO] $t" -ForegroundColor Yellow }
 function Pausa { if (-not $SemPausa) { Read-Host 'Pressione ENTER para fechar' | Out-Null } }
 
+# O registro guarda o pid E a hora de inicio do processo. Um pid sozinho pode ser reaproveitado pelo Windows depois de
+# reiniciar: o launcher diria "ja esta rodando" para o programa de outra pessoa e o nosso nunca subiria (LICOES.md, 2026-10-21).
 function LePids {
   if (-not (Test-Path $arquivoPids)) { return @{} }
   $mapa = @{}
-  try { $o = Get-Content -Raw -Path $arquivoPids | ConvertFrom-Json; foreach ($p in $o.PSObject.Properties) { if ($null -ne $p.Value -and [int]$p.Value -gt 0) { $mapa[$p.Name] = [int]$p.Value } } } catch { }
+  try {
+    $o = Get-Content -Raw -Path $arquivoPids | ConvertFrom-Json
+    foreach ($p in $o.PSObject.Properties) {
+      if ($null -eq $p.Value) { continue }
+      $id = 0; $inicio = [long]0
+      if ($null -ne $p.Value.pid) {
+        $id = [int]$p.Value.pid
+        if ($null -ne $p.Value.inicio) { [long]::TryParse([string]$p.Value.inicio, [ref]$inicio) | Out-Null }
+      } else {
+        [int]::TryParse([string]$p.Value, [ref]$id) | Out-Null
+      }
+      if ($id -le 0) { continue }
+      if ($inicio -le 0) {
+        # Registro antigo (so o pid): so vale se o processo vivo for um node; a hora de inicio e anotada agora.
+        try { $pr = Get-Process -Id $id -ErrorAction Stop; if ($pr.ProcessName -match '^node') { $inicio = $pr.StartTime.Ticks } else { continue } } catch { continue }
+      }
+      $mapa[$p.Name] = @{ pid = $id; inicio = $inicio }
+    }
+  } catch { }
   return $mapa
 }
 function GravaPids($mapa) {
   New-Item -ItemType Directory -Force -Path $dados | Out-Null
-  [System.IO.File]::WriteAllText($arquivoPids, ($mapa | ConvertTo-Json), (New-Object System.Text.UTF8Encoding($false)))
+  [System.IO.File]::WriteAllText($arquivoPids, ($mapa | ConvertTo-Json -Depth 5), (New-Object System.Text.UTF8Encoding($false)))
 }
-function Vivo([int]$id) { if ($id -le 0) { return $false }; try { return ($null -ne (Get-Process -Id $id -ErrorAction Stop)) } catch { return $false } }
+# Vivo: o processo existe E e o MESMO que registramos (mesma hora de inicio). Sem isso, pid reaproveitado passa por nosso.
+# Registro sem hora (formato antigo) so vale se o processo vivo for um node -- nunca assume processo alheio.
+function Vivo($reg) {
+  if ($null -eq $reg) { return $false }
+  $id = 0; $inicio = [long]0
+  if ($null -ne $reg.pid) { $id = [int]$reg.pid; if ($null -ne $reg.inicio) { [long]::TryParse([string]$reg.inicio, [ref]$inicio) | Out-Null } } else { [int]::TryParse([string]$reg, [ref]$id) | Out-Null }
+  if ($id -le 0) { return $false }
+  try {
+    $pr = Get-Process -Id $id -ErrorAction Stop
+    if ($inicio -gt 0) { return ($pr.StartTime.Ticks -eq $inicio) }
+    return ($pr.ProcessName -match '^node')
+  } catch { return $false }
+}
 
 function VersaoDoNodeServe {
   $s = ''
@@ -100,7 +132,7 @@ function Iniciar {
   New-Item -ItemType Directory -Force -Path $pastaLogs | Out-Null
   foreach ($p in $processos) {
     $n = $p.nome
-    if ($pids.ContainsKey($n) -and (Vivo $pids[$n])) { Ok "$n ja esta rodando (pid $($pids[$n]))"; continue }
+    if ($pids.ContainsKey($n) -and (Vivo $pids[$n])) { Ok "$n ja esta rodando (pid $($pids[$n].pid))"; continue }
     if ($p.pasta -and -not (Test-Path (Join-Path $raiz ($p.pasta + '\node_modules')))) {
       if ($SomenteMostrar) { Plano "npm ci em $($p.pasta) (dependencias com versao fixa)" }
       else { Info "instalando as dependencias de $($p.pasta) (npm ci)..."; Push-Location (Join-Path $raiz $p.pasta); & npm ci --no-audit --no-fund 2>&1 | ForEach-Object { Info $_ }; Pop-Location }
@@ -110,10 +142,12 @@ function Iniciar {
     $janela = @{}; if ($ehWindows) { $janela.WindowStyle = 'Hidden' } # so o Windows tem janela para esconder
     $proc = Start-Process -FilePath 'node' -ArgumentList @($p.script) -WorkingDirectory $raiz -RedirectStandardOutput $saida -RedirectStandardError $erro -PassThru @janela
     if ($null -eq $proc -or -not $proc.Id) { Aviso "$n nao iniciou (veja data\logs\$n.erro.log)"; continue }
-    $pids[$n] = $proc.Id
+    $inicio = [long]0; try { $inicio = $proc.StartTime.Ticks } catch { }
+    $pids[$n] = @{ pid = $proc.Id; inicio = $inicio }
     GravaPids $pids
     Ok "$n iniciado (pid $($proc.Id))"
   }
+  if (-not $SomenteMostrar) { GravaPids $pids } # grava tambem os registros antigos que ganharam a hora de inicio
   if ($SomenteMostrar) { return }
   # A tela imprime o link com o codigo de uso unico; mostra aqui para o caso de o navegador nao abrir sozinho.
   $link = $null
@@ -131,8 +165,9 @@ function Parar {
   foreach ($p in $processos) {
     $n = $p.nome
     if (-not $pids.ContainsKey($n)) { Info "${n}: nao estava registrado"; continue }
-    if ($SomenteMostrar) { Plano "pararia $n (pid $($pids[$n]))"; continue }
-    if (Vivo $pids[$n]) { try { Stop-Process -Id $pids[$n] -Force -ErrorAction Stop; Ok "$n parado" } catch { Aviso "$n nao parou: $($_.Exception.Message)" } } else { Info "$n ja estava parado" }
+    $id = $pids[$n].pid
+    if ($SomenteMostrar) { Plano "pararia $n (pid $id)"; continue }
+    if (Vivo $pids[$n]) { try { Stop-Process -Id $id -Force -ErrorAction Stop; Ok "$n parado" } catch { Aviso "$n nao parou: $($_.Exception.Message)" } } else { Info "$n ja estava parado" }
     $pids.Remove($n)
   }
   if (-not $SomenteMostrar) { GravaPids $pids }
@@ -145,7 +180,7 @@ function Estado {
   $pids = LePids
   foreach ($p in $processos) {
     $n = $p.nome
-    if ($pids.ContainsKey($n) -and (Vivo $pids[$n])) { Ok "$n rodando (pid $($pids[$n]))" } else { Aviso "$n parado" }
+    if ($pids.ContainsKey($n) -and (Vivo $pids[$n])) { Ok "$n rodando (pid $($pids[$n].pid))" } else { Aviso "$n parado" }
     $erro = Join-Path $pastaLogs "$n.erro.log"
     if (Test-Path $erro) { $f = Get-Content -Path $erro -Tail 3 -ErrorAction SilentlyContinue | Where-Object { $_ -notmatch 'ExperimentalWarning|trace-warnings' }; foreach ($l in $f) { Info ("   erro.log: " + $l) } }
   }
