@@ -8,7 +8,5 @@ data/
 *.sqlite-*
 *.db
 auth_info*/
-preflight-resultado.json
-preflight-relatorio.txt
-strix_runs/
-instalar-relatorio.txt
+__pycache__/
+*.pyc

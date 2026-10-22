@@ -1,6 +1,6 @@
 # Heimdall — quadro de planejamento
 
-Última atualização: 2026-10-18. Fase atual: **planejamento** (nada instalado, nenhum código escrito).
+Última atualização: 2026-10-22. Fase atual: **fase 2 — conclusão do produto e preparação da VPS** (`fase-2-execucao.md`; decisão D31: teste direto na VPS).
 
 ## Objetivo
 Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; resto ignorado), acumula memória, aprende e entrega relatório diário e semanal (.md) no self-chat. Só conversa com o dono, só no self-chat. Fase 2: CRM Kanban (cadastrar, mover, ganho e perda).
@@ -15,7 +15,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D5 | Ponte listener ↔ Hermes: **opção Q** (API Server do Hermes; o listener envia a resposta, travado no próprio JID) | usuário |
 | D6 | Hermes é o centro; memória de recuperação: **Hindsight** (a confirmar no spike) | usuário + análise |
 | D7 | LLM: **ChatGPT Plus para tudo** (texto, áudio, documentos); sem API paga | usuário |
-| D8 | Onde roda (local ou VPS): ~~decidir depois~~ **resolvida pela D30** (Windows primeiro, VPS depois da validação) | usuário |
+| D8 | Onde roda (local ou VPS): ~~decidir depois~~ **resolvida pela D30** (Windows primeiro, VPS depois da validação); **revista pela D31** (teste direto na VPS) | usuário |
 | D9 | Dados de clientes nunca vão para o git (`data/` ignorado) | análise |
 | D11 | PDF: **markitdown** (só PDF, transcrições de reuniões do Google Meet); outros documentos e imagens ficam de fora por enquanto; exemplos de PDF só na configuração | usuário |
 | D13 | O PDF vem normalmente do **Pedro** (gestor interno); papéis dos contatos aprendidos no início, com cadastro explícito prioritário | usuário |
@@ -36,6 +36,7 @@ Agente que só escuta o WhatsApp comercial do SDR (texto, áudio, PDF → .md; r
 | D28 | Regra para a IA instaladora: **cada erro resolvido gera teste de regressão, atualização das instruções e registro em `LICOES.md`**; só acrescenta, nunca enfraquece as regras inegociáveis | usuário |
 | D29 | Personalidade: **sem exemplos do usuário**; o Heimdall aprende o jeito de falar dele ao processar o conteúdo e cria a própria personalidade (proposta com aprovação no self-chat, a confirmar) | usuário |
 | D30 | **Onde roda:** primeiro **no Windows do dono**, até validar (relatório diário e semanal gerados, tudo o que o Baileys puxar absorvido, aprendizado em andamento); **só então migra para a VPS** já contextualizado, levando acervo, memória e aprendizado (plano em `fase-2-migracao-para-vps.md`). Resolve a D8; a D23 continua valendo até a migração | usuário (2026-10-20) |
+| D31 | **Testar direto na VPS (Linux), antes de validar na máquina local** (2026-10-22): o programa dos 6 itens (limpeza Linux-only, skill de design, documentação, tela de onboarding, ponte completa e facilitador) é concluído com testes e CI verdes; o dono sobe para a VPS e a intervenção humana fica restrita a QR, login do ChatGPT, credenciais do CRM e decisões de acesso. O Omarchy na máquina local fica como ambiente de desenvolvimento. Revê a D30 (que previa validar primeiro no Windows) e mantém o espírito da D23: **sem exposição pública** — acesso à tela por túnel SSH ou Tailscale, a definir. Plano: `fase-2-execucao.md` | usuário (2026-10-22) |
 | D12 | O Heimdall correlaciona a transcrição ao cliente pelo compromisso combinado no WhatsApp; **compromissos** viram entidade própria; pergunta no self-chat quando a confiança for baixa | usuário + análise |
 | D10 | Áudio: **Whisper local via `faster-whisper`**; modelo escolhido por teste de capacidade da máquina; poucos áudios, até 3 min cada | usuário |
 

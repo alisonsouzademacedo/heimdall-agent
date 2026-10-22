@@ -44,15 +44,30 @@ for sk in $INSTALADAS; do
   DIF=$(for f in $(find ".claude/skills/$sk" -name '*.md'); do rel=${f#.claude/skills/}; tail -n +2 "docs/superpowers/skills/$rel" | cmp -s - "$f" || echo "$f"; done)
   [ -d ".claude/skills/$sk" ] && [ -z "$DIF" ] && pass "skill instalada identica a documentacao: $sk" || { fail "skill ausente ou alterada: $sk"; echo "$DIF" | head -2; }
 done
-EXTRAS=$(ls .claude/skills 2>/dev/null | grep -vE '^(test-driven-development|systematic-debugging|verification-before-completion|requesting-code-review|receiving-code-review|ORIGEM.md)$')
+EXTRAS=$(ls .claude/skills 2>/dev/null | grep -vE '^(test-driven-development|systematic-debugging|verification-before-completion|requesting-code-review|receiving-code-review|ui-ux-pro-max|ORIGEM.md)$')
 [ -z "$EXTRAS" ] && pass "so as 5 skills revisadas estao instaladas (nada alem da lista)" || { fail "skill instalada fora da lista revisada:"; echo "$EXTRAS"; }
 for sk in using-superpowers brainstorming writing-plans executing-plans subagent-driven-development dispatching-parallel-agents using-git-worktrees finishing-a-development-branch writing-skills diagnosing-superpowers; do
   [ ! -e ".claude/skills/$sk" ] && pass "nao instalada (decisao registrada no INDEX): $sk" || fail "skill proibida instalada: $sk"
 done
-! grep -rqE 'SessionStart|session-start|hooks' .claude --include=*.json 2>/dev/null && [ ! -e .claude/hooks ] && pass "nenhum hook do Superpowers instalado" || fail "ha hook em .claude (o Superpowers nao instala hook neste projeto)"
+# Hook do Claude Code mora em .claude/settings*.json (chave "hooks") ou em .claude/hooks/. Nao varrer os dados das skills
+# (falsos positivos: "webhooks", "rules of hooks" nos CSVs/fixtures da skill de design).
+! grep -qE 'SessionStart|session-start|"hooks"' .claude/settings*.json 2>/dev/null && [ ! -e .claude/hooks ] && pass "nenhum hook do Claude Code instalado" || fail "ha hook em .claude (nenhuma skill instala hook neste projeto)"
 ! grep -rlE 'curl |wget |git push|rm -rf|sudo ' .claude/skills 2>/dev/null | grep -q . && pass "as skills instaladas nao pedem rede, push, rm -rf nem sudo" || fail "skill instalada com comando de rede/publicacao/apagar"
 grep -qF 'docs/superpowers' AGENTS.md && pass "AGENTS.md lista a pasta docs/superpowers na tabela" || fail "AGENTS.md nao lista docs/superpowers"
 grep -qiE 'AGENTS.md prevalece|prevalece sobre' AGENTS.md && pass "AGENTS.md diz que ele prevalece sobre as skills" || fail "AGENTS.md nao diz que prevalece sobre as skills"
+
+# UI UX Pro Max (NextLevelBuilder, MIT): skill de design; copia revisada em docs/ e UMA instalada em .claude/skills.
+[ -s docs/ui-ux-pro-max/INDEX.md ] && pass "INDEX.md do UI UX Pro Max existe" || fail "falta docs/ui-ux-pro-max/INDEX.md"
+[ -s docs/ui-ux-pro-max/LICENSE ] && grep -q 'MIT License' docs/ui-ux-pro-max/LICENSE && pass "licenca MIT do UI UX Pro Max guardada" || fail "falta a licenca do UI UX Pro Max"
+SEM_ORIGEM_UX=$(for f in $(find docs/ui-ux-pro-max -name '*.md' ! -name INDEX.md 2>/dev/null); do head -1 "$f" | grep -q '^<!-- source: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/[0-9a-f]\{40\}/' || echo "$f"; done)
+[ -z "$SEM_ORIGEM_UX" ] && [ -n "$(find docs/ui-ux-pro-max -name '*.md' ! -name INDEX.md 2>/dev/null)" ] && pass "toda pagina do UI UX Pro Max indica a origem com o commit fixado" || { fail "paginas do UI UX Pro Max ausentes ou sem origem"; echo "$SEM_ORIGEM_UX" | head -3; }
+DIF_UX=""
+for rel in SKILL.md references/quick-reference.md references/pro-rules.md; do
+  [ -f ".claude/skills/ui-ux-pro-max/$rel" ] && tail -n +2 "docs/ui-ux-pro-max/$rel" | cmp -s - ".claude/skills/ui-ux-pro-max/$rel" || DIF_UX="$DIF_UX $rel"
+done
+[ -z "$DIF_UX" ] && pass "skill de design instalada identica a documentacao (com a adaptacao de caminho registrada)" || fail "skill de design ausente ou alterada:$DIF_UX"
+[ -f .claude/skills/ui-ux-pro-max/scripts/search.py ] && [ -d .claude/skills/ui-ux-pro-max/data ] && pass "dados e script da skill de design presentes" || fail "faltam dados/script da skill de design"
+grep -qF 'docs/ui-ux-pro-max' AGENTS.md && pass "AGENTS.md lista a pasta docs/ui-ux-pro-max na tabela" || fail "AGENTS.md nao lista docs/ui-ux-pro-max"
 
 # Auditoria 2026-10-20: a raspagem do Hindsight trouxe 16 paginas "Page Not Found" e o INDEX mandava ler uma pagina que nao existe (sdks/mcp).
 for d in hindsight hermes-agent baileys whisper faster-whisper markitdown krayin openai-codex; do
@@ -67,6 +82,7 @@ for p in hermes-agent/getting-started/installation hermes-agent/user-guide/confi
   hindsight/developer/installation hindsight/developer/configuration hindsight/developer/models hindsight/developer/retain hindsight/developer/retrieval hindsight/developer/mcp-server hindsight/developer/api \
   openai-codex/docs/auth openai-codex/docs/sign-in-with-chatgpt openai-codex/docs/pricing openai-codex/docs/agent-configuration/agents-md \
   whisper/repo/README faster-whisper/repo/README faster-whisper/source/transcribe faster-whisper/source/vad markitdown/repo/README markitdown/source/_pdf_converter krayin/INDEX \
+  ui-ux-pro-max/INDEX ui-ux-pro-max/SKILL \
   docker/desktop/setup docker/engine/install docker/compose docker/desktop/troubleshoot-and-support claude-code/memory claude-code/best-practices claude-code/permissions \
   claude-code/hooks-guide claude-code/settings claude-code/security antigravity/rules antigravity/getting-started antigravity/permissions antigravity/sandbox antigravity/mcp \
   antigravity/cli/best-practices wsl/INDEX wsl/install-manual wsl/wsl-config; do

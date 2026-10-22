@@ -8,7 +8,8 @@ fail() { echo "  [FALHOU] $1"; FAIL=$((FAIL+1)); }
 
 # 1. Nenhum arquivo de dados, banco, login ou ambiente versionado
 # .env.example e um modelo com valor de mentira (confirmado abaixo); qualquer outro .env e proibido
-BAD=$(git ls-files | grep -v '^\.env\.example$' | grep -E '(^|/)data/|\.sqlite|\.db$|auth_info|(^|/)\.env($|\.)|preflight-(resultado|relatorio)' )
+# A pasta data/ da skill de design e um catalogo estatico (CSV), nao dado de cliente: exceto ela, data/ segue proibida.
+BAD=$(git ls-files | grep -v '^\.env\.example$' | grep -v '^\.claude/skills/ui-ux-pro-max/data/' | grep -E '(^|/)data/|\.sqlite|\.db$|auth_info|(^|/)\.env($|\.)|preflight-(resultado|relatorio)' )
 if [ -z "$BAD" ]; then pass "nenhum dado/segredo versionado"; else fail "arquivo proibido versionado"; echo "$BAD" | head -5; fi
 
 # 2. .gitignore cobre os itens essenciais
@@ -16,13 +17,13 @@ for p in '.env' 'data/' '*.sqlite' '*.sqlite3' '*.sqlite-*' '*.db' 'auth_info*/'
   if grep -qxF "$p" .gitignore; then pass ".gitignore tem $p"; else fail ".gitignore sem $p"; fi
 done
 
-# 2b. Nenhum par de arquivos que so difere por maiusculas/minusculas (no Windows os dois viram UM arquivo e um sobrescreve o outro; LICOES.md, 2026-10-19)
+# 2b. Nenhum par de arquivos que so difere por maiusculas/minusculas (em sistema de arquivos insensivel a caixa os dois viram UM arquivo e um sobrescreve o outro; LICOES.md, 2026-10-19)
 DUP=$(git ls-files | awk '{ k = tolower($0); c[k]++; n[k] = n[k] " " $0 } END { for (k in c) if (c[k] > 1) print n[k] }')
-if [ -z "$DUP" ]; then pass "nenhum nome de arquivo repetido so por maiuscula/minuscula"; else fail "nomes que colidem no Windows:$DUP"; fi
+if [ -z "$DUP" ]; then pass "nenhum nome de arquivo repetido so por maiuscula/minuscula"; else fail "nomes que colidem sem diferenca de maiusculas:$DUP"; fi
 
-# 2c. Fim de linha fixado (.gitattributes): .sh sempre LF (CRLF quebra o shell) e .cmd sempre CRLF; com core.autocrlf=true do Windows
-# o Git reescreveria os .sh como CRLF (LICOES.md, 2026-10-19). git check-attr le o .gitattributes de verdade.
-for par in 'tests/run-all.sh:lf' 'iniciar.cmd:crlf'; do
+# 2c. Fim de linha fixado (.gitattributes): .sh sempre LF (CRLF quebra o shell em qualquer sistema; LICOES.md, 2026-10-19).
+# git check-attr le o .gitattributes de verdade.
+for par in 'tests/run-all.sh:lf'; do
   arq="${par%%:*}"; esperado="${par##*:}"
   atual=$(git check-attr eol -- "$arq" | sed 's/.*: //')
   if [ "$atual" = "$esperado" ]; then pass ".gitattributes fixa eol=$esperado em $arq"; else fail ".gitattributes nao fixa eol=$esperado em $arq (esta: $atual)"; fi

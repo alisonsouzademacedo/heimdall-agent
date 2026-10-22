@@ -1,5 +1,7 @@
 # 10. Testes e caminhos por sistema operacional (Windows e Linux)
 
+> **Atualização 2026-10-22 (dono):** o projeto virou **Linux-only**. A camada Windows (instalador, `iniciar.cmd`, `tests/instalar/`, `tests/lib/so.sh`, `preflight.ps1`) foi removida; este roteiro fica como **histórico** dos dois sistemas até a revisão completa da documentação (item 3 do programa, `../fase-2-execucao.md`). O alvo agora é Linux (máquina do dono e VPS).
+
 Este roteiro diz **o que o Heimdall faz em cada sistema**, **quais testes rodam onde** e **como escrever um teste que roda nos dois**. Origem: decisão do dono em 2026-10-20 ("criar um ambiente de testes e soluções para ambos os sistemas, tudo documentado e com testes de regressão") e `LICOES.md` (2026-10-20, "programas falsos"). O que não foi executado está marcado **[não verificado]**.
 
 ## 1. Como o Heimdall escolhe o caminho por sistema

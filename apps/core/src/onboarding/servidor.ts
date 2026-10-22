@@ -110,7 +110,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         const dado = url.searchParams.get('codigo') ?? '';
         if (erros >= MAX_ERROS_CODIGO || codigoUsado || !iguais(dado, op.codigo)) {
           erros++;
-          return responder(res, 403, 'text/plain; charset=utf-8', 'Codigo invalido ou ja usado. Feche esta janela e rode iniciar.cmd de novo.');
+          return responder(res, 403, 'text/plain; charset=utf-8', 'Codigo invalido ou ja usado. Feche esta janela e abra o Heimdall de novo.');
         }
         codigoUsado = true;
         const token = randomBytes(32).toString('hex');

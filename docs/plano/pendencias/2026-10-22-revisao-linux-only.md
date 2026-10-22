@@ -1,6 +1,6 @@
 # Pendência: revisão do repositório para Linux único (limpeza da camada Windows e gordura morta)
 
-**Estado:** proposta registrada em 2026-10-22. Decisão do dono, por mensagem: "não vou mais usar o Windows… vamos deixar só uma camada de testes voltados para o Linux… é preciso que revise os testes e veja o que é válido, o que é obsoleto". **Nada foi alterado nem deletado.** Aguarda OK do dono; recomendação: executar **na máquina Linux, depois da migração**, em passos pequenos com a suíte completa rodando entre eles.
+**Estado:** **executada em 2026-10-22** (o dono pediu para começar na hora, sem esperar a migração). A camada Windows foi removida e o CI ficou só com o job Ubuntu; a suíte completa foi rodada nesta máquina. O que ainda falta está na seção "Execução" abaixo e no programa `../fase-2-execucao.md`.
 
 ## Inventário (leitura real do repositório, 2026-10-22)
 - Testes: **45 arquivos** em `tests/`. Por pasta: instalar 11, infra 7, carga 7, seguranca 3, repo 2, navegadores 2, preflight 2, core 2, lib 2; +1 em cada: run-all, trabalhos, prompts, listener, docs, ponte, memoria.
@@ -24,6 +24,14 @@
 `tests/core` (inclui o teste de mutação), `tests/carga`, `tests/listener`, `tests/memoria`, `tests/ponte`, `tests/trabalhos`, `tests/prompts`, `tests/seguranca`, `tests/navegadores`, `tests/infra`, `tests/docs`, `tests/run-all.sh`; `docs/plano/LICOES.md`; toda a biblioteca `docs/`.
 
 **Regra:** um teste só morre junto com a **função** que ele protege; nenhum teste de regra viva é apagado.
+
+## Execução em 2026-10-22 (o que foi feito)
+
+- **Produção Windows removida:** `iniciar.cmd`, `instalar/` inteiro (instalador, `heimdall.ps1`, `docker-fora.cmd`, `docker-reparo.ps1`, `fora-do-pacote.ps1`, `assinatura.ps1`, `PROMPT-IA.txt`, `README.md` do instalador) e `spike/preflight/preflight.ps1`.
+- **Testes Windows removidos junto com a função** (26 arquivos no total): `tests/instalar/` (11), `tests/preflight/` (2), `tests/lib/` (2).
+- **Ajustes:** `.github/workflows/testes.yml` (só job Ubuntu, `REQUIRE_NODE=1`), `tests/repo/check_ci.sh` (reescrito para Linux-only, com trava contra a volta da camada Windows), `tests/repo/check_higiene.sh` (par de fim de linha só do `.sh`), `.gitattributes`, `.gitignore`, `README.md`, `AGENTS.md`, `apps/core/src/onboarding/servidor.ts` (mensagem que citava `iniciar.cmd`), `docs/plano/PROMPT-CONTINUIDADE-LINUX.md` e nota de histórico no runbook 10.
+- **O que fica em aberto:** supervisor/ligador Linux (equivalente ao `heimdall.ps1`, com pid + hora de início), revisão dos runbooks 01/08/09/10 e validação final da suíte em Linux/VPS.
+- **Decisão do dono (2026-10-22, por mensagem):** remover também `spike/preflight/` e `tests/seguranca/` (preparação do Strix). Feito nesta mesma limpeza; o `preflight` não é mais usado pela tela e o Strix não foi adotado.
 
 ## Ordem proposta (um commit pequeno por passo; suíte completa depois de cada um)
 1. Linha de base na máquina Linux (`sh tests/run-all.sh`) e identificação da falha do Ubuntu no CI (`pendencias/2026-10-21-ci-vermelho-no-github.md`). Se a falha estiver nas suítes que vão morrer (instalar/launcher/preflight), a própria limpeza a resolve.
