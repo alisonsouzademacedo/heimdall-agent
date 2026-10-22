@@ -26,3 +26,6 @@ Rodadas `#78` e `#79`–`#89` (`88bea7d`, `82fa46a`, `0bd4030`…): `conclusion 
 ## Referências
 - `.github/workflows/testes.yml`; `tests/run-all.sh`; `tests/instalar/check_instalar.sh`; `tests/lib/so.sh`.
 - Registro da descoberta: `docs/plano/PROGRESS.md` (entrada de 2026-10-21, noite 2).
+
+## Atualização (2026-10-22)
+As rodadas `#90`–`#94` (commits `2dd3bf6`, `346fe0e`, `4a3fa08` ×2 e `dfc9daf` na `main`) concluíram todas em **failure**, com exatamente os mesmos passos: ubuntu `Rodar todos os testes`; windows 22/24 `Instalador - comportamento no Windows (falsos .cmd)`. O vermelho não é intermitente nem deste trabalho — é sistemático e anterior (verde mais recente: `#77`, 20/10). A limpeza Linux-only proposta em `pendencias/2026-10-22-revisao-linux-only.md` faz os passos do job Windows sumirem junto com o job; o lado Ubuntu precisa ser reproduzido no Linux (`sh tests/run-all.sh`) e corrigido com teste que falhava primeiro.
