@@ -39,8 +39,16 @@ test('retrato (snapshot): pacote sintetico gera exatamente o texto esperado', ()
 test('secoes vazias nao aparecem e a ordem fixa e respeitada', () => {
   const md = renderizarDiario(pacoteBase({ potencial: [item('P1')], aguardando: [item('A1')], pedro: ['x'] }));
   assert.deepEqual(secoesDoTexto(md), ['Aguardando você', 'Potencial', 'Pedro']);
-  const todas = renderizarDiario(pacoteBase({ aguardando: [item('A1')], hoje: [item('F1')], followups: [item('F2')], potencial: [item('P1')], reunioes: ['r'], pedro: ['p'], novos: ['n'], aprendizado: ['a'] }));
+  const todas = renderizarDiario(pacoteBase({ aguardando: [item('A1')], hoje: [item('F1')], followups: [item('F2')], potencial: [item('P1')], reunioes: ['r'], pedro: ['p'], novos: ['n'], crm: [item('C1')], aprendizado: ['a'] }));
   assert.deepEqual(secoesDoTexto(todas), ORDEM_SECOES);
+});
+
+test('secao do CRM mostra a proposta, o motivo e a frase de aprovacao no self-chat', () => {
+  const md = renderizarDiario(pacoteBase({ crm: [{ codigo: 'C1', cliente: 'Alfa', texto: 'criar lead em "Contato iniciado"', motivo: 'cliente respondeu e ainda nao tem lead' }], aprendizado: ['Dúvida curta'] }));
+  assert.match(md, /## CRM/);
+  assert.match(md, /\*\*C1\*\* Alfa/);
+  assert.match(md, /ok 1 e 3/);
+  assert.ok(secoesDoTexto(md).indexOf('CRM') < secoesDoTexto(md).indexOf('Aprendizado e dúvidas'));
 });
 
 test('"Aguardando você" e sempre a primeira secao', () => {

@@ -26,6 +26,8 @@ export interface PacoteDiario {
   reunioes: string[];
   pedro: string[];
   novos: string[];
+  /** Movimentos de CRM propostos no dia; o dono aprova no self-chat. */
+  crm?: Item[];
   aprendizado: string[];
   /** Duvidas abertas citadas em 'aprendizado' (viram respondidas quando o relatorio e entregue, para nao se repetirem). */
   duvidasIds?: number[];
@@ -61,6 +63,8 @@ function linhaItem(i: Item): string {
 
 // Ordem fixa das secoes e rodape de numeros (prompts/relatorios/comum.md).
 export function renderizarDiario(p: PacoteDiario): string {
+  const crm = (p.crm ?? []).map(linhaItem);
+  if (crm.length) crm.push('Para aprovar, responda no self-chat: ok 1 e 3 (para recusar: não 2).');
   const partes = [
     `# ${p.titulo}\n\n**Resumo:** ${p.resumo}\n`,
     secao('Aguardando você', p.aguardando.map(linhaItem)),
@@ -70,6 +74,7 @@ export function renderizarDiario(p: PacoteDiario): string {
     secao('Reuniões', p.reunioes.map((r) => `- ${r}`)),
     secao('Pedro', p.pedro.map((r) => `- ${r}`)),
     secao('Novos contatos', p.novos.map((r) => `- ${r}`)),
+    secao('CRM', crm),
     secao('Aprendizado e dúvidas', p.aprendizado.map((r) => `- ${r}`)),
     p.semNovidade > 0 ? `\n+${p.semNovidade} sem novidade\n` : '',
     `\n_Ontem: ${pl(p.numeros.mensagens, 'mensagem', 'mensagens')}, ${pl(p.numeros.audios, 'áudio', 'áudios')}, ${pl(p.numeros.pdfs, 'PDF', 'PDFs')}, ${pl(p.numeros.falhas, 'falha', 'falhas')}._\n`
@@ -175,7 +180,7 @@ export function montarPacoteDiario(db: Banco, agora: number, cfg: ConfigAcompanh
 }
 
 // Verificacoes usadas pelos testes e, depois, pelo gerador: ordem das secoes e codigos unicos.
-export const ORDEM_SECOES = ['Aguardando você', 'Hoje / atrasados', 'Follow-ups devidos', 'Potencial', 'Reuniões', 'Pedro', 'Novos contatos', 'Aprendizado e dúvidas'];
+export const ORDEM_SECOES = ['Aguardando você', 'Hoje / atrasados', 'Follow-ups devidos', 'Potencial', 'Reuniões', 'Pedro', 'Novos contatos', 'CRM', 'Aprendizado e dúvidas'];
 
 export function secoesDoTexto(md: string): string[] {
   return [...md.matchAll(/^## (.+)$/gm)].map((m) => m[1]!);

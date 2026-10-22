@@ -16,7 +16,7 @@ test('banco novo sobe ate a ultima versao com todas as tabelas', () => {
   assert.equal(versaoAtual(db), 0);
   assert.equal(migrar(db), MIGRACOES.at(-1)!.versao);
   const t = tabelas(db);
-  for (const n of [...TABELAS_V1, 'onboarding_etapas', 'configuracao', 'relatorio_itens', 'casos_criterio', 'propostas_criterio', 'criterios_versoes', 'schema_versao']) assert.ok(t.includes(n), n);
+  for (const n of [...TABELAS_V1, 'onboarding_etapas', 'configuracao', 'relatorio_itens', 'casos_criterio', 'propostas_criterio', 'criterios_versoes', 'crm_leads', 'crm_propostas', 'schema_versao']) assert.ok(t.includes(n), n);
 });
 
 test('migrar duas vezes nao muda nada (idempotente)', () => {

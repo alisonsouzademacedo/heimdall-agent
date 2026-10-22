@@ -3,7 +3,7 @@
 Este arquivo vale para qualquer IA (Claude Code, Codex, Antigravity ou outra). Leia **inteiro** antes de agir. O dono do projeto **não é programador**: explique em português simples, diga o que fez, por que, e como ele confere.
 
 ## O projeto
-Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D30, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
+Heimdall: agente que **só escuta** o WhatsApp comercial de um SDR, absorve texto, áudio e PDF, e entrega relatórios no self-chat. Centro: Hermes Agent. Fonte da verdade do planejamento: `docs/plano/README.md` (decisões D1 a D32, riscos, pendências). Estado atual: `docs/plano/PROGRESS.md`.
 
 ## Regras inegociáveis
 1. **O Heimdall nunca envia mensagem a ninguém além do self-chat do dono.** Nenhuma ferramenta, nenhum código e nenhuma configuração pode criar outro caminho de envio. Se uma tarefa exigir isso, pare e pergunte.

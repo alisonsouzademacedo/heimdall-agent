@@ -16,4 +16,13 @@ jobs:
         with:
           node-version: '22'
       - name: Rodar todos os testes
-        run: REQUIRE_NODE=1 sh tests/run-all.sh
+        shell: bash
+        run: |
+          set -o pipefail
+          REQUIRE_NODE=1 sh tests/run-all.sh 2>&1 | tee /tmp/heimdall-run-all.log
+      - name: Resumo da falha
+        if: failure()
+        shell: bash
+        run: |
+          RESUMO=$(grep -E '\[FALHOU\]|SOBREVIVEU|DESATUALIZADA|RESULTADO: .*falha' /tmp/heimdall-run-all.log 2>/dev/null | tail -n 12 | tr '\n' ' ' | cut -c1-900)
+          echo "::error title=Falha nos testes::${RESUMO:-veja o passo que falhou; o log completo exige login no GitHub}"

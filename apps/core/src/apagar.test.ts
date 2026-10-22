@@ -26,6 +26,8 @@ function semear(db: Banco, clienteId: number, nome: string, jid: string, criadaM
   db.prepare("INSERT INTO sinais_potencial (cliente_id, tipo, em) VALUES (?, 'perguntou_preco', 1)").run(clienteId);
   db.prepare("INSERT INTO ajustes_cliente (cliente_id, tipo, criado_em) VALUES (?, 'silenciar', 1)").run(clienteId);
   db.prepare("INSERT INTO feedback (texto, tipo, cliente_id, criado_em) VALUES ('nota', 2, ?, 1)").run(clienteId);
+  db.prepare('INSERT INTO crm_leads (cliente_id, lead_id, etapa_id, atualizado_em) VALUES (?, ?, 11, 1)').run(clienteId, 100 + clienteId);
+  db.prepare("INSERT INTO crm_propostas (dia, numero, cliente_id, lead_id, etapa_atual, etapa_destino, etapa_destino_nome, tipo, motivo, estado, criada_em) VALUES ('2026-10-21', ?, ?, ?, 11, 12, '1ª Reunião Agendada', 'mover', 'teste', 'proposta', 1)").run(clienteId, clienteId, 100 + clienteId);
 }
 
 const ALFA = '5511988887777@s.whatsapp.net';
@@ -53,7 +55,7 @@ test('etapa 2 so executa com a frase exata, no self-chat e com o codigo certo', 
   const r = confirmarApagar(db, p.frase, { selfChat: true }, AGORA + 1000, (c) => apagados.push(c));
   assert.equal(r.ok, true);
   assert.deepEqual(apagados, ['/midias/Alfa.ogg']);
-  for (const t of ['clientes', 'contatos', 'contato_jids', 'mensagens', 'midias', 'compromissos', 'sinais_potencial', 'ajustes_cliente', 'feedback']) assert.equal(contar(db, t), 0, t);
+  for (const t of ['clientes', 'contatos', 'contato_jids', 'mensagens', 'midias', 'compromissos', 'sinais_potencial', 'ajustes_cliente', 'feedback', 'crm_leads', 'crm_propostas']) assert.equal(contar(db, t), 0, t);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM conversas WHERE tipo = 'dm'").get()!.n, 0);
 });
 
@@ -119,6 +121,9 @@ test('apagar um cliente NAO toca em outro', () => {
   assert.equal(contar(db, 'midias'), 1);
   assert.equal((db.prepare('SELECT texto FROM mensagens WHERE wa_msg_id = ?').get('Beta-1') as { texto: string }).texto, 'segredo de Beta');
   assert.equal(contar(db, 'compromissos'), 1);
+  assert.equal(contar(db, 'crm_leads'), 1);
+  assert.equal(contar(db, 'crm_propostas'), 1);
+  assert.equal((db.prepare('SELECT cliente_id AS c FROM crm_leads').get() as { c: number }).c, 2);
 });
 
 test('mensagens do cliente em grupo tambem saem; mensagens dos outros no grupo ficam', () => {

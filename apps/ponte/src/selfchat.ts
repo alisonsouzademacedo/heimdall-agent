@@ -7,12 +7,35 @@ import { confirmarApagar, proporLimparMidiasAntigasSeHouver, RETENCAO_MIDIAS_DIA
 import { aplicarCorrecao, interpretarCorrecoes } from '../../core/src/aprendizado.ts';
 import { montarPacoteDiario, renderizarDiario } from '../../core/src/relatorio.ts';
 import { diaLocal } from '../../core/src/calendario.ts';
+import type { RespostaCrm } from '../../core/src/crm/fluxo.ts';
 import type { ClienteHermes } from './hermes.ts';
+import type { PortaCrm } from './crm.ts';
 
 export interface PortasSelfChat {
   hermes: Pick<ClienteHermes, 'perguntar'>;
   /** Apaga um arquivo (so usada na confirmacao de apagar; quem decide o que apagar e core/apagar.ts). */
   apagarArquivo(caminho: string): void;
+  /** Opcional: sem CRM configurado, "ok 1 e 3" segue o caminho normal (correcao/Hermes). */
+  crm?: PortaCrm | null;
+}
+
+function formatarRespostaCrm(r: RespostaCrm): string {
+  if (r.semPropostas) return 'Não há propostas de CRM abertas. O próximo relatório traz as pendentes.';
+  const recusadas = new Set(r.recusados);
+  const linhas: string[] = [];
+  for (const x of r.resultados) {
+    if (recusadas.has(x.numero)) { linhas.push(`C${x.numero}: recusada.`); continue; }
+    if (x.ok) {
+      const acao = x.tipo === 'criar' ? 'lead criado'
+        : x.tipo === 'perdido' ? 'marcado como perdido'
+          : x.tipo === 'ganho' ? 'marcado como ganho' : 'movimento aplicado';
+      linhas.push(`C${x.numero}: ${acao}.`);
+    } else {
+      linhas.push(`C${x.numero}: não consegui (${x.erro ?? 'falha ao falar com o CRM'}).`);
+    }
+  }
+  if (r.ignorados.length > 0) linhas.push(`Não encontrei no último relatório: ${r.ignorados.map((n) => `C${n}`).join(', ')}.`);
+  return linhas.join('\n') || 'Nada mudou no CRM.';
 }
 
 export const SESSAO_SELF_CHAT = 'heimdall:self-chat';
@@ -66,21 +89,36 @@ export async function processarSelfChat(db: Banco, portas: PortasSelfChat, agora
         ? `Nenhum arquivo de áudio ou PDF com mais de ${RETENCAO_MIDIAS_DIAS} dias.`
         : `Vou apagar ${p.escopo.contagens.midias} arquivo(s) de áudio/PDF com mais de ${RETENCAO_MIDIAS_DIAS} dias. O texto das mensagens e as transcrições ficam. Para confirmar (vale 10 minutos), escreva exatamente: ${p.frase}`;
     } else {
-      const dia = diaLocal(agora);
-      const correcoes = interpretarCorrecoes(texto, dia);
-      if (correcoes.length > 0) {
-        const diaRelatorio = (db.prepare('SELECT MAX(dia) AS d FROM relatorio_itens').get() as { d: string | null }).d ?? dia;
-        resposta = correcoes
-          .map((c) => {
-            const r = aplicarCorrecao(db, diaRelatorio, c, { selfChat: true }, agora);
-            return r.ok ? `${c.codigo}: registrado (${r.descricao}).` : `${c.codigo}: não encontrei esse código no último relatório.`;
-          })
-          .join('\n');
-      } else {
+      // CRM antes da conversa livre: "ok 1 e 3" nao pode virar pergunta ao Hermes. Se a mensagem nao for um comando de
+      // CRM, a porta devolve null e o fluxo normal continua.
+      let respostaCrm: string | null = null;
+      if (portas.crm) {
         try {
-          resposta = await portas.hermes.perguntar(texto, { sessao: SESSAO_SELF_CHAT, sistema: contexto(db, agora) });
+          const crm = await portas.crm.aplicar(db, texto, agora);
+          if (crm) respostaCrm = formatarRespostaCrm(crm);
         } catch {
-          continue; // Hermes fora do ar ou sem cota: tenta de novo no proximo ciclo (dentro da janela); nada e enviado agora
+          respostaCrm = 'Não consegui registrar a resposta do CRM agora. Tente de novo em instantes.';
+        }
+      }
+      if (respostaCrm !== null) {
+        resposta = respostaCrm;
+      } else {
+        const dia = diaLocal(agora);
+        const correcoes = interpretarCorrecoes(texto, dia);
+        if (correcoes.length > 0) {
+          const diaRelatorio = (db.prepare('SELECT MAX(dia) AS d FROM relatorio_itens').get() as { d: string | null }).d ?? dia;
+          resposta = correcoes
+            .map((c) => {
+              const r = aplicarCorrecao(db, diaRelatorio, c, { selfChat: true }, agora);
+              return r.ok ? `${c.codigo}: registrado (${r.descricao}).` : `${c.codigo}: não encontrei esse código no último relatório.`;
+            })
+            .join('\n');
+        } else {
+          try {
+            resposta = await portas.hermes.perguntar(texto, { sessao: SESSAO_SELF_CHAT, sistema: contexto(db, agora) });
+          } catch {
+            continue; // Hermes fora do ar ou sem cota: tenta de novo no proximo ciclo (dentro da janela); nada e enviado agora
+          }
         }
       }
     }

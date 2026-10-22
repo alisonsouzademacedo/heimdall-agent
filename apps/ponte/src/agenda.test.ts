@@ -6,6 +6,7 @@ import { abrirBanco, migrar, type Banco } from '../../core/src/db.ts';
 import { registrarMensagem } from '../../core/src/ingestao.ts';
 import { MARCA } from '../../core/src/saida.ts';
 import { gerarRelatorioDoDia, textoAceitavel, HORA_INICIO, HORA_FIM, type PortasAgenda } from './agenda.ts';
+import type { PortaCrm } from './crm.ts';
 
 const DONO = { pn: '5555999990000:12@s.whatsapp.net' };
 const ISO = (s: string) => Date.parse(s);
@@ -48,6 +49,28 @@ test('os codigos A1/F1/P1 do relatorio ficam registrados para as correcoes do do
   const db = banco();
   await gerarRelatorioDoDia(db, semHermes, QUARTA_8H);
   assert.deepEqual(db.prepare('SELECT dia, codigo, cliente_id AS c FROM relatorio_itens').all().map((x) => ({ ...x })), [{ dia: '2026-10-21', codigo: 'A1', c: 1 }]);
+});
+
+test('CRM: proposta vira C1 no relatorio deterministico, e gravada e NAO passa pelo modelo', async () => {
+  const db = banco();
+  let chamouModelo = false;
+  const crm: PortaCrm = {
+    propor: async () => [{
+      numero: 1, clienteId: 1, cliente: 'Alfa', tipo: 'criar', leadId: null, etapaAtual: null,
+      etapaDestino: 11, etapaDestinoNome: 'Contato iniciado', motivo: 'cliente respondeu e ainda não tem lead no CRM'
+    }],
+    aplicar: async () => null
+  };
+  const redator = async () => { chamouModelo = true; return '# Diário\n\n## Aguardando você\n- x\n'; };
+  assert.equal(await gerarRelatorioDoDia(db, { ...semHermes, redator, crm }, QUARTA_8H), 'diario');
+  const texto = saidas(db)[0]!.texto;
+  assert.match(texto, /## CRM/);
+  assert.match(texto, /\*\*C1\*\* Alfa — criar lead em "Contato iniciado"/);
+  assert.match(texto, /ok 1 e 3/);
+  assert.equal(chamouModelo, false, 'com CRM o texto deterministico e obrigatorio (os codigos e a frase de aprovacao vem dele)');
+  const p = db.prepare('SELECT dia, numero, cliente_id AS clienteId, etapa_destino AS etapa, estado FROM crm_propostas').get() as Record<string, unknown>;
+  assert.equal(p.dia, '2026-10-21'); assert.equal(p.numero, 1); assert.equal(p.clienteId, 1); assert.equal(p.etapa, 11); assert.equal(p.estado, 'proposta');
+  assert.ok((db.prepare("SELECT 1 AS x FROM relatorio_itens WHERE codigo = 'C1'").get() as { x: number } | undefined));
 });
 
 test('Hermes redige: texto valido e usado; o pedido leva as regras e o pacote como DADOS', async () => {

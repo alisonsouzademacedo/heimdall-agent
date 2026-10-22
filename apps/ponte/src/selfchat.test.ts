@@ -79,6 +79,39 @@ test('correcao por codigo (A1 ja resolvi) aplica o ajuste e confirma em uma linh
   assert.match(r, /A1/); assert.match(r, /A9.*(nao|não) (encontr|conhe)/i);
 });
 
+test('CRM no self-chat: aprova movimento sem chamar o Hermes; mensagem que nao e do CRM segue normal', async () => {
+  const c = cenario();
+  const vistos: string[] = [];
+  c.portas.crm = {
+    propor: async () => [],
+    aplicar: async (_db, texto) => {
+      vistos.push(texto);
+      if (texto !== 'ok 1') return null;
+      return {
+        aprovados: [1], recusados: [], ignorados: [],
+        resultados: [{ numero: 1, cliente: 'Alfa', tipo: 'criar', ok: true }], semPropostas: false
+      };
+    }
+  };
+  c.dono('ok 1');
+  c.dono('quem esta esperando?');
+  await processarSelfChat(c.db, c.portas, T + 1000);
+  assert.equal(c.perguntas.length, 1, 'so a pergunta livre vai ao Hermes');
+  assert.equal(c.perguntas[0]!.texto, 'quem esta esperando?');
+  const respostas = c.saidas().map((s) => s.texto);
+  assert.match(respostas[0]!, /C1: lead criado/);
+  assert.match(respostas[1]!, /resposta para: quem esta esperando/);
+});
+
+test('CRM fora do ar: responde que nao conseguiu e NAO manda o "ok 1" ao Hermes', async () => {
+  const c = cenario();
+  c.portas.crm = { propor: async () => [], aplicar: async () => { throw new Error('krayin fora'); } };
+  c.dono('ok 1');
+  await processarSelfChat(c.db, c.portas, T + 1000);
+  assert.equal(c.perguntas.length, 0);
+  assert.match(c.saidas()[0]!.texto, /CRM/);
+});
+
 test('Hermes fora do ar: nada e enviado ao dono agora e a mensagem e tentada de novo no proximo ciclo; depois de 2 h desiste', async () => {
   const c = cenario(); c.dono('oi');
   const falha: PortasSelfChat = { ...c.portas, hermes: { perguntar: async () => { throw new Error('hermes_sem_resposta'); } } };

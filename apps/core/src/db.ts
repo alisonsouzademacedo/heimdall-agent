@@ -342,6 +342,38 @@ CREATE TABLE equipe (
   criado_em INTEGER NOT NULL
 );
 `
+  },
+  {
+    versao: 14,
+    descricao: 'CRM: vinculo cliente<->lead e propostas de movimento aprovadas pelo dono no self-chat',
+    sql: `
+-- O Krayin e o registro externo do funil; aqui fica so o vinculo necessario para nao criar lead duplicado e para saber a ultima etapa conhecida.
+CREATE TABLE crm_leads (
+  cliente_id INTEGER PRIMARY KEY REFERENCES clientes(id),
+  lead_id INTEGER NOT NULL UNIQUE,
+  etapa_id INTEGER NOT NULL,
+  atualizado_em INTEGER NOT NULL
+);
+-- Uma proposta por numero/dia; nasce "proposta" e so muda por resposta do dono no self-chat. Nada e apagado aqui.
+CREATE TABLE crm_propostas (
+  id INTEGER PRIMARY KEY,
+  dia TEXT NOT NULL,
+  numero INTEGER NOT NULL CHECK (numero > 0),
+  cliente_id INTEGER NOT NULL REFERENCES clientes(id),
+  lead_id INTEGER,
+  etapa_atual INTEGER,
+  etapa_destino INTEGER NOT NULL,
+  etapa_destino_nome TEXT NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('criar','mover','ganho','perdido')),
+  motivo TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'proposta' CHECK (estado IN ('proposta','aplicada','recusada','expirada','falhou')),
+  criada_em INTEGER NOT NULL,
+  respondida_em INTEGER,
+  erro TEXT,
+  UNIQUE (dia, numero)
+);
+CREATE INDEX idx_crm_propostas_abertas ON crm_propostas (estado, dia);
+`
   }
 ];
 

@@ -9,6 +9,7 @@ import { criarClienteHermes } from './hermes.ts';
 import type { PortasAgenda } from './agenda.ts';
 import { criarApagadorDeMidia } from './apagar-arquivo.ts';
 import { apagarBackup } from './apagar-backup.ts';
+import { criarPortaCrm } from './crm.ts';
 
 export function iniciar(raiz: string = process.cwd()) {
   const pastaDados = resolve(raiz, process.env.HEIMDALL_DATA ?? 'data');
@@ -20,14 +21,16 @@ export function iniciar(raiz: string = process.cwd()) {
   const chave = process.env.HERMES_API_KEY ?? (existsSync(envArquivo) ? lerChaveDoEnv(readFileSync(envArquivo, 'utf8')) : null);
   if (!chave) throw new Error('Falta a chave da API do Hermes (HERMES_API_KEY ou API_SERVER_KEY em infra/compose/.env)');
   const hermes = criarClienteHermes({ url: process.env.HERMES_URL ?? 'http://127.0.0.1:8642', chave });
+  const crm = criarPortaCrm(raiz);
   const ler = (nome: string): string => readFileSync(join(raiz, 'prompts', 'relatorios', nome), 'utf8');
   const agenda: PortasAgenda = {
     redator: (pedido) => hermes.perguntar(pedido, { sessao: 'heimdall:relatorios' }),
-    instrucoes: { comum: ler('comum.md'), diario: ler('diario.md'), semanal: ler('semanal.md') }
+    instrucoes: { comum: ler('comum.md'), diario: ler('diario.md'), semanal: ler('semanal.md') },
+    crm
   };
   const instrucoesExtracao = readFileSync(join(raiz, 'prompts', 'extracao', 'compromissos-e-sinais.md'), 'utf8');
   const extracao = { porta: { extrair: (pedido: string, sessao: string) => hermes.perguntar(pedido, { sessao }) }, instrucoes: instrucoesExtracao };
-  const p = iniciarPonte({ agenda, extracao, apagarBackup: (pasta, nome) => { apagarBackup(pasta, nome); }, saudeHermes: () => hermes.saude(), banco, portas: { hermes, apagarArquivo: (c) => { criarApagadorDeMidia(pastaDados)(c); } } });
+  const p = iniciarPonte({ agenda, extracao, apagarBackup: (pasta, nome) => { apagarBackup(pasta, nome); }, saudeHermes: () => hermes.saude(), banco, portas: { hermes, apagarArquivo: (c) => { criarApagadorDeMidia(pastaDados)(c); }, crm } });
   return { hermes, parar: async () => { p.parar(); await p.terminou; banco.close(); }, terminou: p.terminou };
 }
 

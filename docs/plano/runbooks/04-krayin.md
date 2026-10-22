@@ -31,8 +31,9 @@ Abrir a tela de leads em modo Kanban; `POST /api/.../login` e `GET .../leads`; c
 
 ## Armadilhas
 - Senhas e portas de exemplo são inseguras (R6, R1).
-- `setup.sh` é um script de shell: no Windows, rodar dentro do WSL.
+- `setup.sh` é um script de shell: rodar no host Linux (o projeto não tem mais camada Windows).
 - Versão do pacote da API precisa casar com a do Krayin.
+- Propostas `C1`–`C5` de um dia vencem no relatório diário seguinte, mesmo quando ele não traz proposta nova; resposta antiga do dono não vale para a leva nova.
 
 ## Desfazer
 Parar e remover os contêineres; remover o volume do banco apaga os dados.

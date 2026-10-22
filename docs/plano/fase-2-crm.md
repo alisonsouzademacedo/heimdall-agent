@@ -1,6 +1,6 @@
 # Fase 2 — CRM e Kanban
 
-Status: **Krayin escolhido**; fundação local implementada em 2026-10-22 (configuração segura, cliente REST, teste de conexão e passo 12 da tela). **Ainda não validado contra um Krayin real**: instalação, pacote REST e carga ficam para a VPS (D31). Fontes: páginas do GitHub lidas pelo Firecrawl; `https://devdocs.krayincrm.com/llms.txt` e `llms-full.txt`; código de `krayin/rest-api`; README de `trycompai/crm`.
+Status: **Krayin escolhido**; fundação e fluxo de proposta/aprovação implementados localmente em 2026-10-22 (configuração segura, cliente REST, teste de conexão, passo 12 da tela e Fase A do funil; D32). **Ainda não validado contra um Krayin real**: instalação, pacote REST, formatos de payload e carga ficam para a VPS (D31). Fontes: páginas do GitHub lidas pelo Firecrawl; `https://devdocs.krayincrm.com/llms.txt` e `llms-full.txt`; código de `krayin/rest-api`; README de `trycompai/crm`.
 
 ## O que o Heimdall precisa do CRM
 Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM é o **registro do funil**; as conversas continuam no acervo. Para isso precisa de uma **API externa com token** que um agente consiga usar sem interface.
@@ -32,18 +32,26 @@ Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM 
 - **Funil:** `verificarFunil` reconhece as três primeiras etapas por nome e ganho/perda pelo código interno `won`/`lost`; devolve exatamente o que falta. **Não cria o funil pela API** (o formato de criação de pipeline não foi confirmado): a tela orienta o dono a seguir o caminho da documentação, *Settings >> Pipeline >> Create Pipeline*. A mesma frase aparece na tela em inglês, porque a interface do Krayin é em inglês.
 - **Estado:** `apps/core/src/crm/estado.ts` guarda no banco só o último resultado (ok/falhou, motivo curto, funis, completo e etapas faltando). O cartão de fontes fica **vermelho** se a conexão falhar, **em andamento** se o funil estiver incompleto e **verde** só com conexão + 5 etapas.
 - **Tela:** passo 12 "CRM (Krayin)" (o 13 é o painel final) com URL, token (campo de senha), "Salvar e testar" e "Testar de novo"; o token é limpo do campo antes do pedido.
-- **Testes locais:** 431 testes do núcleo, `tsc` limpo, sintaxe do `app.js` conferida; testes do cliente contra servidor HTTP falso, sem Krayin real.
+- **Testes locais:** 452 testes do núcleo, `tsc` limpo, sintaxe do `app.js` conferida; testes do cliente contra servidor HTTP falso, sem Krayin real. O fluxo de propostas tem 20 testes focados (incluindo expiração de proposta antiga e idempotência).
+
+## Proposta e aprovação (Fase A, implementada localmente em 2026-10-22)
+- **Vínculo:** a migração 14 cria `crm_leads` (um lead por cliente, com a última etapa conhecida) e `crm_propostas` (uma proposta numerada por dia, com motivo e estado). Nada é apagado por esse fluxo; apagar um cliente remove as duas linhas locais.
+- **Cálculo:** `apps/core/src/crm/fluxo.ts` só propõe com dados do acervo: criar lead em *Contato iniciado* quando o cliente respondeu pela primeira vez; 1 → 2 quando existe compromisso de reunião; 2 → 3 quando a primeira reunião já ocorreu e há uma segunda marcada; perdido após 7 tentativas. **Ganho ainda não tem sinal confiável** e não é proposto sozinho.
+- **Relatório:** o diário das 08:00 traz a seção `CRM` com `C1`–`C5`, o motivo e a frase de aprovação. Com propostas de CRM, o texto **determinístico** é usado no lugar do Hermes, para os códigos e a frase não se perderem na redação.
+- **Resposta:** o dono aprova ou recusa no self-chat (`ok 1 e 3`, `não, o 2 fica`, `C1 ok, C2 não`). Só uma resposta do self-chat aplica; o código recusa origem diferente. A API é chamada uma vez por proposta; falha deixa a proposta aberta para nova tentativa e nunca cria um segundo lead quando o vínculo já existe.
+- **Configuração ao vivo:** a ponte lê `data/krayin.json` a cada pedido, então salvar o token no passo 12 funciona sem reiniciar o processo. Sem configuração, o CRM fica fora do relatório e a conversa normal segue.
+- **Limitações conhecidas:** se o dono mover um cartão à mão no Krayin, a etapa local pode ficar desatualizada; a busca de lead para ressincronizar ainda não foi validada. Apagar um cliente não apaga o lead no Krayin (só o vínculo local). Ganho automático e objeção irreversível continuam pendentes de decisão/sinal. Tudo isso será testado na VPS.
 
 ## Pendente para a VPS
 - Instalar o Krayin com a imagem oficial `webkul/krayin:2.2.0` (digest `sha256:5a5e6e86bdede8ecd72db7805c4a471c9111513efae95de3e8c80a7bb0e517b9`) **e** o pacote `krayin/rest-api` (a imagem sozinha não garante a API); medir RAM/disco e confirmar persistência.
 - Gerar o token da API (a coleção oficial tem o pedido de Login) e colar na tela; validar as rotas e os formatos reais de lead/pipeline (os payloads de `LeadForm`/`PipelineForm` não estão na documentação copiada).
-- Criar a tabela de vínculo `cliente ↔ lead` e o fluxo de **propor movimento no self-chat e esperar o OK** antes de mover; o cliente REST já existe, mas nada o chama automaticamente ainda.
+- Validar o fluxo completo contra um Krayin real: criar o funil de 5 etapas, gerar o token, conferir os formatos de `POST /leads` e `PUT /leads/stage/edit/{id}`, aprovar/recusar no self-chat, simular falha e repetir. O cliente REST e a proposta local já existem, mas ainda não moveram um lead real.
 
-## Como se ligaria ao Heimdall (proposta)
-- **MCP próprio do CRM** (fino), por cima da API do Krayin, com poucas ferramentas: `criar_lead`, `buscar_lead`, `mover_etapa`, `marcar_ganho`, `marcar_perdido` (com motivo), `registrar_atividade`. **Sem apagar.**
-- Tabela de correspondência no acervo: `cliente_id ↔ organização/pessoa/lead do Krayin`.
+## Como se liga (implementado localmente)
+- A ponte usa **diretamente** o cliente REST do Krayin (sem um MCP novo): `apps/ponte/src/crm.ts` lê a configuração, verifica o funil e entrega ao núcleo só as propostas. O token fica em `data/krayin.json`, fora do git.
+- Tabela de correspondência no acervo: `cliente_id ↔ lead_id` (a etapa conhecida fica na mesma linha).
 - Regra: o CRM guarda **onde o cliente está no funil**; o acervo guarda a conversa. O relatório combina os dois.
-- Nível de autonomia da escrita (a decidir): propor e esperar confirmação no self-chat, ou executar e avisar no relatório.
+- Nível de autonomia: **Fase A** implementada (propor e esperar confirmação no self-chat); nada é movido automaticamente.
 
 ## Não verificado
 - Motivo de perda: campo e rota exatos (não localizei no código lido).
@@ -62,16 +70,16 @@ Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM 
 
 **Objeções irreversíveis** (exemplos do usuário): doença grave na família, falência da fábrica/indústria, total satisfação com o marketing atual. **Todo o resto é objeção contornável**: o usuário tenta converter, e o cliente **não** vai para Perdido.
 
-Alinhamento com as regras anteriores: quem **nunca respondeu** não está no funil (só no acervo, com contagem no semanal); o lead nasce na etapa 1 quando o cliente responde pela primeira vez. Motivos de perda do CRM: `tentativas_esgotadas`, `doenca_grave_familiar`, `falencia`, `satisfeito_com_marketing_atual`, `outro_irreversivel`. Objeções **contornáveis** são registradas como objeção (alimentam o "padrão de objeções" do semanal) sem mudar a etapa.
+Alinhamento com as regras anteriores: quem **nunca respondeu** não está no funil (só no acervo, com contagem no semanal); o lead nasce na etapa 1 quando o cliente responde pela primeira vez. Motivos de perda do CRM: `tentativas_esgotadas`, `doenca_grave_familiar`, `falencia`, `satisfeito_com_marketing_atual`, `outro_irreversivel`. **Nesta fase a API só move a etapa; o motivo ainda não é enviado ao Krayin** (validar na VPS se o pacote REST aceita). Objeções **contornáveis** são registradas como objeção (alimentam o "padrão de objeções" do semanal) sem mudar a etapa.
 
 Gatilhos propostos (o Heimdall detecta, o usuário aprova):
 - 1 → 2: surge compromisso do tipo reunião com aquele cliente (primeira).
 - 2 → 3: a 1ª reunião ocorreu (data passou ou chegou transcrição) e foi marcada uma segunda.
-- → Ganho: o cliente confirma que fecha; sempre proposto.
-- → Perdido: 7 tentativas esgotadas (o acervo já marca `desconsiderado` sozinho e para os lembretes; **a mudança no CRM é proposta**) ou objeção irreversível identificada (sempre proposta, pois exige julgamento).
+- → Ganho: **ainda não implementado**: falta um sinal confiável de fechamento; quando existir, será sempre proposto e confirmado pelo dono.
+- → Perdido: 7 tentativas esgotadas (o acervo já marca `desconsiderado` sozinho e para os lembretes; **a mudança no CRM é proposta**). Objeção irreversível ainda **não** é detectada automaticamente, então não entra nesta fase.
 
 ## Autonomia (decisão do usuário: seguir a sugestão)
-Fase A: o Heimdall **propõe** cada movimento e **espera o "ok" do usuário**. As propostas vêm **dentro do relatório das 08:00** (sem alertas fora de hora), numeradas, para aprovar com uma resposta curta no self-chat ("ok 1 e 3", "não, o 2 fica"). O usuário também pode ordenar a qualquer momento ("mova a empresa X para ganho"), e isso o Heimdall executa. Fase B (depois de acertar bastante): liberar automático só para o que é determinístico e de baixo risco (criar lead em Contato iniciado; avançar para Reunião Agendada); **Ganho e Perdido continuam sempre com confirmação**.
+Fase A **implementada localmente:** o Heimdall **propõe** cada movimento e **espera o "ok" do usuário**. As propostas vêm **dentro do relatório das 08:00** (sem alertas fora de hora), numeradas, para aprovar com uma resposta curta no self-chat ("ok 1 e 3", "não, o 2 fica"). **Ordem livre** ("mova a empresa X para ganho") **ainda não foi implementada**; nesta etapa só as propostas numeradas são aceitas. Fase B (depois de acertar bastante): liberar automático só para o que é determinístico e de baixo risco (criar lead em Contato iniciado; avançar para Reunião Agendada); **Ganho e Perdido continuam sempre com confirmação**.
 
 ## Dados
 **Começar do zero**, sem importação.
@@ -89,8 +97,8 @@ O nosso modelo de dados já tem clientes, contatos, compromissos e estados. Cinc
 | Manutenção | atualizar o Krayin | manter nosso código |
 | Atividades, e-mail, custom fields | prontos | não |
 
-## Decisão pendente
-**Krayin ou funil próprio?** (recomendação: Krayin, desde que o spike confirme um consumo aceitável de memória na máquina escolhida; sem o Krayin, o funil próprio cobre a necessidade com menos peças).
+## Decisão (2026-10-19)
+**Krayin escolhido pelo usuário em 2026-10-19**, desde que o spike na VPS confirme um consumo aceitável de memória; a alternativa de funil próprio fica registrada acima, mas não será usada por ora. A escolha está na seção final.
 
 ## Achados após ler a documentação do Krayin (2026-10-19)
 Documentação salva em `docs/krayin/` (portal de desenvolvedores 2.2, guia de usuário, pacote `krayin/rest-api`).

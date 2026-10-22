@@ -178,6 +178,8 @@ function executarCliente(db: Banco, clienteId: number, agora: number, apagarArqu
     db.prepare('DELETE FROM ajustes_cliente WHERE cliente_id = ?').run(clienteId);
     db.prepare('DELETE FROM feedback WHERE cliente_id = ?').run(clienteId);
     db.prepare('DELETE FROM duvidas WHERE cliente_id = ?').run(clienteId);
+    db.prepare('DELETE FROM crm_propostas WHERE cliente_id = ?').run(clienteId);
+    db.prepare('DELETE FROM crm_leads WHERE cliente_id = ?').run(clienteId);
     if (msgs.length) db.exec(`DELETE FROM mensagens WHERE id IN (${msgs.join(',')})`);
     // Conversas DM do cliente que ficaram vazias. O que foi enviado ao Hindsight sobre elas tambem tem de ser esquecido la (processo da memoria).
     const candidatas = (db.prepare(`SELECT id FROM conversas WHERE tipo = 'dm' AND jid IN (${DO_CLIENTE.jids})`).all(clienteId) as { id: number }[]).map((r) => r.id);
