@@ -454,6 +454,72 @@ export const JS = `
     s.appendChild(el('div','det','Daqui em diante e automatico. Esta pagina so mostra o estado.'));
   }
   var msgBackup='';
+  function crm(s){
+    s.appendChild(el('p','','O CRM (Krayin) guarda em que etapa do funil cada cliente esta. O Heimdall so propoe movimentos; voce aprova no self-chat. O endereco e o token ficam em data/krayin.json, fora do git; o token nunca volta para esta tela.'));
+    var box=el('div','aviso');
+    box.appendChild(el('div','','No Krayin, abra Configuracoes >> Pipeline >> Create Pipeline, marque "Mark as default" e crie as cinco etapas:'));
+    var ul=el('ul');
+    ['Contato iniciado','1ª Reunião Agendada','2ª Reunião Agendada','Fechamento / Ganho','Perdido / Arquivado'].forEach(function(t){ul.appendChild(el('li','',t))});
+    box.appendChild(ul);
+    box.appendChild(el('div','det','As tres primeiras precisam ter exatamente estes nomes. Ganho e perdido sao reconhecidos pelo codigo interno (won/lost), mesmo com outro nome.'));
+    s.appendChild(box);
+    s.appendChild(el('div','det','Endereco do Krayin (ex.: http://127.0.0.1:8000)'));
+    var url=el('input','txt');url.type='url';url.placeholder='http://127.0.0.1:8000';url.setAttribute('aria-label','Endereco do Krayin');s.appendChild(url);
+    var labTok=el('div','det','Token da API (gerado uma vez na instalacao do Krayin; nao e a senha)');labTok.style.marginTop='10px';s.appendChild(labTok);
+    var token=el('input','txt');token.type='password';token.autocomplete='off';token.placeholder='cole o token aqui';token.setAttribute('aria-label','Token da API do Krayin');s.appendChild(token);
+    var linha=el('div');linha.style.marginTop='10px';
+    var bSalvar=el('button','acao','Salvar e testar');bSalvar.type='button';
+    var bTestar=el('button','sec','Testar de novo');bTestar.type='button';bTestar.style.marginLeft='8px';bTestar.style.display='none';
+    linha.appendChild(bSalvar);linha.appendChild(bTestar);s.appendChild(linha);
+    var res=el('div','aviso');res.style.marginTop='12px';res.setAttribute('role','status');res.setAttribute('aria-live','polite');s.appendChild(res);
+
+    function pintar(j){
+      res.textContent='';
+      if(j.url)url.value=j.url;
+      if(!j.configurado){
+        res.appendChild(el('div','det','Ainda nao configurado. Preencha o endereco e o token para testar.'));
+        bTestar.style.display='none';
+        return;
+      }
+      bTestar.style.display='';
+      var st=j.status||{};
+      if(st.estado==='ok'){
+        if(st.completo){res.appendChild(el('div','verde','Conectado. O funil tem as cinco etapas.'));}
+        else{
+          res.appendChild(el('div','atencao','Conectado, mas o funil ainda nao tem as cinco etapas.'));
+          if(st.faltando&&st.faltando.length){var falta=el('ul');st.faltando.forEach(function(t){falta.appendChild(el('li','',t))});res.appendChild(falta)}
+          res.appendChild(el('div','det','Crie ou corrija as etapas no Krayin e clique em "Testar de novo".'));
+        }
+      }else if(st.estado==='falhou'){
+        res.appendChild(el('div','vermelho','Sem conexao: '+(st.motivo||'erro')));
+        res.appendChild(el('div','det','Confira o endereco, se o Krayin esta rodando e se o token e valido.'));
+      }else{
+        res.appendChild(el('div','det','Configurado; ainda sem teste de conexao.'));
+      }
+    }
+    function testar(){
+      return api('POST','/api/crm/testar',{}).then(function(j){
+        pintar({configurado:true,url:j.url||url.value,status:j.status||{}});
+        if(j.ok)res.insertBefore(el('div','verde','A conexao respondeu.'),res.firstChild);
+        else res.insertBefore(el('div','vermelho','Nao conectou: '+(j.erro||'erro')),res.firstChild);
+        return atualizarMenu();
+      }).catch(function(e){res.textContent='Nao consegui testar: '+e.message});
+    }
+    bSalvar.addEventListener('click',function(){
+      var u=url.value.trim(),t=token.value.trim();
+      if(!u||!t){res.textContent='Preencha o endereco e o token.';return}
+      token.value='';
+      bSalvar.disabled=true;res.textContent='Salvando e testando...';
+      api('POST','/api/crm/conectar',{url:u,token:t}).then(function(j){
+        pintar({configurado:true,url:j.url||u,status:j.status||{}});
+        if(j.ok)res.insertBefore(el('div','verde','A conexao respondeu.'),res.firstChild);
+        else res.insertBefore(el('div','vermelho','Nao conectou: '+(j.erro||'erro')),res.firstChild);
+        return atualizarMenu();
+      }).catch(function(e){res.textContent='Nao salvei: '+e.message}).then(function(){bSalvar.disabled=false});
+    });
+    bTestar.addEventListener('click',function(){bTestar.disabled=true;res.textContent='Testando...';testar().then(function(){bTestar.disabled=false})});
+    api('GET','/api/crm').then(pintar).catch(function(e){res.textContent='Nao carreguei o estado do CRM: '+e.message});
+  }
   function backup(s,d){
     var b=d.backup;
     s.appendChild(el('p','',b.destino?('Destino atual: '+b.destino):'Escolha onde guardar o backup: um HD externo, um segundo disco ou um pen drive (nao a mesma pasta do projeto).'));
@@ -468,7 +534,7 @@ export const JS = `
     s.appendChild(el('div','det',b.ultimoEm?('Ultimo backup: '+new Date(b.ultimoEm).toLocaleString('pt-BR')+(b.erro?' - ATENCAO: '+b.erro:'')):(b.erro?'Erro: '+b.erro:'Ainda nao ha backup.')));
     s.appendChild(el('div','aviso','O backup e feito sozinho no primeiro uso de cada dia (uma copia do acervo com a data no nome). Para apagar dados de um cliente: voce pede no WhatsApp e confirma com um codigo de seis letras (duas etapas).'));
   }
-  var RENDER={backup:backup,whatsapp:whatsapp,sincronizar:sincronizar,extrair:extrair,selfchat:selfchat,agenda:agenda,pronto:pronto,cadastro:cadastro,modelo:modelo,processar:processar};
+  var RENDER={backup:backup,whatsapp:whatsapp,sincronizar:sincronizar,extrair:extrair,selfchat:selfchat,agenda:agenda,pronto:pronto,cadastro:cadastro,modelo:modelo,processar:processar,crm:crm};
   function atualizarPainel(){return api('GET','/api/painel').then(function(r){pn=r;return api('GET','/api/estado')}).then(function(r){passos=r.passos;fontes=r.fontes||null;tudo()}).catch(function(){})}
   function atualizarMenu(){return api('GET','/api/estado').then(function(r){passos=r.passos;fontes=r.fontes||null;lateral();pintarFontes(fontes)}).catch(function(){})}
   function bug(s,id){
@@ -489,7 +555,7 @@ export const JS = `
     if(!document.hidden){
       if(p&&p.id==='sincronizar'){
         if(atualizarSincronizar)atualizarSincronizar();else atualizarMenu();
-      }else if(p&&(p.id==='cadastro'||p.id==='modelo'||p.id==='backup'||p.id==='ambiente')){
+      }else if(p&&(p.id==='cadastro'||p.id==='modelo'||p.id==='backup'||p.id==='ambiente'||p.id==='crm')){
         atualizarMenu();
       }else if(p&&p.pronto){
         atualizarPainel();

@@ -28,6 +28,8 @@ export interface CrmParaFontes {
   configurado: boolean;
   estado?: 'ok' | 'falhou';
   motivo?: string;
+  completo?: boolean;
+  faltando?: string[];
 }
 
 const soma = (o: Record<string, number> | undefined): number => Object.values(o ?? {}).reduce((a, b) => a + b, 0);
@@ -75,7 +77,13 @@ function fonteMidia(p: Painel): Fonte {
 
 function fonteCrm(c: CrmParaFontes): Fonte {
   if (!c.configurado) return { estado: 'pendente', detalhe: 'nao configurado (Krayin).' };
-  if (c.estado === 'ok') return { estado: 'verde', detalhe: 'conectado ao Krayin.' };
+  if (c.estado === 'ok') {
+    if (c.completo === false) {
+      const falta = c.faltando ?? [];
+      return { estado: 'processando', detalhe: `conectado; funil incompleto${falta.length > 0 ? `: falta ${falta.join(', ')}` : ''}.` };
+    }
+    return { estado: 'verde', detalhe: 'conectado ao Krayin; funil com as 5 etapas.' };
+  }
   if (c.estado === 'falhou') return { estado: 'vermelho', detalhe: `sem conexao: ${c.motivo ?? 'sem detalhe'}.` };
   return { estado: 'pendente', detalhe: 'configurado; falta testar a conexao.' };
 }

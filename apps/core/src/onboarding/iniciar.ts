@@ -20,7 +20,7 @@ export async function principal(raiz: string = process.cwd()): Promise<void> {
   // Uma medicao serve a verificacao e ao perfil (a tela chama "sondar" e depois "perfil" na mesma requisicao).
   let ultima: Medidas | null = null;
   const medir = (): Medidas => { ultima = medirSistema(raiz); return ultima; };
-  const op = { banco, codigo, pastaBugs: join(dados, 'bugs'), sondar: () => avaliar(medir()), perfil: () => escolherPerfil(ultima ?? medir()) };
+  const op = { banco, codigo, pastaBugs: join(dados, 'bugs'), raiz, sondar: () => avaliar(medir()), perfil: () => escolherPerfil(ultima ?? medir()) };
   let servidor;
   try { servidor = await iniciarServidor(op, preferida); } catch { servidor = await iniciarServidor(op, 0); }
   const link = `${servidor.url}/?codigo=${codigo}`;

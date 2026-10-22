@@ -307,3 +307,12 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - **Transparencia:** o cartao do CRM mostra "nao configurado (Krayin)" ate existir configuracao e teste real; nunca verde de graca. Midia cobre `baixar_midia`, `transcrever` e `converter_pdf` (Whisper/PDF).
 - **Testes:** novo `fontes.test.ts` (4 casos) + `servidor.test.ts` confere as cinco fontes; **417 testes do core passaram**, `tsc` sem erros, sintaxe do `app.js` conferida com `node --check`. Teste de navegador **nao executado** (Playwright ausente nesta maquina).
 - **CI:** a rodada `39794063931` (commit `e463dea`) seguia **em fila** no GitHub; esta entrada sera atualizada com o resultado.
+## 2026-10-22 (local) — CRM Krayin: fundacao, teste de conexao e passo 13
+
+- **Configuracao:** `apps/core/src/crm/config.ts` grava `data/krayin.json` (fora do git) com URL e token, modo `0600`; valida esquema, recusa credenciais na URL e token invalido; o token nunca e devolvido nem gravado no banco.
+- **Cliente:** `apps/core/src/crm/krayin.ts` (prefixo `/api/admin`) le funis, cria lead e move etapa; tempo limite de 8 s, sem seguir redirecionamento, motivo de erro curto e sem token. `verificarFunil` reconhece as 3 primeiras etapas por nome e ganho/perda por `won`/`lost`.
+- **Estado:** `apps/core/src/crm/estado.ts` guarda no banco o ultimo teste (ok/falhou, motivo, funis, completo, faltando). O cartao de fontes e o passo so ficam verdes com conexao + 5 etapas.
+- **Tela:** novo passo 13 "CRM (Krayin)" com URL, token (campo de senha), "Salvar e testar" e "Testar de novo"; instrucoes do funil (Configuracoes >> Pipeline) e lista do que falta. O token e limpo do campo antes do pedido.
+- **Testes:** 431 no nucleo, `tsc` limpo, sintaxe do `app.js` conferida; testes novos de config (3), cliente (6), estado (2) e integracao da tela com servidor falso (401, token nao volta, fontes vermelho). O `tests/run-all.sh` local **nao terminou** em 15 min por causa do teste de mutacao (108 mutacoes) no Windows; os checks de higiene, documentacao e CI passaram. A bateria completa fica para o CI Linux.
+- **Nao verificado:** Krayin real (imagem/REST/persistencia), payloads de `LeadForm`/`PipelineForm` e criacao de funil pela API; nada chama `criarLead`/`moverEtapa` automaticamente ainda (o fluxo de aprovar no self-chat vem depois). Registrado em `docs/plano/fase-2-crm.md` (Pendente para a VPS).
+- **CI:** a rodada `39794063931` (`e463dea`) seguia em fila e a de `312eb06` ainda nao havia sido criada; GitHub Status em "Partially Degraded Service". Atualizar quando voltar.

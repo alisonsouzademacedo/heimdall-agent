@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { request } from 'node:http';
+import { request, createServer } from 'node:http';
 import { connect } from 'node:net';
 import { networkInterfaces } from 'node:os';
 import { mkdtempSync, rmSync, readdirSync, readFileSync } from 'node:fs';
@@ -24,7 +24,7 @@ async function subir(): Promise<Ctx> {
   const dir = mkdtempSync(join(tmpdir(), 'heimdall-tela-'));
   const banco = abrirBanco(); migrar(banco);
   const sonda = { v: OK };
-  const s = await iniciarServidor({ banco, codigo: CODIGO, pastaBugs: join(dir, 'bugs'), sondar: () => sonda.v, agora: () => Date.parse('2026-10-19T20:00:00Z') });
+  const s = await iniciarServidor({ banco, codigo: CODIGO, pastaBugs: join(dir, 'bugs'), raiz: dir, sondar: () => sonda.v, agora: () => Date.parse('2026-10-19T20:00:00Z') });
   return { s, dir, banco, sonda, fim: async () => { await s.fechar(); rmSync(dir, { recursive: true, force: true }); } };
 }
 // requisicao com controle total dos cabecalhos (fetch nao deixa mudar o Host)
@@ -165,14 +165,14 @@ test('metodos estranhos e rotas inexistentes', async () => {
   } finally { await c.fim(); }
 });
 
-test('estado lista os 12 passos; so os passos com acao real estao prontos (lista exata, atualizada a cada passo ligado); persiste no banco', async () => {
+test('estado lista os 13 passos; so os passos com acao real estao prontos (lista exata, atualizada a cada passo ligado); persiste no banco', async () => {
   const c = await subir();
   try {
     const cookie = await entrar(c);
     const e = JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto);
-    assert.equal(e.passos.length, 12);
+    assert.equal(e.passos.length, 13);
     assert.deepEqual(e.passos.map((p: { id: string }) => p.id), PASSOS.map((p) => p.id));
-    assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'cadastro', 'sincronizar', 'extrair', 'modelo', 'processar', 'selfchat', 'agenda', 'backup', 'pronto']);
+    assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'cadastro', 'sincronizar', 'extrair', 'modelo', 'processar', 'selfchat', 'agenda', 'backup', 'crm', 'pronto']);
     assert.ok(e.passos.every((p: { estado: string }) => p.estado === 'pendente'));
     assert.equal(e.bugsAbertos, 0);
     assert.deepEqual(Object.keys(e.fontes).sort(), ['crm', 'memoria', 'midia', 'modelo', 'whatsapp']);
@@ -182,6 +182,46 @@ test('estado lista os 12 passos; so os passos com acao real estao prontos (lista
     assert.match(e.fontes.crm.detalhe, /Krayin/);
     assert.equal(e.fontes.midia.estado, 'pendente');
   } finally { await c.fim(); }
+});
+
+test('CRM: nao configurado de inicio; token nao volta; falha de conexao vira vermelho e fica gravada', async () => {
+  const c = await subir();
+  const fake = createServer((_req, res) => { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ message: 'Unauthenticated.' })); });
+  await new Promise<void>((resolve) => fake.listen(0, '127.0.0.1', () => resolve()));
+  try {
+    const cookie = await entrar(c);
+    const inicial = JSON.parse((await req(c, 'GET', '/api/crm', { Cookie: cookie })).texto);
+    assert.equal(inicial.configurado, false);
+    assert.equal(inicial.url, null);
+    assert.deepEqual(inicial.status, { estado: 'nao_testado', em: null, motivo: null, funis: 0, completo: false, faltando: [] });
+
+    const token = ['77', 'abcdefghijklmnopqrstuvwxyz'].join('|'); // token FALSO
+    const invalido = await req(c, 'POST', '/api/crm/conectar', POST(cookie), JSON.stringify({ url: 'ftp://127.0.0.1', token }));
+    assert.equal(invalido.status, 400);
+    assert.ok(!invalido.texto.includes(token));
+
+    const endereco = (fake.address() as { port: number }).port;
+    const texto = (await req(c, 'POST', '/api/crm/conectar', POST(cookie), JSON.stringify({ url: `http://127.0.0.1:${endereco}`, token }))).texto;
+    assert.ok(!texto.includes(token), texto);
+    const r = JSON.parse(texto);
+    assert.equal(r.ok, false);
+    assert.match(String(r.erro), /401/);
+    assert.equal(r.status.estado, 'falhou');
+
+    const salvo = JSON.parse(readFileSync(join(c.dir, 'data', 'krayin.json'), 'utf8'));
+    assert.deepEqual(salvo, { url: `http://127.0.0.1:${endereco}`, token });
+    const depois = JSON.parse((await req(c, 'GET', '/api/crm', { Cookie: cookie })).texto);
+    assert.equal(depois.configurado, true);
+    assert.equal(depois.url, `http://127.0.0.1:${endereco}`);
+    assert.ok(!JSON.stringify(depois).includes(token));
+    assert.equal(depois.status.estado, 'falhou');
+    const e = JSON.parse((await req(c, 'GET', '/api/estado', { Cookie: cookie })).texto);
+    assert.equal(e.fontes.crm.estado, 'vermelho');
+    assert.match(e.fontes.crm.detalhe, /401/);
+  } finally {
+    await new Promise<void>((resolve) => fake.close(() => resolve()));
+    await c.fim();
+  }
 });
 
 test('testar ambiente: verde quando tudo ok, vermelho com o motivo quando ha falha, e grava no banco', async () => {

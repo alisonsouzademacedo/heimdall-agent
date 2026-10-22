@@ -66,9 +66,17 @@ test('o MCP nao importa o porteiro de apagar nem o de envio', () => {
   assert.doesNotMatch(mcp, /from '\.\/(apagar|envio)\.ts'/);
 });
 
-test('gravar texto em disco: so bugs.ts (relatorios sem segredos); nunca apagar/renomear arquivos', () => {
-  assert.deepEqual(arquivosCom(/writeFileSync|appendFileSync|createWriteStream/), ['bugs.ts']);
+test('gravar texto em disco: so bugs.ts e o arquivo de configuracao do CRM (fora do git); nunca apagar/renomear arquivos', () => {
+  assert.deepEqual(arquivosCom(/writeFileSync|appendFileSync|createWriteStream/), ['bugs.ts', 'crm/config.ts']);
   assert.deepEqual(arquivosCom(/\bunlinkSync\b|\brmSync\b|\brenameSync\b|\brmdirSync\b|fs\.promises|node:fs\/promises/), []);
+});
+
+test('config do CRM grava SO data/krayin.json, com permissao 0600, e nao apaga nem renomeia', () => {
+  const c = codigo('crm/config.ts');
+  assert.match(c, /caminhoConfigCrm/);
+  assert.match(c, /mode:\s*0o600/);
+  assert.match(c, /chmodSync\(caminho,\s*0o600\)/);
+  assert.doesNotMatch(c, /\bunlinkSync\b|\brmSync\b|\brenameSync\b|\brmdirSync\b/);
 });
 
 test('nenhum segredo, token ou chave fixos no codigo', () => {

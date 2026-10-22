@@ -89,6 +89,12 @@ test('fontes: QR pendente, teste falhou, Hindsight sem resposta e midia com falh
   assert.equal(f.crm.estado, 'vermelho');
 });
 
+test('fontes: CRM conectado mas com funil incompleto fica em andamento, nunca verde', () => {
+  const f = montarFontes(painel(), { estado: 'nao_feito' }, { configurado: true, estado: 'ok', completo: false, faltando: ['2ª Reunião Agendada'] });
+  assert.equal(f.crm.estado, 'processando');
+  assert.match(f.crm.detalhe, /2ª Reuni/);
+});
+
 test('fontes: media ainda na fila fica processando, mesmo sem falha', () => {
   const p = painel({
     acervo: { mensagens: 5, conversas: 1, audios: 1, pdfs: 0 },

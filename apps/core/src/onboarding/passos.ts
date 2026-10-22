@@ -19,5 +19,6 @@ export const PASSOS: readonly Passo[] = [
   { id: 'selfchat', titulo: 'Self-chat', mito: 'Huginn e Muninn · pensamento e memória', explicacao: 'Teste de ida e volta e dos codigos de correcao (A1, F2, P1).', pronto: true },
   { id: 'agenda', titulo: 'Agenda e relatório de teste', mito: 'A vigília · cada manhã às 08:00', explicacao: 'Horarios dos relatorios e um relatorio de teste agora.', pronto: true },
   { id: 'backup', titulo: 'Backup e segurança', mito: 'O cofre de Asgard', explicacao: 'Destino do backup, primeiro backup e ensaio de restauracao.', pronto: true },
+  { id: 'crm', titulo: 'CRM (Krayin)', mito: 'O quadro do funil', explicacao: 'Conecta o Krayin e confere o funil de 5 etapas. O Heimdall propoe cada movimento; voce aprova no self-chat. Nenhum cartao se move sozinho.', pronto: true },
   { id: 'pronto', titulo: 'Pronto', mito: 'Heimdall vigia', explicacao: 'Painel de status. Daqui em diante e automatico.', pronto: true }
 ];

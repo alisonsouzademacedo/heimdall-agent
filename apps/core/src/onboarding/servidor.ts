@@ -19,11 +19,15 @@ import { lerConfigHistorico, gravarConfigHistorico, resumoHistoricoAntigo } from
 import { cadastrarMembro, listarEquipe, normalizarTelefone } from '../cadastro.ts';
 import { lerTesteDoModelo, pedirTesteDoModelo } from '../modelo-teste.ts';
 import { diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada } from '../extracao.ts';
+import { lerConfigCrm, salvarConfigCrm, type ConfigCrm } from '../crm/config.ts';
+import { listarFunis, verificarFunil } from '../crm/krayin.ts';
+import { gravarStatusCrm, lerStatusCrm } from '../crm/estado.ts';
 
 export interface OpcoesServidor {
   banco: Banco;
   codigo: string; // uso unico
   pastaBugs: string;
+  raiz?: string; // pasta do projeto; data/krayin.json fica aqui (fora do git)
   sondar: () => Verificacao[] | Promise<Verificacao[]>;
   perfil?: () => Perfil | Promise<Perfil>; // perfil ideal deste computador (perfil.ts); viaja na resposta do "Testar ambiente"
   agora?: () => number;
@@ -66,6 +70,7 @@ function lerCorpo(req: IncomingMessage): Promise<string | null> {
 
 export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<Servidor> {
   const agora = op.agora ?? (() => Date.now());
+  const raiz = op.raiz ?? process.cwd();
   let codigoUsado = false;
   let erros = 0;
   const sessoes = new Set<string>();
@@ -92,7 +97,17 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
     const modeloParaFontes = tm.estado === 'nenhum'
       ? { estado: 'nao_feito' as const }
       : { estado: tm.estado, ms: tm.ms ?? undefined, motivo: tm.motivo ?? undefined };
-    const fontes = montarFontes(painel, modeloParaFontes, { configurado: false });
+    const crmConfig = lerConfigCrm(raiz);
+    const crmStatus = lerStatusCrm(op.banco);
+    const crmParaFontes = {
+      configurado: crmConfig !== null,
+      estado: crmStatus.estado === 'ok' ? 'ok' as const : crmStatus.estado === 'falhou' ? 'falhou' as const : undefined,
+      motivo: crmStatus.motivo ?? undefined,
+      completo: crmStatus.completo,
+      faltando: crmStatus.faltando
+    };
+    const fontes = montarFontes(painel, modeloParaFontes, crmParaFontes);
+    vivo.crm = { estado: fontes.crm.estado, percentual: null, detalhe: fontes.crm.detalhe };
     return {
       passos: PASSOS.map((p) => {
         const v = vivo[p.id];
@@ -102,6 +117,19 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
       bugsAbertos: listarAbertos(op.pastaBugs).length,
       fontes
     };
+  };
+
+  // Testa o Krayin e grava SO o resultado (nunca o token). Usado por /api/crm/conectar e /api/crm/testar.
+  const executarTesteCrm = async (config: ConfigCrm) => {
+    const lista = await listarFunis(config);
+    if (!lista.ok) {
+      const motivo = lista.motivo ?? 'sem conexao';
+      gravarStatusCrm(op.banco, { estado: 'falhou', motivo, funis: 0, completo: false, faltando: [] }, agora());
+      return { ok: false, erro: motivo, funis: 0, completo: false, faltando: [] as string[], funil: null as string | null };
+    }
+    const v = verificarFunil(lista.funis);
+    gravarStatusCrm(op.banco, { estado: 'ok', motivo: null, funis: lista.funis.length, completo: v.completo, faltando: v.faltando }, agora());
+    return { ok: true, funis: lista.funis.length, completo: v.completo, faltando: v.faltando, funil: v.funil?.nome ?? null };
   };
 
   const server: Server = createServer(async (req, res) => {
@@ -137,6 +165,10 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
           return json(res, 200, { config: { liberado: c.liberado, ritmoSegundos: Math.round(c.ritmoMs / 1000), esperaRespostaSegundos: Math.round(c.esperaRespostaMs / 1000), tamanhoPagina: c.tamanhoPagina, maxPaginas: c.maxPaginas }, resumo: resumoHistoricoAntigo(op.banco) });
         }
         if (url.pathname === '/api/cadastro') return json(res, 200, { equipe: listarEquipe(op.banco) });
+        if (url.pathname === '/api/crm') {
+          const config = lerConfigCrm(raiz);
+          return json(res, 200, { configurado: config !== null, url: config?.url ?? null, status: lerStatusCrm(op.banco) });
+        }
         if (url.pathname === '/api/modelo') {
           return json(res, 200, { teste: lerTesteDoModelo(op.banco), passos: [
             'O login e feito por voce, no terminal, nunca nesta tela. Abra um terminal e rode: docker exec -it heimdall-hermes-1 hermes model (esta tela nunca ve nem guarda senha, token ou chave).',
@@ -193,6 +225,22 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
           return r.ok ? json(res, 200, { achou: r.achou, aviso: r.aviso ?? null, exibir: r.exibir }) : json(res, 400, { erro: r.motivo });
         }
         if (url.pathname === '/api/modelo/testar') return json(res, 200, { pedido: pedirTesteDoModelo(op.banco, agora()) });
+        if (url.pathname === '/api/crm/conectar') {
+          let config: ConfigCrm;
+          try {
+            config = salvarConfigCrm(raiz, { url: dados.url, token: dados.token });
+          } catch (e) {
+            return json(res, 400, { erro: e instanceof Error ? e.message : 'configuracao do CRM invalida.' });
+          }
+          const resultado = await executarTesteCrm(config);
+          return json(res, 200, { configurado: true, url: config.url, ...resultado, status: lerStatusCrm(op.banco) });
+        }
+        if (url.pathname === '/api/crm/testar') {
+          const config = lerConfigCrm(raiz);
+          if (!config) return json(res, 400, { erro: 'O CRM ainda nao esta configurado. Preencha o endereco e o token.' });
+          const resultado = await executarTesteCrm(config);
+          return json(res, 200, { configurado: true, url: config.url, ...resultado, status: lerStatusCrm(op.banco) });
+        }
         if (url.pathname === '/api/processamento/liberar') {
           if (typeof dados.liberar !== 'boolean') return json(res, 400, { erro: 'Informe liberar: true ou false.' });
           if (dados.liberar && dados.confirmar !== true) return json(res, 400, { erro: 'Para liberar o processamento a confirmacao e obrigatoria.' });
