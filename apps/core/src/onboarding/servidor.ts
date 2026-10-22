@@ -14,6 +14,7 @@ import type { Perfil } from './perfil.ts';
 import { CSS, JS, HTML } from './recursos.ts';
 import { definirDestinoDeBackup, backupDoDia, lerBackup } from '../backup-copia.ts';
 import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas, estadosAoVivo, type EstadoAoVivo } from './painel.ts';
+import { montarFontes } from './fontes.ts';
 import { lerConfigHistorico, gravarConfigHistorico, resumoHistoricoAntigo } from '../historico-antigo.ts';
 import { cadastrarMembro, listarEquipe, normalizarTelefone } from '../cadastro.ts';
 import { lerTesteDoModelo, pedirTesteDoModelo } from '../modelo-teste.ts';
@@ -81,19 +82,25 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
     const linhas = op.banco.prepare('SELECT passo, estado FROM onboarding_etapas').all() as { passo: string; estado: string }[];
     const mapa = new Map(linhas.map((l) => [l.passo, l.estado]));
     // Os passos que dependem de trabalho em andamento vem AO VIVO (nunca do verde gravado): "processando" com barra e texto.
-    const vivo = estadosAoVivo(montarPainel(op.banco, agora())) as Record<string, EstadoAoVivo | undefined>;
+    const painel = montarPainel(op.banco, agora());
+    const vivo = estadosAoVivo(painel) as Record<string, EstadoAoVivo | undefined>;
     // cadastro: verde com ao menos um membro da equipe; modelo: o resultado do ultimo teste (so ok/falhou, nunca o texto)
     const membros = listarEquipe(op.banco).length;
     vivo.cadastro = { estado: membros > 0 ? 'verde' : 'pendente', percentual: null, detalhe: membros > 0 ? `${membros} membro(s) da equipe cadastrado(s)` : 'Nenhum membro da equipe cadastrado ainda.' };
     const tm = lerTesteDoModelo(op.banco);
     vivo.modelo = { estado: tm.estado === 'ok' ? 'verde' : tm.estado === 'pedido' ? 'processando' : tm.estado === 'falhou' ? 'vermelho' : 'pendente', percentual: null, detalhe: tm.estado === 'ok' ? `Chamada de teste ok (${tm.ms} ms)` : tm.estado === 'falhou' ? `A chamada de teste falhou: ${tm.motivo}` : tm.estado === 'pedido' ? 'Teste pedido; aguardando a ponte responder.' : 'Ainda sem chamada de teste.' };
+    const modeloParaFontes = tm.estado === 'nenhum'
+      ? { estado: 'nao_feito' as const }
+      : { estado: tm.estado, ms: tm.ms ?? undefined, motivo: tm.motivo ?? undefined };
+    const fontes = montarFontes(painel, modeloParaFontes, { configurado: false });
     return {
       passos: PASSOS.map((p) => {
         const v = vivo[p.id];
         const gravado = mapa.get(p.id) === 'verde' ? 'verde' : mapa.get(p.id) === 'vermelho' ? 'vermelho' : 'pendente';
         return { id: p.id, titulo: p.titulo, mito: p.mito, explicacao: p.explicacao, pronto: p.pronto, estado: v ? v.estado : gravado, percentual: v ? v.percentual : null, detalhe: v ? v.detalhe : '' };
       }),
-      bugsAbertos: listarAbertos(op.pastaBugs).length
+      bugsAbertos: listarAbertos(op.pastaBugs).length,
+      fontes
     };
   };
 

@@ -9,6 +9,16 @@ header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:s
 .marca{font-size:34px;letter-spacing:.16em;font-weight:700}
 .sub{color:var(--mfg);font-size:14px}
 .ponte{height:3px;margin:0 28px;border-radius:3px;background:linear-gradient(90deg,#2DD4BF,#60A5FA,#A78BFA,#F472B6,#FBBF24)}
+.fontes{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;padding:14px 28px 0}
+.fonte{display:flex;gap:10px;align-items:flex-start;background:rgba(27,35,54,.65);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+.fonte .sigla{flex:0 0 36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--muted);border:1px solid var(--line);color:#C9B27A;font:700 10px ui-monospace,monospace;letter-spacing:.05em}
+.fonte .nome{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mfg)}
+.fonte .nome .dot{width:8px;height:8px;flex:0 0 8px;margin:0}
+.fonte .valor{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.fonte .valor b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mfg)}
+.fonte[data-estado=verde]{border-color:rgba(34,197,94,.45)}.fonte[data-estado=verde] .valor b{color:var(--ok)}
+.fonte[data-estado=vermelho]{border-color:rgba(239,68,68,.45)}.fonte[data-estado=vermelho] .valor b{color:var(--bad)}
+.fonte[data-estado=processando]{border-color:rgba(251,191,36,.45)}.fonte[data-estado=processando] .valor b{color:var(--warn)}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font:13px ui-monospace,Consolas,monospace;color:var(--mfg)}
 main{display:flex;flex-wrap:wrap;gap:20px;padding:18px 28px 36px;align-items:flex-start}
@@ -24,7 +34,7 @@ h1{margin:0 0 2px;font-size:38px;line-height:1.1}
 .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:16px 0}
 .verif{display:flex;gap:10px;background:var(--muted);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .dot{flex:0 0 12px;height:12px;border-radius:50%;margin-top:6px}
-.dot.ok{background:var(--ok)}.dot.atencao{background:var(--warn)}.dot.falha{background:var(--bad)}
+.dot.ok{background:var(--ok)}.dot.atencao{background:var(--warn)}.dot.falha{background:var(--bad)}.dot.neutro{background:var(--mfg)}
 .det{color:var(--mfg);font-size:13.5px}
 button.acao{min-height:44px;border:0;border-radius:12px;padding:0 20px;font:600 16px system-ui;background:var(--gold);color:#0F172A;cursor:pointer}
 button.sec{min-height:44px;border:1px solid var(--line);border-radius:12px;padding:0 18px;background:transparent;color:var(--fg);font:inherit;cursor:pointer}
@@ -46,16 +56,33 @@ textarea{width:100%;min-height:90px;background:var(--bg);color:var(--fg);border:
 .item-lista{background:var(--muted);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0}
 .item-lista b{display:inline-block;margin-right:8px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:700px){.fontes{padding:12px 16px 0;grid-template-columns:1fr 1fr}.fonte .sigla{display:none}}
 `;
 
 export const JS = `
 (function(){
-  var passos=[],atual=0,verifs=[],perfilAtual=null,pn=null,resTeste=null,msgSelf='',timerModelo=null,atualizarSincronizar=null;
+  var passos=[],atual=0,verifs=[],perfilAtual=null,pn=null,resTeste=null,msgSelf='',timerModelo=null,atualizarSincronizar=null,fontes=null;
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e}
   function api(m,u,corpo){
     var o={method:m,headers:{'X-Heimdall':'1'},credentials:'same-origin'};
     if(corpo!==undefined){o.headers['Content-Type']='application/json';o.body=JSON.stringify(corpo)}
     return fetch(u,o).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.erro||'erro');return j})});
+  }
+  function pintarFontes(f){
+    var box=document.getElementById('fontes');if(!box)return;box.textContent='';
+    if(!f)return;
+    var defs=[['whatsapp','WA','WhatsApp'],['modelo','IA','Modelo (ChatGPT)'],['memoria','HS','Memoria (Hindsight)'],['midia','MID','Midia (Whisper/PDF)'],['crm','CRM','CRM (Krayin)']];
+    var rot={verde:'ok',vermelho:'atencao',processando:'em andamento',pendente:'aguardando'};
+    var ponto={verde:'ok',vermelho:'falha',processando:'atencao',pendente:'neutro'};
+    defs.forEach(function(d){
+      var x=f[d[0]];if(!x)return;
+      var c=el('div','fonte');c.setAttribute('data-estado',x.estado);
+      c.appendChild(el('span','sigla',d[1]));
+      var t=el('div');t.style.minWidth='0';
+      var nome=el('div','nome');nome.appendChild(el('span','dot '+(ponto[x.estado]||'neutro')));nome.appendChild(document.createTextNode(d[2]));t.appendChild(nome);
+      var valor=el('div','valor');valor.appendChild(el('b','',rot[x.estado]||x.estado));valor.appendChild(document.createTextNode(x.detalhe));t.appendChild(valor);
+      c.appendChild(t);box.appendChild(c);
+    });
   }
   function lateral(){
     var nav=document.getElementById('passos');nav.textContent='';
@@ -442,8 +469,8 @@ export const JS = `
     s.appendChild(el('div','aviso','O backup e feito sozinho no primeiro uso de cada dia (uma copia do acervo com a data no nome). Para apagar dados de um cliente: voce pede no WhatsApp e confirma com um codigo de seis letras (duas etapas).'));
   }
   var RENDER={backup:backup,whatsapp:whatsapp,sincronizar:sincronizar,extrair:extrair,selfchat:selfchat,agenda:agenda,pronto:pronto,cadastro:cadastro,modelo:modelo,processar:processar};
-  function atualizarPainel(){return api('GET','/api/painel').then(function(r){pn=r;return api('GET','/api/estado')}).then(function(r){passos=r.passos;tudo()}).catch(function(){})}
-  function atualizarMenu(){return api('GET','/api/estado').then(function(r){passos=r.passos;lateral()}).catch(function(){})}
+  function atualizarPainel(){return api('GET','/api/painel').then(function(r){pn=r;return api('GET','/api/estado')}).then(function(r){passos=r.passos;fontes=r.fontes||null;tudo()}).catch(function(){})}
+  function atualizarMenu(){return api('GET','/api/estado').then(function(r){passos=r.passos;fontes=r.fontes||null;lateral();pintarFontes(fontes)}).catch(function(){})}
   function bug(s,id){
     var box=el('div','aviso');box.appendChild(el('div','','Algo deu errado ou estranho neste passo?'));
     var ta=el('textarea');ta.setAttribute('aria-label','Descreva o problema');ta.placeholder='Conte o que aconteceu. Nao escreva senhas nem chaves.';box.appendChild(ta);
@@ -455,8 +482,8 @@ export const JS = `
     });
     box.appendChild(b);box.appendChild(out);s.appendChild(box);
   }
-  function tudo(){lateral();painel()}
-  function carregar(){return api('GET','/api/estado').then(function(r){passos=r.passos;if(!verifs.length)verifs=r.verificacoes||[];document.getElementById('bugs').textContent='relatorios de bug abertos: '+r.bugsAbertos;tudo()})}
+  function tudo(){pintarFontes(fontes);lateral();painel()}
+  function carregar(){return api('GET','/api/estado').then(function(r){passos=r.passos;fontes=r.fontes||null;if(!verifs.length)verifs=r.verificacoes||[];document.getElementById('bugs').textContent='relatorios de bug abertos: '+r.bugsAbertos;tudo()})}
   setInterval(function(){
     var p=passos[atual];
     if(!document.hidden){
@@ -466,6 +493,8 @@ export const JS = `
         atualizarMenu();
       }else if(p&&p.pronto){
         atualizarPainel();
+      }else{
+        atualizarMenu();
       }
     }
   },3000);
@@ -487,6 +516,7 @@ export const HTML = `<!doctype html>
   <div class="chips"><span class="chip">só nesta máquina · 127.0.0.1</span><span class="chip" id="bugs">relatórios de bug abertos: 0</span></div>
 </header>
 <div class="ponte"></div>
+<div id="fontes" class="fontes" aria-label="Estado das fontes de dados"></div>
 <main>
   <nav id="passos" aria-label="Passos da configuração"></nav>
   <section id="painel" aria-live="polite"></section>

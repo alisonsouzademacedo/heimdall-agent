@@ -175,6 +175,12 @@ test('estado lista os 12 passos; so os passos com acao real estao prontos (lista
     assert.deepEqual(PASSOS.filter((p) => p.pronto).map((p) => p.id), ['ambiente', 'whatsapp', 'cadastro', 'sincronizar', 'extrair', 'modelo', 'processar', 'selfchat', 'agenda', 'backup', 'pronto']);
     assert.ok(e.passos.every((p: { estado: string }) => p.estado === 'pendente'));
     assert.equal(e.bugsAbertos, 0);
+    assert.deepEqual(Object.keys(e.fontes).sort(), ['crm', 'memoria', 'midia', 'modelo', 'whatsapp']);
+    assert.equal(e.fontes.whatsapp.estado, 'pendente');
+    assert.match(e.fontes.whatsapp.detalhe, /WhatsApp/);
+    assert.equal(e.fontes.crm.estado, 'pendente');
+    assert.match(e.fontes.crm.detalhe, /Krayin/);
+    assert.equal(e.fontes.midia.estado, 'pendente');
   } finally { await c.fim(); }
 });
 

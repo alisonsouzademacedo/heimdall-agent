@@ -301,3 +301,9 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - **D31 registrada** em `docs/plano/README.md`: validar direto na VPS; Omarchy local = desenvolvimento; sem exposição pública (túnel SSH/Tailscale a definir). Plano do programa em `docs/plano/fase-2-execucao.md`.
 - **Testes nesta máquina (evidência):** `tests/docs/check_docs.sh` **passou**; `tests/repo/check_ci.sh` **passou**; `tests/repo/check_higiene.sh` **passou**; `apps/core` — **413 testes passaram** e `tsc` **sem erros**; carga **passou** (15.000 mensagens sintéticas). A bateria completa local foi interrompida no `mutacao.py` (108 quebras): ele é o passo mais lento no Windows e o alvo real é Linux. O **CI do GitHub roda a bateria inteira em Ubuntu** a cada push; o resultado fica registrado na próxima entrada.
 - **Pendente:** confirmar CI verde; revisar runbooks 01/08/09/10 e a documentação (item 3); aplicar o protótipo visual e os estados ao vivo (itens 4/6); completar a ponte, incluindo Krayin (item 5); supervisor Linux e deploy na VPS.
+## 2026-10-22 (local) — painel de fontes ao vivo na tela
+
+- **Novo:** `apps/core/src/onboarding/fontes.ts` monta os cinco cartoes (WhatsApp, modelo, memoria, midia, CRM) a partir do `Painel`; `servidor.ts` devolve `fontes` em `/api/estado`; `recursos.ts` desenha a faixa fixa acima dos passos, atualizada junto com os passos.
+- **Transparencia:** o cartao do CRM mostra "nao configurado (Krayin)" ate existir configuracao e teste real; nunca verde de graca. Midia cobre `baixar_midia`, `transcrever` e `converter_pdf` (Whisper/PDF).
+- **Testes:** novo `fontes.test.ts` (4 casos) + `servidor.test.ts` confere as cinco fontes; **417 testes do core passaram**, `tsc` sem erros, sintaxe do `app.js` conferida com `node --check`. Teste de navegador **nao executado** (Playwright ausente nesta maquina).
+- **CI:** a rodada `39794063931` (commit `e463dea`) seguia **em fila** no GitHub; esta entrada sera atualizada com o resultado.

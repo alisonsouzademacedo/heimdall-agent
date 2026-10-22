@@ -1,6 +1,6 @@
 # Pendência: melhorias da tela de onboarding (feedback do dono, 2026-10-21, durante a primeira carga real)
 
-**Estado:** só registrado e analisado; **nada alterado**. Mexer na tela exige teste primeiro (regra do `AGENTS.md`) e reiniciar o processo da tela; deixado para depois da carga. Origem: o dono olhou a tela com a carga em andamento (capturas dos passos 3, 4 e 5) e pediu estes pontos.
+**Estado:** implementado em 2026-10-22 (itens 1 a 4 e o painel fixo de fontes); falta a revisão visual final e o teste em navegador real. Mexer na tela exige teste primeiro (regra do `AGENTS.md`). Origem: o dono olhou a tela com a carga em andamento (capturas dos passos 3, 4 e 5) e pediu estes pontos.
 
 ## 1. Passo "Cadastro" (3 de 12): ainda não está ligado ("Este passo ainda nao esta ligado nesta versao")
 O dono pede:
@@ -35,3 +35,9 @@ O dono pede:
 
 ## Para registrar também
 - O texto da tela do passo 3 menciona `docs/plano/fase-1-onboarding-visual.md`, mostrado ao usuário final: trocar por um texto sem caminho de arquivo quando o passo existir.
+
+## Atualização (2026-10-22, local)
+- **Cadastro inteligente:** `apps/core/src/cadastro.ts` normaliza o número humano, gera as variantes com e sem o 9 e casa com os contatos do acervo; `tests` cobrem formatos sintéticos.
+- **Estados ao vivo:** `painel.ts` calcula `sincronizar`, `extrair` e `processar` a cada leitura, com percentual só quando existe total conhecido; o menu lateral mostra barra e detalhe. Testes em `painel.test.ts` e `servidor.test.ts`.
+- **Fontes:** novo painel fixo na tela (`apps/core/src/onboarding/fontes.ts` + `recursos.ts`) com WhatsApp, modelo (ChatGPT), memória (Hindsight), mídia (Whisper/PDF) e CRM (Krayin). O cartão do CRM fica **pendente** enquanto o Krayin não estiver configurado e **nunca fica verde sem um teste de verdade**.
+- **Ainda falta:** aplicar o desenho completo do protótipo (tipografia e composição), revisar os textos para leigo e rodar o teste de navegador num ambiente com Playwright; o CI Ubuntu roda a bateria, mas o teste de navegador é pulado sem Playwright.
