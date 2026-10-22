@@ -39,8 +39,9 @@ services:
       - "127.0.0.1:9999:9999"
     environment:
       HINDSIGHT_API_DATABASE_URL: postgresql://hindsight:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/hindsight
-      # LLM: "chatgpt" depois do login (runbooks/07-logins.md); "none" so guarda trechos e busca (sem reflexao nem observacoes).
-      HINDSIGHT_API_LLM_PROVIDER: ${HINDSIGHT_API_LLM_PROVIDER:?defina HINDSIGHT_API_LLM_PROVIDER no .env (none ou chatgpt)}
+      # LLM: "none" so guarda trechos e busca (sem reflexao nem observacoes). "chatgpt" so existe a partir do Hindsight 1.1.0 (aqui e 1.0.0:
+      # so "openai-codex"); ver runbooks/02-hindsight.md, "Medido na VPS". Trocar de versao e decisao do dono.
+      HINDSIGHT_API_LLM_PROVIDER: ${HINDSIGHT_API_LLM_PROVIDER:?defina HINDSIGHT_API_LLM_PROVIDER no .env (none; chatgpt so no Hindsight 1.1.0+)}
       HINDSIGHT_API_LLM_CHATGPT_HOME: /home/hindsight/chatgpt
       HINDSIGHT_API_WORKER_ID: heimdall-1
       # Portugues ANTES de qualquer carga (trocar depois obriga a migrar o banco): fase-1-troca-de-provedor.md

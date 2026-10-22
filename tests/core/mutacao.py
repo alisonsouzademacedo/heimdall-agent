@@ -20,6 +20,9 @@ print("[LINHA DE BASE] os testes passam sem mutacao")
 
 # (arquivo, trecho original, trecho estragado, regra protegida)
 MUTACOES = [
+    ("src/crm/krayin.ts", "/api/v1${caminho}", "/api/admin${caminho}", "o CRM chama o prefixo real da API do Krayin (/api/v1, medido no Krayin 2.2.0)"),
+    ("src/crm/krayin.ts", "chaveEtapa(x.nome) === chaveEtapa(e.nome)", "x.nome === e.nome", "nome da etapa e comparado sem acento, caixa e simbolo ordinal"),
+    ("src/crm/krayin.ts", "redirect: 'error'", "redirect: 'follow'", "o token do CRM nunca segue redirecionamento para outro endereco"),
     ("src/acompanhamento.ts", "tentativas >= cfg.maxTentativas", "tentativas > cfg.maxTentativas", "7 tentativas desconsideram"),
     ("src/acompanhamento.ts", "if (doCliente.length === 0) {", "if (false) {", "quem nunca respondeu nao gera follow-up"),
     ("src/acompanhamento.ts", "ordenadas.filter((m) => m.deMim && m.em > ultimaCliente.em)", "ordenadas.filter((m) => m.deMim)", "resposta do cliente zera a contagem"),

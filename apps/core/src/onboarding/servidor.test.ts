@@ -330,6 +330,19 @@ test('a pagina nao carrega o codigo nem a sessao', async () => {
   } finally { await c.fim(); }
 });
 
+test('passo do CRM: manda criar so as 3 etapas do meio (Novo, Ganho e Perdido sao fixas no Krayin) e usa a porta 8082', async () => {
+  const c = await subir();
+  try {
+    const cookie = await entrar(c);
+    const js = (await req(c, 'GET', '/app.js', { Cookie: cookie })).texto;
+    for (const nome of ['Contato iniciado', '1ª Reunião Agendada', '2ª Reunião Agendada']) assert.ok(js.includes(nome), nome);
+    assert.doesNotMatch(js, /crie as cinco etapas/, 'o Krayin ja traz Novo, Ganho e Perdido: o dono cria so tres');
+    assert.match(js, /Novo.*Ganho.*Perdido|fixas/, 'explica as etapas fixas do Krayin');
+    assert.ok(js.includes('http://127.0.0.1:8082'), 'endereco de exemplo e o da instalacao (8082)');
+    assert.ok(!js.includes('127.0.0.1:8000'), 'sem o exemplo antigo :8000');
+  } finally { await c.fim(); }
+});
+
 // ---- painel e acoes dos passos (QR, progresso, self-chat, agenda) ----
 test('sem sessao, o painel e as acoes novas sao recusados', async () => {
   const c = await subir();

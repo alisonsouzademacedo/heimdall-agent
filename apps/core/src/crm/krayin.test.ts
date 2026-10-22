@@ -91,6 +91,40 @@ test('funil: lista o que falta sem inventar etapa', async () => {
   } finally { await f.fechar(); }
 });
 
+test('redirecionamento: o token NAO e enviado para outro endereco (o Krayin redireciona, o cliente recusa)', async () => {
+  let recebidoNoDestino = 0;
+  const destino = createServer((_req, res) => { recebidoNoDestino++; res.end('{}'); });
+  await new Promise<void>((ok) => destino.listen(0, '127.0.0.1', () => ok()));
+  const origem = createServer((_req, res) => { res.writeHead(302, { Location: `http://127.0.0.1:${(destino.address() as AddressInfo).port}/roubo` }); res.end(); });
+  await new Promise<void>((ok) => origem.listen(0, '127.0.0.1', () => ok()));
+  try {
+    const r = await listarFunis(cfg(`http://127.0.0.1:${(origem.address() as AddressInfo).port}`));
+    assert.equal(r.ok, false, 'redirecionamento nao e seguido');
+    assert.equal(recebidoNoDestino, 0, 'o outro endereco nao recebeu nenhum pedido (nem o token)');
+  } finally {
+    await new Promise<void>((ok) => origem.close(() => ok()));
+    await new Promise<void>((ok) => destino.close(() => ok()));
+  }
+});
+
+test('funil: aceita 1a/2a (sem o simbolo ordinal), sem acento e em outra caixa', () => {
+  const funil: FunilKrayin = { id: 1, nome: 'Vendas', padrao: true, etapas: [
+    { id: 1, nome: 'Novo', codigo: 'new' },
+    { id: 2, nome: 'CONTATO INICIADO', codigo: null },
+    { id: 3, nome: '1a reuniao agendada', codigo: null },
+    { id: 4, nome: '2o Reuniao Agendada', codigo: null },
+    { id: 5, nome: 'Ganho', codigo: 'won' },
+    { id: 6, nome: 'Perdido', codigo: 'lost' }
+  ] };
+  const v = verificarFunil([funil]);
+  assert.equal(v.completo, true, JSON.stringify(v.faltando));
+  assert.equal(v.etapas.primeira?.id, 3);
+  assert.equal(v.etapas.segunda?.id, 4);
+  // nao confunde numeros: "2a" nao vale como primeira
+  const trocado: FunilKrayin = { ...funil, etapas: funil.etapas.filter((e) => e.id !== 3) };
+  assert.deepEqual(verificarFunil([trocado]).faltando, ['1ª Reunião Agendada']);
+});
+
 test('conexao: 401 vira motivo curto, sem ecoar o token', async () => {
   const f = await subir();
   try {

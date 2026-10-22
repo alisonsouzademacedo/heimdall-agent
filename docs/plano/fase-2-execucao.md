@@ -17,6 +17,7 @@ Regra que não muda: o Heimdall **só envia ao self-chat do dono**; dados e segr
 Removidos 26 arquivos: `iniciar.cmd`, `instalar/` (instalador, launcher `heimdall.ps1`, `docker-fora.cmd`, `PROMPT-IA.txt`), `spike/preflight/preflight.ps1`, `tests/instalar/`, `tests/preflight/`, `tests/lib/` (falso `.cmd`/PowerShell). Ajustados o workflow (um job Ubuntu), `check_ci.sh` (trava contra a volta da camada Windows), `check_higiene.sh`, `.gitattributes`, `.gitignore`, `README.md`, `AGENTS.md`, `servidor.ts` (mensagem que citava `iniciar.cmd`) e o prompt de continuidade. Registro: `pendencias/2026-10-22-revisao-linux-only.md`.
 
 **Falta ainda:** o **supervisor/ligador Linux** (equivalente ao antigo `heimdall.ps1`: subir/parar/estado dos processos, com pid + hora de início registrados — `LICOES.md`, 2026-10-21) e a revisão dos runbooks 01/08/09/10. Entra na frente 5/F.
+**Supervisor feito em 2026-10-22 (VPS):** `scripts/heimdall.sh` + `tests/ops/check_supervisor.sh` + `heimdall.service` (systemd de usuário) ativado com o OK do dono; ver `runbooks/11-supervisor-linux.md`.
 
 ### 2. Skill de design (UI UX Pro Max)
 Instalar com o mesmo processo das skills do Superpowers: clone e revisão de segurança, cópia da documentação em `docs/ui-ux-pro-max/` (com origem e licença), skill em `.claude/skills/`, entrada em `.claude/skills/ORIGEM.md`, linha na tabela do `AGENTS.md` e ajuste de `tests/docs/check_docs.sh`. Só então usar na tela (item 4).
@@ -60,3 +61,6 @@ Cada etapa precisa de: **status ao vivo** (fonte real, não texto fixo), **açã
 - Dados de clientes na VPS: manter o espírito da D23 (sem exposição pública) e backup antes de qualquer migração.
 - CI vermelho desde 21/10: a remoção da camada Windows pode ter resolvido; confirmar no GitHub Actions após o push.
 - Nada de segredo, conversa ou token em commit, log ou resposta.
+
+## Estado na VPS (2026-10-22, noite)
+Feito: Compose completo no servidor (com Krayin, tetos de CPU e memória), supervisor e reinício automático, cliente do CRM validado contra o Krayin real (`/api/v1`), tela no ar em `127.0.0.1:8765`. Falta só intervenção humana (túnel, QR, login do ChatGPT, funil do Krayin): `runbooks/12-primeiro-acesso-vps.md`. Decisões pendentes no topo de `PROGRESS.md`.

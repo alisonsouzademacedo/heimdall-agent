@@ -137,6 +137,13 @@ INI=$(wc -l < "$FAKE_CONTADOR" 2>/dev/null || echo 0)
 [ "$INI" -le 2 ] && [ "$INI" -ge 1 ] && pass "com espera crescente grande o executor nao volta em laco apertado (subiu $INI vez(es))" || fail "espera crescente nao segurou o laco ($INI subidas)"
 for p in $(pids_do_registro); do kill "$p" 2>/dev/null; done; sleep 1
 
+# 9b) a checagem periodica do Docker so SOBE o que esta parado: nunca recria conteiner porque alguem editou o docker-compose.yml (2026-10-22)
+rm -f "$R/data/processos.json"; : > "$T/docker-chamadas.txt"
+(cd "$R" && PATH="$B:$PATH" HEIMDALL_INTERVALO_S=1 HEIMDALL_CICLOS_DOCKER=1 HEIMDALL_MAX_CICLOS=2 sh "$R/scripts/heimdall.sh" supervisionar > "$T/sup.txt" 2>&1)
+grep -q 'up -d --no-recreate' "$T/docker-chamadas.txt" && pass "checagem periodica usa 'up -d --no-recreate' (nao recria servico sozinho)" || { fail "checagem periodica pode recriar conteineres (falta --no-recreate)"; cat "$T/docker-chamadas.txt"; }
+[ "$(grep -c 'up -d$' "$T/docker-chamadas.txt")" -le 1 ] && pass "so a subida inicial usa 'up -d' simples" || fail "'up -d' simples repetido nos ciclos"
+for p in $(pids_do_registro); do kill "$p" 2>/dev/null; done; sleep 1
+
 # 10) config-hermes
 : > "$T/docker-chamadas.txt"
 roda config-hermes; grep -q 'cp .*:/opt/data/config.yaml' "$T/docker-chamadas.txt" && grep -q 'restart hermes' "$T/docker-chamadas.txt" && pass "config-hermes copia o config para o volume e reinicia o Hermes" || { fail "config-hermes nao fez o combinado"; cat "$T/docker-chamadas.txt"; }

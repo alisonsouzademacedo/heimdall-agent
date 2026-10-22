@@ -477,14 +477,14 @@ export const JS = `
   function crm(s){
     s.appendChild(el('p','','O CRM (Krayin) guarda em que etapa do funil cada cliente está. O Heimdall só propõe movimentos; você aprova no self-chat. O endereço e o token ficam num arquivo protegido no computador (data/krayin.json), fora do git; o token nunca volta para esta tela.'));
     var box=el('div','aviso');
-    box.appendChild(el('div','','No Krayin (em inglês), abra Settings >> Pipeline >> Create Pipeline, marque "Mark as default" e crie as cinco etapas:'));
+    box.appendChild(el('div','','No Krayin, abra Settings >> Pipeline >> Create Pipeline, dê um nome ao funil, marque "Mark as default" e, entre as etapas fixas, adicione estas três (botão de adicionar etapa), nesta ordem:'));
     var ul=el('ul');
-    ['Contato iniciado','1ª Reunião Agendada','2ª Reunião Agendada','Fechamento / Ganho','Perdido / Arquivado'].forEach(function(t){ul.appendChild(el('li','',t))});
+    ['Contato iniciado','1ª Reunião Agendada','2ª Reunião Agendada'].forEach(function(t){ul.appendChild(el('li','',t))});
     box.appendChild(ul);
-    box.appendChild(el('div','det','As três primeiras precisam ter exatamente estes nomes. Ganho e perdido são reconhecidos pelo código interno (won/lost), mesmo com outro nome.'));
+    box.appendChild(el('div','det','Novo (a primeira), Ganho e Perdido (as últimas) já vêm no Krayin e são fixas: o nome delas não muda e não precisa mudar. O Heimdall reconhece ganho e perdido pelo código interno (won/lost). Os três nomes acima podem ser digitados sem acento e sem o símbolo ª (ex.: 1a Reuniao Agendada).'));
     s.appendChild(box);
-    s.appendChild(el('div','det','Endereço do Krayin (ex.: http://127.0.0.1:8000)'));
-    var url=el('input','txt');url.type='url';url.placeholder='http://127.0.0.1:8000';url.setAttribute('aria-label','Endereço do Krayin');s.appendChild(url);
+    s.appendChild(el('div','det','Endereço do Krayin (ex.: http://127.0.0.1:8082)'));
+    var url=el('input','txt');url.type='url';url.placeholder='http://127.0.0.1:8082';url.setAttribute('aria-label','Endereço do Krayin');s.appendChild(url);
     var labTok=el('div','det','Token da API (gerado uma vez na instalação do Krayin; não é a senha). Se você não tiver, pare e peça a quem instalou o Krayin; não invente.');labTok.style.marginTop='10px';s.appendChild(labTok);
     var token=el('input','txt');token.type='password';token.autocomplete='off';token.placeholder='cole o token aqui';token.setAttribute('aria-label','Token da API do Krayin');s.appendChild(token);
     var linha=el('div');linha.style.marginTop='10px';

@@ -39,3 +39,8 @@ Autenticação do MCP; comportamento do banco "sem LLM" por banco; se o `hindsig
 
 ## Armadilha: idioma (descoberta em 2026-10-20 ao planejar a troca de provedor)
 Os padrões do Hindsight para embeddings, reranker e busca por palavras são **em inglês** (`docs/hindsight/developer/multilingual.md`). Todo o conteúdo do Heimdall é em português. **Antes da carga inicial** configurar modelos multilíngues e o dicionário `portuguese` (detalhes e opções em `docs/plano/fase-1-troca-de-provedor.md`). Trocar o modelo de embeddings depois exige migrar o banco.
+
+## Medido na VPS (2026-10-22): versão instalada × documentação
+- `hindsight-admin` **vem** na imagem slim (`/app/api/.venv/bin/hindsight-admin`), com `backup`, `restore`, `run-db-migration`, `repair-bank`, `rename-bank`, `export-bank`, `import-bank` e os de worker; **não tem `chatgpt`**.
+- A 1.0.0 **não tem o provedor `chatgpt`** (o código instalado só traz `openai-codex`, que lê o `auth.json` do Codex CLI, `auth_mode: chatgpt`). O provedor `chatgpt` e o comando `hindsight-admin chatgpt login` descritos em `developer/models.md` chegaram na **v1.1.0** (2026-10-21; notas da versão: "feat(api): chatgpt LLM provider via Sign in with ChatGPT", PR #5688). A cópia local da documentação está à frente da versão fixada.
+- Consequência: com a 1.0.0, o Hindsight fica com `HINDSIGHT_API_LLM_PROVIDER=none` (guarda e busca, sem reflexão/observações) até o dono decidir: atualizar para 1.1.0 (testar a migração antes) ou usar `openai-codex` (exige o login do Codex CLI).

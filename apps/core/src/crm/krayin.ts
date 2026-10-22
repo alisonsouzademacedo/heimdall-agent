@@ -26,6 +26,12 @@ export function normalizarNome(s: string): string {
   return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
+// Chave para COMPARAR nomes de etapa: "1ª Reunião Agendada" e "1a reuniao agendada" (sem o simbolo ordinal, dificil de digitar) valem o mesmo.
+// O numero continua separando 1ª de 2ª. normalizarNome nao muda (tem teste proprio).
+export function chaveEtapa(s: string): string {
+  return normalizarNome(s).replace(/^(\d+)[ao]?(?= )/, '$1');
+}
+
 // Nomes do funil combinado com o dono (docs/plano/fase-2-crm.md). Ganho/perda valem pelo code, nao pelo nome.
 const ESPERADAS = [
   { chave: 'contato', nome: 'Contato iniciado', codigo: null },
@@ -146,7 +152,7 @@ export function verificarFunil(funis: FunilKrayin[]): FunilVerificado {
     for (const e of ESPERADAS) {
       const achada = e.codigo
         ? f.etapas.find((x) => normalizarNome(x.codigo ?? '') === e.codigo)
-        : f.etapas.find((x) => normalizarNome(x.nome) === normalizarNome(e.nome));
+        : f.etapas.find((x) => chaveEtapa(x.nome) === chaveEtapa(e.nome));
       if (achada) etapas[e.chave as ChaveEtapa] = achada; else faltando.push(e.nome);
     }
     const candidato = { funil: f, etapas, faltando };

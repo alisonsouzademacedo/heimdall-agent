@@ -62,3 +62,9 @@ Persistência da imagem única; caminho real da API; campo de motivo de perda; c
 8. **Composer avisou "64 security vulnerability advisories affecting 17 packages"** nas dependências do Krayin 2.2.0. Mitigação: só `127.0.0.1`, sem exposição pública.
 9. O instalador sem `--skip-env-check` não foi usado: o idioma e a moeda ficaram `en`/`USD` (padrão do seeder). Ajustar em Configurações do Krayin se o dono quiser.
 **Não verificado:** o caminho "banco vazio" do `instalar.sh` rodou só à mão (o banco já tinha sido instalado manualmente antes); funil de 5 etapas do dono; kanban; webhooks.
+
+## Funil do dono e token — como fazer na VPS (2026-10-22)
+- **O formulário "Create Pipeline" do Krayin 2.2.0 tem 3 etapas FIXAS** (lidas em `packages/Webkul/Admin/src/Resources/views/settings/pipelines/create.blade.php` dentro da imagem): a primeira (código `new`, "New"/"Novo"), **Won** ("Ganho") e **Lost** ("Perdido"); o nome delas é somente leitura. O dono só adiciona as do meio. Funil resultante: `Novo` (não usada pelo Heimdall) → **Contato iniciado** → **1ª Reunião Agendada** → **2ª Reunião Agendada** → **Ganho** (`won`) → **Perdido** (`lost`). O Heimdall reconhece ganho e perdido pelo CÓDIGO e as três do meio pelo nome (sem acento, sem diferença de maiúsculas e aceitando "1a" no lugar de "1ª"; teste em `krayin.test.ts`).
+- Por isso a instrução da tela (passo 12) mandava "criar as cinco etapas" e estava errada: corrigida (teste em `servidor.test.ts`).
+- **Token:** `sh infra/krayin/gerar-token.sh` faz o login com o administrador do `.env` e grava `data/krayin.json` (modo 0600), sem mostrar o token. Cada execução revoga o token anterior. O dono pode colar um token próprio no passo 12 da tela, se preferir.
+- **Senha do administrador do Krayin** (usuário `dono@heimdall.local`): está em `infra/compose/.env` (`KRAYIN_ADMIN_PASSWORD`). Para ler sem copiar para conversa: `grep KRAYIN_ADMIN_PASSWORD ~/heimdall/infra/compose/.env` no terminal do próprio dono.

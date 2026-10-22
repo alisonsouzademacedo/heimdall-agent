@@ -78,11 +78,10 @@ preparar() {
   return 0
 }
 
-docker_subir() {
+docker_subir() { # $1 = --no-recreate na checagem periodica: so sobe o que esta parado, nunca recria por causa de edicao no docker-compose.yml
   [ "$SEM_DOCKER" = 1 ] && return 0
   if [ "$SOMENTE" = 1 ]; then plano "docker compose --env-file infra/compose/.env -f infra/compose/docker-compose.yml up -d"; return 0; fi
-  compose up -d 2>&1 | while IFS= read -r l; do info "$l"; done
-  [ "$(compose ps -q 2>/dev/null | wc -l)" -ge 0 ] || true
+  compose up -d ${1:-} 2>&1 | while IFS= read -r l; do info "$l"; done
 }
 
 iniciar_um() {
@@ -189,7 +188,7 @@ acao_supervisionar() {
       iniciar_um "$n"
     done
     # de tempos em tempos, garante o Compose de pe (o Docker pode ter demorado a subir no boot)
-    if [ $((ciclo % ${HEIMDALL_CICLOS_DOCKER:-30})) -eq 0 ]; then docker_subir >/dev/null 2>&1; fi
+    if [ $((ciclo % ${HEIMDALL_CICLOS_DOCKER:-30})) -eq 0 ]; then docker_subir --no-recreate >/dev/null 2>&1; fi
     if [ "$MAX_CICLOS" -gt 0 ] && [ "$ciclo" -ge "$MAX_CICLOS" ]; then return 0; fi
     sleep "$INTERVALO"
   done

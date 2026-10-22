@@ -51,3 +51,9 @@ Tudo o que o Heimdall puxa do WhatsApp vive em `data/` na raiz do projeto (o `.g
 
 ## O que só a prática vai responder (lista viva para o spike)
 Windows Home com Docker Desktop; a conta Plus do usuário no fluxo do Hindsight; menu `hermes model` no contêiner; caminho real da API do Krayin (`/api/admin` ou `/api/v1`); persistência da imagem única do Krayin; campo de motivo de perda; envio de `.md` como documento no WhatsApp; nono dígito de números brasileiros; alcance real do histórico do Baileys; consumo de memória e cota; qualidade do Whisper em português e do PDF do Meet; `local_files_only` do faster-whisper; corpo do `POST /api/jobs` do Hermes; leitura de `cron/output` pelo núcleo; autenticação do MCP do Hindsight; imagem slim com `hindsight-admin`.
+
+## Respondido na prática na VPS (2026-10-22)
+- **Caminho real da API do Krayin:** `/api/v1` (`04-krayin.md`). **Persistência do Krayin:** sim (MySQL próprio em volume; `restart` e recriação). **Motivo de perda:** campo nativo `lost_reason`. **Etapas fixas do funil:** Novo, Ganho e Perdido.
+- **`hindsight-admin` na slim:** vem, mas sem `chatgpt`; o provedor `chatgpt` só existe a partir da 1.1.0 (`02-hindsight.md`).
+- **Whisper nesta CPU (sem AVX):** ~5× o tempo real, pico 1,4 GB (`06-media-worker.md`).
+- **Supervisor Linux e reinício automático:** `11-supervisor-linux.md`. **Primeiro acesso do dono:** `12-primeiro-acesso-vps.md`.

@@ -2,7 +2,15 @@
 
 Memória do projeto para qualquer IA que continue o trabalho. **Atualize ao fim de cada passo.** Não apague entradas antigas.
 
-## Estado atual (2026-10-22)
+## Estado atual (2026-10-22, noite) — VPS de validação no ar, esperando o dono
+- **Onde:** VPS Linux compartilhada com sites de clientes (nunca mexer em nginx, pm2, firewall, SSH nem nos contêineres dos outros projetos). Tudo do Heimdall: projeto Compose `heimdall`, portas só em `127.0.0.1` (tela 8765, Krayin 8082, Hermes 8642, Hindsight 8888/9999).
+- **Rodando:** Postgres, Hindsight (1.0.0, LLM `none`), Hermes (sem login), Krayin 2.2.0 + MySQL; os 5 processos do Node sob `heimdall.service` (systemd de usuário, reinício automático, linger já ativo). Supervisor: `scripts/heimdall.sh` (`runbooks/11`). Token do Krayin em `data/krayin.json`; senhas em `infra/compose/.env` (fora do git).
+- **Falta o dono (roteiro: `runbooks/12-primeiro-acesso-vps.md`):** túnel SSH; QR do WhatsApp (antes, desconectar a sessão antiga: D2); `hermes model` (login do ChatGPT); criar o funil no Krayin (3 etapas do meio).
+- **Decisões pendentes do dono:** (1) Hindsight 1.0.0 não tem o provedor `chatgpt` (só na 1.1.0): atualizar ou seguir sem LLM na memória; (2) Whisper `small` a ~5× o tempo real nesta CPU sem AVX: manter, modelo menor ou mais CPU; (3) trazer o acervo/memória antigos do Windows (não estão nesta VPS; o `.env` daqui é novo e não combina com o volume exportado de lá) ou começar do zero; (4) enviar ao GitHub (nada foi enviado nesta sessão; a branch local está rebaseada sobre `origin/main`).
+- **Pendências técnicas anotadas (ler antes de tudo):** `pendencias/2026-10-22-vps-melhorias-pendentes.md` — fechar a bateria e o commit, disco quase no mínimo (31 GB livres; cache de construção 7,8 GB), parada limpa do MySQL do Krayin, rodízio de logs, threads do Whisper, Krayin em inglês/dólar, link novo da tela, teste do Krayin com banco vazio, motivo de perda no CRM.
+- **Próximo passo da IA:** depois do dono, validar de ponta a ponta (histórico, áudio/PDF reais, modelo real, relatório de teste, CRM com lead real) e registrar no runbook 08.
+
+## Estado anterior (2026-10-22, antes da VPS)
 - Fase: **fase 2 — conclusão do produto e preparação da VPS** (`fase-2-execucao.md`; decisão D31). O projeto é **Linux-only** desde hoje: a camada Windows foi removida (26 arquivos; registro em `pendencias/2026-10-22-revisao-linux-only.md`) e o CI tem um único job Ubuntu.
 - **Onde roda (D31):** validação de ponta a ponta **direto na VPS** (Linux); o Omarchy na máquina do dono fica como desenvolvimento. Sessão única do WhatsApp (D2): VPS e máquina local **nunca** ao mesmo tempo.
 - Decisões: `docs/plano/README.md` (D1 a D32). Regras para IAs: `AGENTS.md` e `CLAUDE.md`; erros resolvidos em `docs/plano/LICOES.md`.
@@ -354,3 +362,8 @@ O token de API do Strix que o dono colou na conversa (nome "Claude", todos os es
 - **Trabalhador de áudio/PDF:** ver `runbooks/06-media-worker.md` ("Medido na VPS Linux"): cabe na memória (pico 1,39 GB), mas roda a **5,1× o tempo real** nesta CPU sem AVX.
 - **Teto de CPU** em todos os serviços do Compose (teste novo em `check_infra.sh`, visto falhar antes); aplicado com `compose up -d` (recriou os contêineres na ordem certa, nada perdido).
 - **Memória do servidor (medida, todos os serviços de pé, trabalhador de áudio parado):** ~3,75 GB usados, ~4,2 GB disponíveis; Heimdall ≈ 2,3 GB (Docker ≈ 1,8 GB + Node ≈ 0,55 GB).
+
+### 2026-10-22 (VPS) — reinício automático ativado, tela do CRM corrigida
+- **Reinício automático (OK do dono nesta sessão):** `scripts/heimdall.sh instalar-servico` + `systemctl --user enable --now heimdall.service`. O `Linger` do usuário `pedro` **já estava ativo** (não precisei de `sudo`). Provado ao vivo: derrubei a ponte com `kill -9` (voltou em segundos com outro pid) e derrubei o próprio supervisor (o systemd reergueu os 5 processos). Não mexi em nginx, pm2, firewall, SSH nem nos contêineres dos sites.
+- **Tela, passo 12 (CRM):** o texto mandava criar 5 etapas; no Krayin real são 3 (Novo, Ganho e Perdido são fixas, lido no formulário dentro da imagem). Corrigido com teste; exemplo de endereço agora `:8082`; `chaveEtapa` aceita "1a"/"2a" (teste novo); 3 quebras propositais novas para o CRM, uma delas só detectada depois de escrever o teste do redirecionamento (token não segue redirecionamento).
+- **Tela ao vivo (instância temporária em 8766, apagada):** `/api/estado` devolve os 13 passos e 5 fontes; todos `pendente` (nada conectado); `/api/crm/testar` falou com o Krayin real (`Default Pipeline`, faltando as 3 etapas do dono); `/api/ambiente/testar` lê Linux, 4,1 GB livres, Docker rodando, imagens na versão certa. O listener já exibe um QR **real** (aguardando leitura).

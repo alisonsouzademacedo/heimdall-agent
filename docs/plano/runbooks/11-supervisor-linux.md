@@ -29,6 +29,7 @@ Ver: `systemctl --user status heimdall.service`. Desativar: `systemctl --user di
 
 ## Armadilhas (medidas)
 - **`sh` não tem variável local.** Duas vezes uma função "emprestou" o nome de uma variável do chamador: `reg_gravar` usava `n` (todas as mensagens saíam "ponte iniciado") e `vivo`/`inicio_de` usavam `s` (o processo era lançado com o conteúdo de `/proc/<pid>/stat` como argumento, só quando havia registro velho). Regra: variáveis de função com prefixo próprio (`_vs`, `_np`...).
+- **Mudança no `docker-compose.yml` não é aplicada sozinha:** a checagem periódica usa `up -d --no-recreate` (só sobe o que caiu). Para aplicar uma mudança de propósito: `sh scripts/heimdall.sh iniciar` (ou `docker compose ... up -d`).
 - A unidade de usuário não ordena depois do `docker.service` (outro gerenciador): por isso o supervisor repete o `docker compose up -d` de tempos em tempos.
 - `iniciar` roda `npm ci` (versões do `package-lock.json`) em `apps/<x>` sem `node_modules`; não instala programas no sistema.
 - Se `infra/compose/.env` não existe, recusa: não inventa senhas.
