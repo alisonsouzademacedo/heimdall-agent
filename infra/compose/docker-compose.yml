@@ -92,8 +92,59 @@ services:
     networks: [isolada]
     mem_limit: 2g
 
+  # CRM (fase 2, runbooks/04-krayin.md). MySQL PROPRIO, sem porta publicada; o Krayin so em 127.0.0.1:8082 (acesso por tunel SSH).
+  # Sem envio de e-mail (MAIL_MAILER=log: a mensagem so vai para o log) e sem webhook configurado: o Heimdall nao ganha outro caminho de envio (regra 1).
+  krayin-mysql:
+    image: mysql:8.0.46
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --performance-schema=OFF --innodb-buffer-pool-size=128M --max-connections=40
+    environment:
+      MYSQL_ROOT_PASSWORD: ${KRAYIN_DB_ROOT_PASSWORD:?defina KRAYIN_DB_ROOT_PASSWORD no .env}
+      MYSQL_DATABASE: krayin
+      MYSQL_USER: krayin
+      MYSQL_PASSWORD: ${KRAYIN_DB_PASSWORD:?defina KRAYIN_DB_PASSWORD no .env}
+    volumes:
+      - krayin_mysql_data:/var/lib/mysql
+    networks: [krayin_db]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    mem_limit: 640m
+
+  krayin:
+    build: ../krayin
+    image: heimdall-krayin:2.2.0-api
+    restart: unless-stopped
+    depends_on:
+      krayin-mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8082:80"
+    environment:
+      DB_HOST: krayin-mysql   # diferente de 127.0.0.1: desliga o MySQL interno da imagem
+      DB_PORT: "3306"
+      DB_DATABASE: krayin
+      DB_USERNAME: krayin
+      DB_PASSWORD: ${KRAYIN_DB_PASSWORD:?defina KRAYIN_DB_PASSWORD no .env}
+      APP_KEY: ${KRAYIN_APP_KEY:?defina KRAYIN_APP_KEY no .env (base64:...)}
+      APP_URL: http://127.0.0.1:8082
+      APP_LOCALE: pt_BR
+      APP_CURRENCY: BRL
+      MAIL_MAILER: log
+      SANCTUM_STATEFUL_DOMAINS: 127.0.0.1:8082
+      L5_SWAGGER_UI_PERSIST_AUTHORIZATION: "true"
+    volumes:
+      - krayin_storage:/var/www/laravel-crm/storage
+    networks: [krayin_db, default]
+    mem_limit: 768m
+
 networks:
   interna: {}
+  krayin_db:
+    internal: true   # o MySQL do Krayin nao tem internet nem porta no computador
   isolada:
     internal: true   # sem internet: processa PDFs e audios de terceiros
 
@@ -102,3 +153,5 @@ volumes:
   hindsight_chatgpt: {}
   hindsight_modelos: {}
   hermes-data: {}
+  krayin_mysql_data: {}
+  krayin_storage: {}

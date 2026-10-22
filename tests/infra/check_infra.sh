@@ -100,6 +100,34 @@ grep -q 'ENV_EXEMPLO_SEM_SEGREDO' "$ENVX" && pass "modelo.env so traz valores de
 SOLTO=$(grep -nE '^[^#]*\bdocker run\b' tests/infra/smoke_*.sh | grep -v 'drun()' | grep -v '^\s*#')
 [ -z "$SOLTO" ] && pass "os smokes nao chamam docker run solto (usam drun/hpath, que funcionam no Git Bash do Windows)" || { fail "docker run solto nos smokes (no Windows o Git Bash estraga os caminhos): use drun e hpath de tests/infra/lib_docker.sh"; echo "$SOLTO" | cut -c1-140; }
 grep -q '^drun()' tests/infra/lib_docker.sh && grep -q '^hpath()' tests/infra/lib_docker.sh && pass "lib_docker.sh define drun e hpath" || fail "lib_docker.sh sem drun/hpath"
+# ---- Krayin (CRM, passo 4 da migracao para a VPS; runbook 04): imagem por digest, MySQL proprio, so 127.0.0.1, sem e-mail ----
+KR=infra/krayin/Dockerfile
+[ -s "$KR" ] && pass "existe $KR (imagem do Krayin com o pacote da API)" || fail "falta $KR"
+grep -qE '^FROM webkul/krayin:2\.2\.0@sha256:5a5e6e86bdede8ecd72db7805c4a471c9111513efae95de3e8c80a7bb0e517b9$' "$KR" 2>/dev/null && pass "Krayin 2.2.0 preso pelo digest da imagem (a tag sozinha pode mudar)" || fail "Krayin nao esta preso por tag E digest"
+grep -qE 'composer require .*krayin/rest-api:[0-9]+\.[0-9]+\.[0-9]+' "$KR" 2>/dev/null && pass "pacote krayin/rest-api com versao exata" || fail "krayin/rest-api sem versao exata"
+grep -qE '^\s+krayin:' "$DC" && grep -qE '^\s+krayin-mysql:' "$DC" && pass "Compose tem krayin e krayin-mysql (MySQL proprio, nao o interno da imagem)" || fail "faltam os servicos krayin e krayin-mysql"
+grep -qE '127\.0\.0\.1:8082:80' "$DC" && pass "Krayin publicado so em 127.0.0.1:8082" || fail "Krayin fora de 127.0.0.1:8082"
+grep -qE 'image:\s*mysql:8\.0\.[0-9]+\s*$' "$DC" && pass "MySQL com versao exata (8.0.x, minimo exigido pelo Krayin: 8.0.32)" || fail "MySQL sem versao exata 8.0.x"
+grep -qiE 'phpmyadmin' "$DC" "$ENVX" && fail "phpMyAdmin no Compose (nao deve existir)" || pass "sem phpMyAdmin"
+for v in KRAYIN_DB_PASSWORD KRAYIN_DB_ROOT_PASSWORD KRAYIN_APP_KEY; do grep -qE "\\$\{$v:\?" "$DC" && pass "$v obrigatoria (sem valor padrao)" || fail "$v nao e obrigatoria no Compose"; done
+grep -qE 'MAIL_MAILER:\s*"?log"?' "$DC" && pass "Krayin com MAIL_MAILER=log (nenhum e-mail sai: regra 1)" || fail "Krayin sem MAIL_MAILER=log"
+grep -qiE 'MAIL_MAILER:\s*"?smtp|MAIL_HOST|SENDGRID|MAILGUN|SES_' "$DC" "$ENVX" && fail "Krayin com configuracao de envio de e-mail" || pass "nenhuma configuracao de envio de e-mail no Compose"
+grep -qE 'APP_URL:\s*http://127\.0\.0\.1:8082' "$DC" && pass "APP_URL do Krayin aponta para o tunel (127.0.0.1:8082)" || fail "APP_URL do Krayin nao e http://127.0.0.1:8082"
+KI=infra/krayin/instalar.sh
+[ -s "$KI" ] && sh -n "$KI" 2>/dev/null && pass "infra/krayin/instalar.sh existe e tem sintaxe valida" || fail "falta infra/krayin/instalar.sh ou a sintaxe esta errada"
+grep -qE 'admin123' "$KI" 2>/dev/null && grep -qE 'Hash::check' "$KI" && pass "instalar.sh troca a senha padrao admin123 e so se ela ainda for a padrao (nao desfaz troca do dono)" || fail "instalar.sh nao trata a senha padrao admin123 com Hash::check"
+grep -qE 'echo[^|]*\$\{?[A-Za-z_]*(PASSWORD|SENHA|APP_KEY)' "$KI" 2>/dev/null && fail "instalar.sh imprime senha ou chave" || pass "instalar.sh nao imprime senha nem chave"
+grep -qE 'krayin-rest-api:install' "$KR" 2>/dev/null && pass "o pacote da API e configurado na construcao da imagem (sobrevive a down/up)" || fail "krayin-rest-api:install nao roda na construcao da imagem"
+# Armadilha medida em 2026-10-22: o entrypoint.sh da imagem do Krayin aplica APP_TIMEZONE com sed "s/.../.../"; "America/Sao_Paulo" tem barra e quebra o sed (o contêiner reinicia em laco).
+grep -qE '^\s+APP_TIMEZONE:' "$DC" && fail "APP_TIMEZONE no Compose do Krayin (valor com barra quebra o entrypoint da imagem; runbook 04, Armadilhas)" || pass "sem APP_TIMEZONE no Compose do Krayin (o sed do entrypoint nao aceita valor com barra)"
+python3 -I - "$DC" <<'PY' && pass "krayin-mysql nao publica porta e esta so numa rede interna; volume do banco nomeado" || fail "krayin-mysql exposto, fora de rede interna ou sem volume nomeado"
+import re, sys
+t = open(sys.argv[1], encoding='utf-8').read()
+m = re.search(r'^  krayin-mysql:\n(.*?)(?=^  \S|^\S|\Z)', t, re.S | re.M)
+b = m.group(1) if m else ''
+ok = bool(b) and 'ports:' not in b and 'krayin_db' in b and re.search(r'krayin_mysql_data:/var/lib/mysql', b)
+sys.exit(0 if ok else 1)
+PY
 
 # ---- Compose: o proprio Docker valida (portas, interpolacao, redes) ----
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
