@@ -13,10 +13,9 @@ import { enfileirar } from '../../apps/core/src/fila.ts';
 
 const GIB = 1024 ** 3;
 const CODIGO = 'codigo-sintetico-navegadores';
-// WSL antigo + Windows antigo + imagens faltando: as linhas novas (e as de texto mais comprido) precisam aparecer.
+// Linux + imagens faltando: as linhas novas (e as de texto mais comprido) precisam aparecer.
 const verificacoes = avaliar({
-  plataforma: 'win32', memTotalBytes: 16 * GIB, memLivreBytes: 8 * GIB, discoLivreBytes: 100 * GIB, nodeVersao: 'v22.22.0', dockerRodando: true,
-  virtualizacao: true, wsl: true, wslVersao: '2.1.4', windowsBuild: 19044,
+  plataforma: 'linux', memTotalBytes: 16 * GIB, memLivreBytes: 8 * GIB, discoLivreBytes: 100 * GIB, nodeVersao: 'v22.22.0', dockerRodando: true,
   imagensFaltando: ['nousresearch/hermes-agent:v0.22.2', 'heimdall-hindsight:1.0.0-onnx']
 });
 
@@ -40,7 +39,7 @@ escuta.mensagens([
   { key: { id: 'SINT-C1', remoteJid: '5511999900001@s.whatsapp.net', fromMe: false }, message: { conversation: 'cliente um' }, messageTimestamp: Math.floor(T / 1000) },
   { key: { id: 'SINT-C2', remoteJid: '5511999900002@s.whatsapp.net', fromMe: false }, message: { conversation: 'cliente dois' }, messageTimestamp: Math.floor(T / 1000) }
 ], 'historico', () => '{}');
-const s = await iniciarServidor({ banco, codigo: CODIGO, pastaBugs: join(dir, 'bugs'), sondar: () => verificacoes, agora: () => T });
+const s = await iniciarServidor({ banco, codigo: CODIGO, pastaBugs: join(dir, 'bugs'), raiz: dir, sondar: () => verificacoes, agora: () => T });
 let falhas = 0, rodou = 0;
 const passou = (m) => console.log(`  [PASSOU] ${m}`);
 const falhou = (m) => { console.log(`  [FALHOU] ${m}`); falhas++; };
@@ -59,9 +58,23 @@ for (const [nome, abrir] of MOTORES) {
     try { await pagina.waitForFunction((n) => document.querySelectorAll('.verif').length === n, verificacoes.length, { timeout: 15000 }); passou(`${nome}: ${verificacoes.length} verificacoes na tela`); }
     catch { falhou(`${nome}: as ${verificacoes.length} verificacoes nao apareceram`); }
     const texto = await pagina.innerText('body');
-    for (const trecho of ['Versão do WSL: 2.1.4', 'Windows (compilação 19044)', 'Imagens do Heimdall que faltam', 'pull --ignore-buildable']) {
+    for (const trecho of ['Sistema', 'Docker', 'Imagens do Heimdall que faltam', 'pull --ignore-buildable']) {
       texto.includes(trecho) ? passou(`${nome}: mostra "${trecho}"`) : falhou(`${nome}: falta o texto "${trecho}"`);
     }
+
+    // A tela tem de mostrar os 13 passos, as 5 fontes ao vivo e o progresso da ponte (nao e uma tela generica).
+    try {
+      await pagina.locator('#passos button.passo').first().waitFor({ timeout: 10000 });
+      const nPassos = await pagina.locator('#passos button.passo').count();
+      const nFontes = await pagina.locator('#fontes .fonte').count();
+      const resumo = await pagina.locator('.resumo-ponte').innerText();
+      const navTitulo = await pagina.locator('.nav-titulo').innerText();
+      const rotulo = await pagina.locator('#painel .rotulo-passo').innerText();
+      (nPassos === 13 && /de 13 passos prontos/.test(resumo) && navTitulo === 'A Ponte' && rotulo === 'PASSO 1 DE 13')
+        ? passou(`${nome}: 13 passos, progresso "${resumo.trim()}" e titulo "A Ponte"`)
+        : falhou(`${nome}: menu/progresso errado (${nPassos} passos, "${resumo}", "${navTitulo}", "${rotulo}")`);
+      nFontes === 5 ? passou(`${nome}: 5 fontes ao vivo`) : falhou(`${nome}: ${nFontes} fontes ao vivo (esperado 5)`);
+    } catch (e) { falhou(`${nome}: menu ou fonte ao vivo nao apareceram: ${String(e).slice(0, 140)}`); }
 
     // Passos novos ligados: Cadastro, Sincronizar, Modelo, Processar
     const irPara = async (rotulo) => {
@@ -170,6 +183,20 @@ for (const [nome, abrir] of MOTORES) {
         await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('Processamento PAUSADO'), { timeout: 10000 });
         passou(`${nome}: Processar pausa de novo`);
       } catch (e) { falhou(`${nome}: Processar incompleto: ${String(e).slice(0, 140)}`); }
+    }
+
+    // CRM: passo guiado, token em campo de senha (nunca em texto) e as 5 etapas explicadas.
+    if (await exigirPasso('CRM (Krayin)')) {
+      try {
+        await pagina.waitForSelector('input[aria-label="Token da API do Krayin"]', { timeout: 10000 });
+        const tipoToken = await pagina.getAttribute('input[aria-label="Token da API do Krayin"]', 'type');
+        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('Ainda não configurado'), { timeout: 10000 });
+        const txtCrm = await pagina.innerText('#painel');
+        const etapas = ['Contato iniciado', '1ª Reunião Agendada', '2ª Reunião Agendada', 'Fechamento / Ganho', 'Perdido / Arquivado'];
+        (tipoToken === 'password' && txtCrm.includes('Settings >> Pipeline >> Create Pipeline') && etapas.every((x) => txtCrm.includes(x)))
+          ? passou(`${nome}: CRM guia o funil, pede o token em campo de senha e mostra as 5 etapas`)
+          : falhou(`${nome}: CRM sem token protegido, sem o caminho do funil ou sem as 5 etapas`);
+      } catch (e) { falhou(`${nome}: CRM incompleto: ${String(e).slice(0, 140)}`); }
     }
 
     // Menu lateral: "processando" com barra e TEXTO (nao so cor).

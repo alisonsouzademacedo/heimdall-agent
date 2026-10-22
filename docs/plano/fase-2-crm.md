@@ -1,6 +1,6 @@
 # Fase 2 — CRM e Kanban
 
-Status: **Krayin escolhido**; fundação local implementada em 2026-10-22 (configuração segura, cliente REST, teste de conexão e passo 13 da tela). **Ainda não validado contra um Krayin real**: instalação, pacote REST e carga ficam para a VPS (D31). Fontes: páginas do GitHub lidas pelo Firecrawl; `https://devdocs.krayincrm.com/llms.txt` e `llms-full.txt`; código de `krayin/rest-api`; README de `trycompai/crm`.
+Status: **Krayin escolhido**; fundação local implementada em 2026-10-22 (configuração segura, cliente REST, teste de conexão e passo 12 da tela). **Ainda não validado contra um Krayin real**: instalação, pacote REST e carga ficam para a VPS (D31). Fontes: páginas do GitHub lidas pelo Firecrawl; `https://devdocs.krayincrm.com/llms.txt` e `llms-full.txt`; código de `krayin/rest-api`; README de `trycompai/crm`.
 
 ## O que o Heimdall precisa do CRM
 Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM é o **registro do funil**; as conversas continuam no acervo. Para isso precisa de uma **API externa com token** que um agente consiga usar sem interface.
@@ -29,9 +29,9 @@ Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM 
 ## Implementado localmente (2026-10-22)
 - **Configuração segura:** `apps/core/src/crm/config.ts` grava `data/krayin.json` (fora do git) com URL e token, modo `0600` no Linux; valida `http/https`, recusa credenciais na URL e token vazio/curto/com quebra de linha. O token **nunca** volta para a tela, vai para log ou para o banco.
 - **Cliente REST:** `apps/core/src/crm/krayin.ts` usa o prefixo `/api/admin`, `Authorization: Bearer`, tempo limite de 8 s e **não segue redirecionamento** (para o token não vazar para outro endereço). Lê funis/etapas (`GET /settings/pipelines`), cria lead (`POST /leads`) e move etapa (`PUT /leads/stage/edit/{id}`).
-- **Funil:** `verificarFunil` reconhece as três primeiras etapas por nome e ganho/perda pelo código interno `won`/`lost`; devolve exatamente o que falta. **Não cria o funil pela API** (o formato de criação de pipeline não foi confirmado): a tela orienta o dono a criar em *Configurações >> Pipeline* e testa de novo.
+- **Funil:** `verificarFunil` reconhece as três primeiras etapas por nome e ganho/perda pelo código interno `won`/`lost`; devolve exatamente o que falta. **Não cria o funil pela API** (o formato de criação de pipeline não foi confirmado): a tela orienta o dono a seguir o caminho da documentação, *Settings >> Pipeline >> Create Pipeline*. A mesma frase aparece na tela em inglês, porque a interface do Krayin é em inglês.
 - **Estado:** `apps/core/src/crm/estado.ts` guarda no banco só o último resultado (ok/falhou, motivo curto, funis, completo e etapas faltando). O cartão de fontes fica **vermelho** se a conexão falhar, **em andamento** se o funil estiver incompleto e **verde** só com conexão + 5 etapas.
-- **Tela:** passo 13 "CRM (Krayin)" com URL, token (campo de senha), "Salvar e testar" e "Testar de novo"; o token é limpo do campo antes do pedido.
+- **Tela:** passo 12 "CRM (Krayin)" (o 13 é o painel final) com URL, token (campo de senha), "Salvar e testar" e "Testar de novo"; o token é limpo do campo antes do pedido.
 - **Testes locais:** 431 testes do núcleo, `tsc` limpo, sintaxe do `app.js` conferida; testes do cliente contra servidor HTTP falso, sem Krayin real.
 
 ## Pendente para a VPS

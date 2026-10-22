@@ -36,7 +36,7 @@ Base visual: protótipo em `docs/plano/prototipo-onboarding/` (glassmorphism esc
 | Whisper (faster-whisper) | media-worker, fila, testes | rodar áudio real de ponta a ponta, estado no onboarding | — |
 | Markitdown (PDF) | media-worker, testes | rodar PDF real, estado no onboarding | — |
 | ChatGPT Plus | plano do dono, uso pelo Hermes | detectar login/estado e provar extração real | login |
-| Krayin (CRM) | decisão D17/D18, documentação em `docs/krayin/`, **fundação local** (config segura, cliente REST, teste de conexão e passo 13) | **maior trabalho novo**: subir no Compose da VPS, funil de 5 etapas, API/token real, propor movimentos no relatório e aprovar no self-chat | credenciais/configuração |
+| Krayin (CRM) | decisão D17/D18, documentação em `docs/krayin/`, **fundação local** (config segura, cliente REST, teste de conexão e passo 12) | **maior trabalho novo**: subir no Compose da VPS, funil de 5 etapas, API/token real, propor movimentos no relatório e aprovar no self-chat | credenciais/configuração |
 
 ### 6. Onboarding como facilitador para leigo
 Cada etapa precisa de: **status ao vivo** (fonte real, não texto fixo), **ação guiada** (com confirmação), **explicação simples** e **critério de pronto**. Cobrir todos os passos 1–13, incluindo WhatsApp, provedor de LLM/ChatGPT Plus, memória, CRM, testes e relatórios. Requer endpoints de estado no núcleo e testes de navegador (`tests/navegadores/`).

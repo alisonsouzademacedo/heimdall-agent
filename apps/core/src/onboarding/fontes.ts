@@ -44,7 +44,7 @@ function fonteWhatsapp(p: Painel): Fonte {
   if (w.estado === 'deslogado') return { estado: 'vermelho', detalhe: 'desconectado; leia o QR para conectar.' };
   if (w.estado === 'reconectar') return { estado: 'processando', detalhe: w.qrSvg ? 'QR gerado; aguardando a leitura no telefone.' : 'precisa reconectar; abra o passo do WhatsApp para gerar o QR.' };
   if (w.qrSvg) return { estado: 'processando', detalhe: 'QR gerado; aguardando a leitura no telefone.' };
-  return { estado: 'pendente', detalhe: 'ainda nao conectado; abra o passo do WhatsApp.' };
+  return { estado: 'pendente', detalhe: 'ainda não conectado; abra o passo do WhatsApp.' };
 }
 
 function fonteModelo(m: ModeloParaFontes): Fonte {
@@ -56,8 +56,8 @@ function fonteModelo(m: ModeloParaFontes): Fonte {
 
 function fonteMemoria(p: Painel): Fonte {
   const s = p.servicos.hindsight;
-  if (!s) return { estado: 'pendente', detalhe: `Hindsight ainda nao respondeu${p.memoria.documentosEnviados > 0 ? `; ${p.memoria.documentosEnviados} documento(s) ja enviado(s)` : ''}.` };
-  if (!s.ok) return { estado: 'vermelho', detalhe: `sem resposta ha ${s.ha}s; ${p.memoria.documentosEnviados} documento(s) enviado(s).` };
+  if (!s) return { estado: 'pendente', detalhe: `Hindsight ainda não respondeu${p.memoria.documentosEnviados > 0 ? `; ${p.memoria.documentosEnviados} documento(s) já enviado(s)` : ''}.` };
+  if (!s.ok) return { estado: 'vermelho', detalhe: `sem resposta há ${s.ha}s; ${p.memoria.documentosEnviados} documento(s) enviado(s).` };
   return { estado: 'verde', detalhe: `respondendo · ${p.memoria.documentosEnviados} documento(s) enviado(s).` };
 }
 
@@ -68,15 +68,15 @@ function fonteMidia(p: Painel): Fonte {
   const ok = tipos.reduce((a, t) => a + (q(t).ok ?? 0), 0);
   const pend = tipos.reduce((a, t) => a + (q(t).pendente ?? 0) + (q(t).em_andamento ?? 0), 0);
   const falhas = tipos.reduce((a, t) => a + (q(t).erro ?? 0) + (q(t).abandonada ?? 0), 0);
-  if (pend > 0) return { estado: 'processando', detalhe: `${ok} de ${total} etapa(s) concluida(s); ${pend} na fila.` };
-  if (falhas > 0) return { estado: 'vermelho', detalhe: `${falhas} arquivo(s) com falha; ${ok} de ${total} etapa(s) concluida(s).` };
-  if (total > 0) return { estado: 'verde', detalhe: `${p.acervo.audios} audio(s) e ${p.acervo.pdfs} PDF(s); ${ok} de ${total} etapa(s) concluida(s).` };
-  if (p.acervo.audios + p.acervo.pdfs > 0) return { estado: 'pendente', detalhe: `${p.acervo.audios} audio(s) e ${p.acervo.pdfs} PDF(s) aguardando processamento.` };
-  return { estado: 'pendente', detalhe: 'nenhum audio ou PDF recebido ainda.' };
+  if (pend > 0) return { estado: 'processando', detalhe: `${ok} de ${total} etapa(s) concluída(s); ${pend} na fila.` };
+  if (falhas > 0) return { estado: 'vermelho', detalhe: `${falhas} arquivo(s) com falha; ${ok} de ${total} etapa(s) concluída(s).` };
+  if (total > 0) return { estado: 'verde', detalhe: `${p.acervo.audios} áudio(s) e ${p.acervo.pdfs} PDF(s); ${ok} de ${total} etapa(s) concluída(s).` };
+  if (p.acervo.audios + p.acervo.pdfs > 0) return { estado: 'pendente', detalhe: `${p.acervo.audios} áudio(s) e ${p.acervo.pdfs} PDF(s) aguardando processamento.` };
+  return { estado: 'pendente', detalhe: 'nenhum áudio ou PDF recebido ainda.' };
 }
 
 function fonteCrm(c: CrmParaFontes): Fonte {
-  if (!c.configurado) return { estado: 'pendente', detalhe: 'nao configurado (Krayin).' };
+  if (!c.configurado) return { estado: 'pendente', detalhe: 'não configurado (Krayin).' };
   if (c.estado === 'ok') {
     if (c.completo === false) {
       const falta = c.faltando ?? [];
@@ -84,8 +84,8 @@ function fonteCrm(c: CrmParaFontes): Fonte {
     }
     return { estado: 'verde', detalhe: 'conectado ao Krayin; funil com as 5 etapas.' };
   }
-  if (c.estado === 'falhou') return { estado: 'vermelho', detalhe: `sem conexao: ${c.motivo ?? 'sem detalhe'}.` };
-  return { estado: 'pendente', detalhe: 'configurado; falta testar a conexao.' };
+  if (c.estado === 'falhou') return { estado: 'vermelho', detalhe: `sem conexão: ${c.motivo ?? 'sem detalhe'}.` };
+  return { estado: 'pendente', detalhe: 'configurado; falta testar a conexão.' };
 }
 
 export function montarFontes(p: Painel, modelo: ModeloParaFontes, crm: CrmParaFontes): Fontes {
