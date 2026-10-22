@@ -14,9 +14,9 @@
 |---|---|---|
 | Hermes (API compatível com OpenAI) | 8642 | exige `API_SERVER_KEY` |
 | Hindsight (API / painel) | 8888 / 9999 | |
-| Krayin | 80 no contêiner; sugerido 8082 no host | |
 | Login do ChatGPT (retorno local) | 1455 | só durante o login; fixa |
-| Tela de onboarding do Heimdall | a definir | só local |
+| Krayin (CRM) | 8082 (no host) | só 127.0.0.1; MySQL sem porta publicada |
+| Tela de onboarding do Heimdall | 8765 (`HEIMDALL_PORTA`) | só local |
 
 ## Onde ficam os dados reais (fora do git; nunca em commit, chat ou relatório)
 Tudo o que o Heimdall puxa do WhatsApp vive em `data/` na raiz do projeto (o `.gitignore` ignora a pasta inteira):

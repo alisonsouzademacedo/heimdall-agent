@@ -38,17 +38,17 @@ async function subir(): Promise<Fake> {
       f.pedidos.push({ metodo: req.method ?? '', caminho: req.url ?? '', autorizacao: String(req.headers.authorization ?? ''), corpo });
       if (req.headers.authorization !== `Bearer ${TOKEN}`) { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ message: 'Unauthenticated.' })); return; }
       if (f.status !== 200) { res.writeHead(f.status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ message: 'falha proposital' })); return; }
-      if (req.method === 'GET' && req.url === '/api/admin/settings/pipelines') {
+      if (req.method === 'GET' && req.url === '/api/v1/settings/pipelines') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ data: f.funis.map((x) => ({ id: x.id, name: x.nome, is_default: x.padrao, stages: x.etapas.map((e) => ({ id: e.id, name: e.nome, code: e.codigo })) })) }));
         return;
       }
-      if (req.method === 'POST' && req.url === '/api/admin/leads') {
+      if (req.method === 'POST' && req.url === '/api/v1/leads') {
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ data: { id: 55 }, message: 'criado' }));
         return;
       }
-      if (req.method === 'PUT' && req.url === '/api/admin/leads/stage/edit/55') {
+      if (req.method === 'PUT' && req.url === '/api/v1/leads/stage/edit/55') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ data: { id: 55 }, message: 'movido' }));
         return;
@@ -106,7 +106,7 @@ test('lead: cria na etapa 1 com titulo/descricao e devolve o id', async () => {
   try {
     const r = await criarLead(cfg(f.url), { titulo: 'Empresa Sintetica', descricao: 'Cliente respondeu no WhatsApp', etapaId: 101 });
     assert.deepEqual(r, { ok: true, id: 55 });
-    const p = f.pedidos.find((x) => x.metodo === 'POST' && x.caminho === '/api/admin/leads');
+    const p = f.pedidos.find((x) => x.metodo === 'POST' && x.caminho === '/api/v1/leads');
     assert.deepEqual(p?.corpo, { title: 'Empresa Sintetica', description: 'Cliente respondeu no WhatsApp', lead_value: 0, lead_pipeline_stage_id: 101 });
     assert.equal(p?.autorizacao, `Bearer ${TOKEN}`);
   } finally { await f.fechar(); }
@@ -116,7 +116,7 @@ test('lead: mover etapa manda o id da etapa e recusa id invalido', async () => {
   const f = await subir();
   try {
     assert.deepEqual(await moverEtapa(cfg(f.url), 55, 103), { ok: true });
-    const p = f.pedidos.find((x) => x.metodo === 'PUT' && x.caminho === '/api/admin/leads/stage/edit/55');
+    const p = f.pedidos.find((x) => x.metodo === 'PUT' && x.caminho === '/api/v1/leads/stage/edit/55');
     assert.deepEqual(p?.corpo, { lead_pipeline_stage_id: 103 });
     assert.equal((await moverEtapa(cfg(f.url), 0, 103)).ok, false);
     assert.equal((await moverEtapa(cfg(f.url), 55, 0)).ok, false);

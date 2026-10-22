@@ -102,7 +102,7 @@ async function pedir(config: ConfigCrm, metodo: string, caminho: string, corpo: 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TEMPO_MS);
   try {
-    const r = await buscar(`${config.url}/api/admin${caminho}`, {
+    const r = await buscar(`${config.url}/api/v1${caminho}`, {
       method: metodo,
       headers: {
         Authorization: `Bearer ${config.token}`,

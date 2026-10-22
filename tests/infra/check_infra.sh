@@ -118,6 +118,10 @@ KI=infra/krayin/instalar.sh
 grep -qE 'admin123' "$KI" 2>/dev/null && grep -qE 'Hash::check' "$KI" && pass "instalar.sh troca a senha padrao admin123 e so se ela ainda for a padrao (nao desfaz troca do dono)" || fail "instalar.sh nao trata a senha padrao admin123 com Hash::check"
 grep -qE 'echo[^|]*\$\{?[A-Za-z_]*(PASSWORD|SENHA|APP_KEY)' "$KI" 2>/dev/null && fail "instalar.sh imprime senha ou chave" || pass "instalar.sh nao imprime senha nem chave"
 grep -qE 'krayin-rest-api:install' "$KR" 2>/dev/null && pass "o pacote da API e configurado na construcao da imagem (sobrevive a down/up)" || fail "krayin-rest-api:install nao roda na construcao da imagem"
+KG=infra/krayin/gerar-token.sh
+[ -s "$KG" ] && sh -n "$KG" 2>/dev/null && pass "infra/krayin/gerar-token.sh existe e tem sintaxe valida" || fail "falta infra/krayin/gerar-token.sh"
+grep -q 'salvarConfigCrm' "$KG" 2>/dev/null && grep -q '/api/v1/login' "$KG" && pass "gerar-token.sh usa o login real (/api/v1) e grava data/krayin.json pelo codigo do projeto (modo 0600)" || fail "gerar-token.sh nao usa /api/v1/login e salvarConfigCrm"
+grep -qE 'echo[^|]*\$\{?[A-Za-z_]*(TOKEN|PASSWORD|SENHA)|node[^|]*\$\{?[A-Za-z_]*TOKEN|printf[^|]*\$\{?[A-Za-z_]*TOKEN' "$KG" 2>/dev/null && fail "gerar-token.sh imprime ou passa o token por argumento" || pass "gerar-token.sh nao imprime o token nem o passa por argumento"
 # Armadilha medida em 2026-10-22: o entrypoint.sh da imagem do Krayin aplica APP_TIMEZONE com sed "s/.../.../"; "America/Sao_Paulo" tem barra e quebra o sed (o contêiner reinicia em laco).
 grep -qE '^\s+APP_TIMEZONE:' "$DC" && fail "APP_TIMEZONE no Compose do Krayin (valor com barra quebra o entrypoint da imagem; runbook 04, Armadilhas)" || pass "sem APP_TIMEZONE no Compose do Krayin (o sed do entrypoint nao aceita valor com barra)"
 python3 -I - "$DC" <<'PY' && pass "krayin-mysql nao publica porta e esta so numa rede interna; volume do banco nomeado" || fail "krayin-mysql exposto, fora de rede interna ou sem volume nomeado"

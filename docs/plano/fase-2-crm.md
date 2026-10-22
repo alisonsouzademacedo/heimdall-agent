@@ -13,7 +13,7 @@ Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM 
 | Stack | PHP 8.3+, Laravel 11, Vue 3; MySQL 8.0.32+ ou MariaDB; Apache/Nginx; ~3 GB de RAM | TypeScript: Next.js, NestJS, Bun, Postgres, agente em "eve" (Vercel) |
 | Kanban com etapas | **Sim**: visão Kanban por etapas e **vários funis com etapas personalizadas** (documentação) | **Não confirmado** (o README fala em "pipeline" de demonstração, sem descrever Kanban) |
 | API externa | **Sim**, pacote `krayin/rest-api`: token (Sanctum), Swagger, CRUD de leads, pessoas, organizações, cotações, produtos | API é **tRPC do próprio app**, autenticação por sessão (Better Auth, login Google/Microsoft); API externa com token **não documentada** |
-| Mover etapa / ganho / perda | **Sim**: rota `PUT /api/admin/leads/stage/edit/{id}` (campo `lead_pipeline_stage_id`); etapas com código `won` e `lost` registram a data de fechamento | não verificado |
+| Mover etapa / ganho / perda | **Sim**: rota `PUT /api/v1/leads/stage/edit/{id}` (campo `lead_pipeline_stage_id`); etapas com código `won` e `lost` registram a data de fechamento | não verificado |
 | Pessoas e empresas | Pessoas e organizações (encaixa em "cliente = empresa" com vários contatos) | Contatos, empresas e negócios |
 | Eventos | Eventos de criar/atualizar/apagar, que a API também dispara | n/d |
 | Extras | atributos personalizados, tags, atividades, e-mail, importação CSV/XLSX | agente autônomo próprio de pesquisa e enriquecimento; lê Gmail e Calendar; não lê WhatsApp |
@@ -28,7 +28,7 @@ Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM 
 
 ## Implementado localmente (2026-10-22)
 - **Configuração segura:** `apps/core/src/crm/config.ts` grava `data/krayin.json` (fora do git) com URL e token, modo `0600` no Linux; valida `http/https`, recusa credenciais na URL e token vazio/curto/com quebra de linha. O token **nunca** volta para a tela, vai para log ou para o banco.
-- **Cliente REST:** `apps/core/src/crm/krayin.ts` usa o prefixo `/api/admin`, `Authorization: Bearer`, tempo limite de 8 s e **não segue redirecionamento** (para o token não vazar para outro endereço). Lê funis/etapas (`GET /settings/pipelines`), cria lead (`POST /leads`) e move etapa (`PUT /leads/stage/edit/{id}`).
+- **Cliente REST:** `apps/core/src/crm/krayin.ts` usa o prefixo `/api/v1` (corrigido em 2026-10-22 após medir no Krayin real; antes era `/api/admin`), `Authorization: Bearer`, tempo limite de 8 s e **não segue redirecionamento** (para o token não vazar para outro endereço). Lê funis/etapas (`GET /settings/pipelines`), cria lead (`POST /leads`) e move etapa (`PUT /leads/stage/edit/{id}`).
 - **Funil:** `verificarFunil` reconhece as três primeiras etapas por nome e ganho/perda pelo código interno `won`/`lost`; devolve exatamente o que falta. **Não cria o funil pela API** (o formato de criação de pipeline não foi confirmado): a tela orienta o dono a seguir o caminho da documentação, *Settings >> Pipeline >> Create Pipeline*. A mesma frase aparece na tela em inglês, porque a interface do Krayin é em inglês.
 - **Estado:** `apps/core/src/crm/estado.ts` guarda no banco só o último resultado (ok/falhou, motivo curto, funis, completo e etapas faltando). O cartão de fontes fica **vermelho** se a conexão falhar, **em andamento** se o funil estiver incompleto e **verde** só com conexão + 5 etapas.
 - **Tela:** passo 12 "CRM (Krayin)" (o 13 é o painel final) com URL, token (campo de senha), "Salvar e testar" e "Testar de novo"; o token é limpo do campo antes do pedido.
@@ -42,7 +42,10 @@ Cadastrar, mover entre etapas do Kanban, registrar **ganho** e **perda**. O CRM 
 - **Configuração ao vivo:** a ponte lê `data/krayin.json` a cada pedido, então salvar o token no passo 12 funciona sem reiniciar o processo. Sem configuração, o CRM fica fora do relatório e a conversa normal segue.
 - **Limitações conhecidas:** se o dono mover um cartão à mão no Krayin, a etapa local pode ficar desatualizada; a busca de lead para ressincronizar ainda não foi validada. Apagar um cliente não apaga o lead no Krayin (só o vínculo local). Ganho automático e objeção irreversível continuam pendentes de decisão/sinal. Tudo isso será testado na VPS.
 
-## Pendente para a VPS
+## Validado na VPS (2026-10-22) e o que ainda falta
+**Feito e visto funcionando:** Krayin 2.2.0 + `krayin/rest-api` 2.2.0 no Compose (`infra/krayin/`, MySQL próprio, só `127.0.0.1:8082`, `MAIL_MAILER=log`); API real em `/api/v1`; `lost_reason` é campo nativo (grava-se no `PUT /leads/{id}` com `status: 0` ou em `PUT /leads/attributes/edit/{id}`; a rota de mover etapa o ignora); persistência em `restart` e recriação; cliente do projeto testado contra o Krayin real. Detalhes: `runbooks/04-krayin.md`. **Ainda falta:** o funil de 5 etapas (o dono cria na tela do Krayin), mover pelo cliente no funil do dono, e a gravação do `lost_reason` pelo cliente do projeto (hoje `moverEtapa` não manda motivo).
+
+## Pendente para a VPS (texto original)
 - Instalar o Krayin com a imagem oficial `webkul/krayin:2.2.0` (digest `sha256:5a5e6e86bdede8ecd72db7805c4a471c9111513efae95de3e8c80a7bb0e517b9`) **e** o pacote `krayin/rest-api` (a imagem sozinha não garante a API); medir RAM/disco e confirmar persistência.
 - Gerar o token da API (a coleção oficial tem o pedido de Login) e colar na tela; validar as rotas e os formatos reais de lead/pipeline (os payloads de `LeadForm`/`PipelineForm` não estão na documentação copiada).
 - Validar o fluxo completo contra um Krayin real: criar o funil de 5 etapas, gerar o token, conferir os formatos de `POST /leads` e `PUT /leads/stage/edit/{id}`, aprovar/recusar no self-chat, simular falha e repetir. O cliente REST e a proposta local já existem, mas ainda não moveram um lead real.
@@ -106,7 +109,7 @@ Documentação salva em `docs/krayin/` (portal de desenvolvedores 2.2, guia de u
 - **Motivo de perda:** **não é um campo nativo documentado** (nenhuma ocorrência na documentação nem no controlador da API). Opções a testar no spike (E8): atributo personalizado do lead, tag ou nota em atividade. Os motivos definidos (`tentativas_esgotadas`, `doenca_grave_familiar`, `falencia`, `satisfeito_com_marketing_atual`, `outro_irreversivel`) entrariam por um desses caminhos.
 - **Webhooks:** o Krayin envia webhooks quando lead, pessoa, organização, produto, cotação ou armazém mudam (Configurações → Webhooks, com URL, cabeçalhos e corpo JSON). Útil para o Heimdall **saber quando o usuário move um cartão à mão** e manter o acervo coerente (sincronização nos dois sentidos).
 - **Eventos e workflows:** as escritas pela API disparam os mesmos eventos do painel; há "workflows" automáticos (a avaliar se são necessários).
-- **API:** autenticação por `POST /api/admin/login` (token), rotas de leads, pessoas, organizações, atividades, tags, pipelines, origens, tipos e atributos. Pacote exige PHP ^8.2 (Krayin 2.2 pede 8.3+).
+- **API:** autenticação por `POST /api/v1/login` (token; no Krayin real o prefixo é `/api/v1`), rotas de leads, pessoas, organizações, atividades, tags, pipelines, origens, tipos e atributos. Pacote exige PHP ^8.2 (Krayin 2.2 pede 8.3+).
 - **Importação em massa:** existe (CSV/XLSX), mas o usuário começa do zero.
 
 ## Decisão
