@@ -3,6 +3,8 @@
 !.env.example
 node_modules/
 data/
+# catalogo estatico da skill de design (nao e dado de cliente; ver tests/repo/check_higiene.sh)
+!.claude/skills/ui-ux-pro-max/data/
 *.sqlite
 *.sqlite3
 *.sqlite-*

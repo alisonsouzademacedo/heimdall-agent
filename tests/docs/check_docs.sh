@@ -64,6 +64,8 @@ for rel in SKILL.md references/quick-reference.md references/pro-rules.md; do
 done
 [ -z "$DIF_UX" ] && pass "skill de design instalada identica a documentacao (com a adaptacao de caminho registrada)" || fail "skill de design ausente ou alterada:$DIF_UX"
 [ -f .claude/skills/ui-ux-pro-max/scripts/search.py ] && [ -d .claude/skills/ui-ux-pro-max/data ] && pass "dados e script da skill de design presentes" || fail "faltam dados/script da skill de design"
+# CI 2026-10-22: o .gitignore "data/" ignorava tambem a data/ da skill; o teste acima so olhava o disco e passava localmente. Aqui conferimos o que o git versiona de verdade.
+if [ -f .claude/skills/ui-ux-pro-max/data/colors.csv ] && ! git check-ignore -q .claude/skills/ui-ux-pro-max/data/colors.csv; then pass "dados da skill de design versionados e nao ignorados pelo git"; else fail "dados da skill de design nao estao no git (.gitignore ignora data/ aninhada?)"; fi
 grep -qF 'docs/ui-ux-pro-max' AGENTS.md && pass "AGENTS.md lista a pasta docs/ui-ux-pro-max na tabela" || fail "AGENTS.md nao lista docs/ui-ux-pro-max"
 
 # Auditoria 2026-10-20: a raspagem do Hindsight trouxe 16 paginas "Page Not Found" e o INDEX mandava ler uma pagina que nao existe (sdks/mcp).

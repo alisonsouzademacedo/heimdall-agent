@@ -52,7 +52,8 @@ if [ -z "$CTRL" ]; then pass "nenhum caractere de controle nem UTF-8 invalido no
 
 # 3. Padroes de chave nos arquivos versionados (fora de docs/, que sao copias de terceiros)
 PAT='sk-[A-Za-z0-9_-]{20,}|fc-[a-f0-9]{24,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(API_KEY|TOKEN|SECRET)=[A-Za-z0-9]{20,}'
-HITS=$(git ls-files | grep -v '^docs/' | grep -v '^tests/repo/' | xargs grep -lE "$PAT" 2>/dev/null)
+# Excecao: catalogo estatico de terceiros da skill de design (falso alarme: "Task-based-..." casa com sk-...; mesma isencao do item 1).
+HITS=$(git ls-files | grep -v '^docs/' | grep -v '^tests/repo/' | grep -v '^\.claude/skills/ui-ux-pro-max/data/' | xargs grep -lE "$PAT" 2>/dev/null)
 if [ -z "$HITS" ]; then pass "nenhum padrao de chave nos arquivos versionados (fora de docs/)"; else fail "possivel segredo em: $HITS"; fi
 
 # 3b. O modelo .env.example so pode ter valores de mentira (x repetido)
