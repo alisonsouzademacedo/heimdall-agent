@@ -196,17 +196,25 @@ acao_supervisionar() {
 }
 
 acao_config_hermes() {
-  if [ "$SOMENTE" = 1 ]; then plano "gerar o config.yaml (node apps/ponte/scripts/gerar-config.ts), copiar para o volume do Hermes (docker cp) e reiniciar o Hermes"; return 0; fi
+  if [ "$SOMENTE" = 1 ]; then plano "gerar o config.yaml (node apps/ponte/scripts/gerar-config.ts), copiar para o volume do Hermes (docker cp), esperar o Hindsight ficar saudavel e reiniciar o Hermes"; return 0; fi
   preparar || return 1
-  tmp=$(mktemp "${TMPDIR:-/tmp}/heimdall-hermes.XXXXXX") || return 1
-  node apps/ponte/scripts/gerar-config.ts heimdall > "$tmp" 2>/dev/null
-  [ -s "$tmp" ] || { aviso "Nao consegui gerar o config.yaml."; rm -f "$tmp"; return 1; }
-  compose create hermes 2>&1 | while IFS= read -r l; do info "$l"; done
-  cont=$(compose ps -aq hermes 2>/dev/null | head -1)
-  [ -n "$cont" ] || { aviso "Nao achei o conteiner do Hermes."; rm -f "$tmp"; return 1; }
-  docker cp "$tmp" "$cont:/opt/data/config.yaml" 2>&1 | while IFS= read -r l; do info "$l"; done
+  # NUNCA "compose create/up" aqui: recria o Postgres e o Hindsight sem inicia-los (licao de 2026-10-22). O conteiner do Hermes tem de existir (iniciar).
+  _cont=$(compose ps -aq hermes 2>/dev/null | head -1)
+  [ -n "$_cont" ] || { aviso "Nao achei o conteiner do Hermes. Rode antes: sh scripts/heimdall.sh iniciar"; return 1; }
+  _tmp=$(mktemp "${TMPDIR:-/tmp}/heimdall-hermes.XXXXXX") || return 1
+  node apps/ponte/scripts/gerar-config.ts heimdall > "$_tmp" 2>/dev/null
+  [ -s "$_tmp" ] || { aviso "Nao consegui gerar o config.yaml."; rm -f "$_tmp"; return 1; }
+  docker cp "$_tmp" "$_cont:/opt/data/config.yaml" 2>&1 | while IFS= read -r l; do info "$l"; done
+  rm -f "$_tmp"
+  # O Hermes so liga o MCP da memoria na partida: o Hindsight precisa estar saudavel antes de reiniciar.
+  _hind=$(compose ps -q hindsight 2>/dev/null | head -1); _t=0; _max=${HEIMDALL_ESPERA_HINDSIGHT_S:-420}; _saude=""
+  while [ "$_t" -le "$_max" ]; do
+    _saude=$(docker inspect -f '{{.State.Health.Status}}' "$_hind" 2>/dev/null)
+    [ "$_saude" = "healthy" ] && break
+    sleep 2; _t=$((_t+2))
+  done
+  if [ "$_saude" != "healthy" ]; then aviso "O Hindsight nao ficou saudavel (estado: ${_saude:-desconhecido}). Nao reiniciei o Hermes: o MCP da memoria ficaria estacionado. Rode de novo quando o Hindsight estiver saudavel."; return 1; fi
   compose restart hermes 2>&1 | while IFS= read -r l; do info "$l"; done
-  rm -f "$tmp"
   ok "config.yaml do Hermes gravado; o Hermes foi reiniciado"
 }
 

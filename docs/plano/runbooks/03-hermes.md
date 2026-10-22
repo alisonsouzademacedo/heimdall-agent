@@ -59,3 +59,7 @@ Tudo mora em `/opt/data` (`config.yaml`, `.env`, `SOUL.md`, `sessions/`, `memori
 
 ## Não verificado
 O menu `hermes model` dentro do contêiner (o `-it` em si está documentado); lista exata de toolsets a desabilitar; formato do corpo de `POST /api/jobs`; leitura de `cron/output` pelo `core`.
+
+## Armadilha (2026-10-22, VPS Linux)
+- **Nunca `docker compose create hermes` (nem `up hermes`) para "preparar" o contêiner:** se a configuração do Compose mudou, o Compose recria o Postgres e o Hindsight (dependências) sem iniciá-los. Para gravar o `config.yaml` use `sh scripts/heimdall.sh config-hermes`, que exige o contêiner existente e espera o Hindsight saudável antes de reiniciar o Hermes.
+- **Login do modelo ainda é do dono:** `docker exec -it heimdall-hermes-1 hermes model` → "ChatGPT or Codex Subscription" (código de dispositivo: sem retorno para `localhost`, funciona por túnel). Sem ele a API responde 200 com a mensagem "Hermes is not connected to any AI provider yet".

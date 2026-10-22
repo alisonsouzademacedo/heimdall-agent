@@ -148,6 +148,7 @@ for nome, s in c['services'].items():
     for v in s.get('volumes', []) or []:
         if v.get('type') == 'bind' and nome != 'media-worker': bad.append(nome + ' monta pasta do computador: ' + str(v.get('source')))
     if not (s.get('mem_limit') or s.get('deploy', {}).get('resources', {}).get('limits', {}).get('memory')): bad.append(nome + ' sem limite de memoria')
+    if not (s.get('cpus') or s.get('deploy', {}).get('resources', {}).get('limits', {}).get('cpus')): bad.append(nome + ' sem teto de CPU (servidor compartilhado com sites de clientes)')
 if bad: print('\n'.join(bad))
 " > /tmp/heimdall-compose-regras.txt
     if [ -s /tmp/heimdall-compose-regras.txt ]; then fail "regras do Compose violadas:"; cat /tmp/heimdall-compose-regras.txt; else pass "portas so em 127.0.0.1; sem pasta do computador (exceto a entrada do audio); todo servico com limite de memoria"; fi

@@ -39,7 +39,11 @@ FAKE
 cat > "$B/docker" <<FAKE
 #!/bin/sh
 echo "\$@" >> "$T/docker-chamadas.txt"
-case "\$*" in *"ps -aq hermes"*) echo cont123;; esac
+case "\$*" in
+  *"ps -aq hermes"*) [ -n "\$FAKE_SEM_HERMES" ] || echo cont123;;
+  *"ps -q hindsight"*) echo hind123;;
+  inspect*) echo "\${FAKE_SAUDE:-healthy}";;
+esac
 exit 0
 FAKE
 chmod +x "$B/node" "$B/docker"
@@ -136,6 +140,17 @@ for p in $(pids_do_registro); do kill "$p" 2>/dev/null; done; sleep 1
 # 10) config-hermes
 : > "$T/docker-chamadas.txt"
 roda config-hermes; grep -q 'cp .*:/opt/data/config.yaml' "$T/docker-chamadas.txt" && grep -q 'restart hermes' "$T/docker-chamadas.txt" && pass "config-hermes copia o config para o volume e reinicia o Hermes" || { fail "config-hermes nao fez o combinado"; cat "$T/docker-chamadas.txt"; }
+# Licao de 2026-10-22: "compose create hermes" RECRIOU o Postgres e o Hindsight sem inicia-los (a memoria ficou parada).
+grep -qE 'compose .* (create|up) ' "$T/docker-chamadas.txt" && fail "config-hermes chamou create/up (pode recriar o Postgres e o Hindsight)" || pass "config-hermes nao chama create nem up (nao recria os outros servicos)"
+# O Hermes so liga o MCP da memoria na partida: so reinicia depois de o Hindsight estar saudavel.
+LI=$(grep -n '^inspect' "$T/docker-chamadas.txt" | head -1 | cut -d: -f1); LR=$(grep -n 'restart hermes' "$T/docker-chamadas.txt" | head -1 | cut -d: -f1)
+{ [ -n "$LI" ] && [ -n "$LR" ] && [ "$LI" -lt "$LR" ]; } && pass "config-hermes confere a saude do Hindsight ANTES de reiniciar o Hermes" || fail "config-hermes reiniciou o Hermes sem conferir a saude do Hindsight"
+: > "$T/docker-chamadas.txt"
+FAKE_SAUDE=starting HEIMDALL_ESPERA_HINDSIGHT_S=2 roda config-hermes; C=$?
+{ [ "$C" -ne 0 ] && ! grep -q 'restart hermes' "$T/docker-chamadas.txt"; } && pass "Hindsight que nao fica saudavel: NAO reinicia o Hermes (o MCP ficaria estacionado) e avisa" || fail "reiniciou o Hermes com o Hindsight doente (codigo $C)"
+: > "$T/docker-chamadas.txt"
+FAKE_SEM_HERMES=1 roda config-hermes; C=$?
+{ [ "$C" -ne 0 ] && grep -q 'iniciar' "$T/saida.txt" && ! grep -qE 'compose .* (create|up) ' "$T/docker-chamadas.txt"; } && pass "sem conteiner do Hermes: recusa e manda rodar 'iniciar' (nao cria nada sozinho)" || fail "sem conteiner do Hermes nao recusou direito"
 
 # 11) unidade systemd: so escreve o arquivo, nunca ativa nada
 mkdir -p "$T/unit"

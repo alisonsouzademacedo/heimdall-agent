@@ -31,3 +31,11 @@ Transcrever um áudio de teste em português e conferir o texto; converter um PD
 
 ## Não verificado
 Qualidade em português por modelo; tempo em CPU de modelos grandes; comportamento do `local_files_only` com modelo pré-baixado; qualidade do PDF do Meet.
+
+
+## Medido na VPS Linux (2026-10-22) — CPU virtual sem AVX
+- Imagem `heimdall-media-worker:1.0.0` construída pelo Compose (`--profile trabalho build media-worker`): 1,87 GB, build de 2 min 34 s.
+- Offline (`--network none`): `av` 16.1.0, decodificação de WAV, carga do modelo `small` (5,0 s), PDF sintético lido pelo markitdown (`convert_stream`). O `smoke_docker.sh` **se recusa a rodar** com as portas 8888/9999 ocupadas pela instalação real; as mesmas verificações foram feitas à mão.
+- **Velocidade (o ponto crítico):** 60 s de áudio sintético, sem VAD, `small`/`int8`/`beam_size=5`: **307 s = 5,11× o tempo real** (4 núcleos, sem `avx`/`avx2` no `/proc/cpuinfo`); no notebook antigo eram 0,37×. Um áudio de 3 min leva ~15 min. **Pico de memória 1389 MB** (cabe: o limite do contêiner é 2 GB). Áudio sintético (não é fala): não mede qualidade nem como o VAD reduz o trabalho com fala real.
+- Por isso todo serviço do Compose ganhou **teto de CPU** (`cpus:`; trabalhador de áudio 2, Hindsight 2, os demais 1) e o teste `check_infra.sh` exige: o servidor também hospeda sites de clientes.
+- **Opções se a fila de áudios ficar lenta (decisão do dono):** modelo menor (`base`/`tiny`, muito mais rápido e menos preciso em português), mais vCPUs/RAM na VPS, ou rodar áudios em horário de pouco movimento (o executor roda um por vez). Nada foi trocado.
