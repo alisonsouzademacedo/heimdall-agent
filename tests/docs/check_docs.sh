@@ -21,17 +21,14 @@ for opcao in '--target' '--scan-mode' '--max-budget' '--fail-on' '--instruction-
 done
 [ -s docs/strix/INDEX.md ] && pass "INDEX.md do Strix existe" || fail "falta docs/strix/INDEX.md"
 
-# WSL (Microsoft): o caminho manual com dism foi o que funcionou na maquina do dono (LICOES.md, 2026-10-19); a pagina precisa estar no repositorio, inteira.
-[ -s docs/wsl/INDEX.md ] && pass "INDEX.md do WSL existe" || fail "falta docs/wsl/INDEX.md"
-SEM_ORIGEM_WSL=$(for f in $(find docs/wsl -name '*.md' ! -name INDEX.md 2>/dev/null); do head -1 "$f" | grep -q '^<!-- source: https://' || echo "$f"; done)
-[ -z "$SEM_ORIGEM_WSL" ] && [ -n "$(find docs/wsl -name '*.md' ! -name INDEX.md 2>/dev/null)" ] && pass "toda pagina do WSL indica a origem" || fail "paginas do WSL ausentes ou sem origem"
-for termo in 'dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux' 'VirtualMachinePlatform' 'wsl --set-default-version 2'; do
-  grep -qF -- "$termo" docs/wsl/install-manual.md 2>/dev/null && pass "install-manual.md traz: $termo" || fail "install-manual.md sem: $termo"
-done
-for termo in 'autoMemoryReclaim' 'vmIdleTimeout' 'memory=' 'processors='; do
-  grep -qF -- "$termo" docs/wsl/wsl-config.md 2>/dev/null && pass "wsl-config.md traz: $termo" || fail "wsl-config.md sem: $termo"
-done
-grep -qF 'docs/wsl' AGENTS.md && pass "AGENTS.md lista a pasta docs/wsl na tabela" || fail "AGENTS.md nao lista docs/wsl"
+# Linux-only desde 2026-10-22: o WSL e o roteiro do instalador Windows sao HISTORICOS.
+# Ficam em docs/arquivo/ (fora da tabela ativa) e nao podem voltar sem revisao.
+[ ! -e docs/wsl ] && pass "docs/wsl fora da biblioteca ativa (arquivado)" || fail "docs/wsl voltou para a biblioteca ativa"
+[ ! -e docs/plano/PROMPT-INICIAL-NOTEBOOK.md ] && pass "roteiro do instalador Windows fora de docs/plano" || fail "PROMPT-INICIAL-NOTEBOOK.md voltou para docs/plano"
+[ -s docs/arquivo/wsl/INDEX.md ] && pass "copia historica do WSL existe em docs/arquivo/wsl" || fail "falta a copia historica do WSL"
+[ -s docs/arquivo/PROMPT-INICIAL-NOTEBOOK.md ] && pass "roteiro antigo do notebook existe em docs/arquivo" || fail "falta o roteiro antigo no arquivo"
+[ -s docs/arquivo/README.md ] && pass "docs/arquivo/README.md explica o que e historico" || fail "falta docs/arquivo/README.md"
+if grep -qF 'docs/wsl' AGENTS.md; then fail "AGENTS.md ainda lista docs/wsl na tabela ativa"; else pass "AGENTS.md nao lista docs/wsl na tabela ativa"; fi
 
 # Superpowers (obra, MIT): biblioteca de "skills" para agentes. Copia da documentacao em docs/superpowers (versao fixada pelo commit na origem de cada pagina)
 # e UM SUBCONJUNTO revisado instalado em .claude/skills. Regras: o instalado e identico ao original; nada de hook; o que gasta muito ou publica nao entra.
@@ -85,7 +82,7 @@ for p in hermes-agent/getting-started/installation hermes-agent/user-guide/confi
   ui-ux-pro-max/INDEX ui-ux-pro-max/SKILL \
   docker/desktop/setup docker/engine/install docker/compose docker/desktop/troubleshoot-and-support claude-code/memory claude-code/best-practices claude-code/permissions \
   claude-code/hooks-guide claude-code/settings claude-code/security antigravity/rules antigravity/getting-started antigravity/permissions antigravity/sandbox antigravity/mcp \
-  antigravity/cli/best-practices wsl/INDEX wsl/install-manual wsl/wsl-config; do
+  antigravity/cli/best-practices; do
   existe "$p" && pass "Leia primeiro existe: $p" || fail "Leia primeiro FALTA: docs/$p"
 done
 

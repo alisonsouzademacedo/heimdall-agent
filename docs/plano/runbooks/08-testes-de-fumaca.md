@@ -1,5 +1,7 @@
 # 8. Testes de fumaça (depois de instalar tudo)
 
+> **Histórico (2026-10-22):** os caminhos e comandos deste roteiro são da máquina Windows da fase 1. O projeto é **Linux-only**; os mesmos testes valem, mas os comandos Linux e o ligador serão escritos no item 5 de `../fase-2-execucao.md`. Não execute linhas com `C:\`, `PowerShell` ou `iniciar.cmd` como se fossem atuais.
+
 Cada linha: o que rodar, o que se espera, de onde vem. Registrar a saída real em `../PROGRESS.md`.
 
 | # | Teste | Resultado esperado | Origem |

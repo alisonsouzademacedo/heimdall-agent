@@ -33,12 +33,13 @@ A documentação das ferramentas está em `docs/` (cópias `.md` oficiais). **El
 | Docker | `docs/docker/` | `desktop/setup/`, `engine/install/`, `compose/`, `desktop/troubleshoot-and-support/` |
 | Claude Code | `docs/claude-code/` | `memory`, `best-practices`, `permissions`, `hooks-guide`, `settings`, `security` |
 | Antigravity | `docs/antigravity/` | `rules`, `getting-started`, `permissions`, `sandbox`, `mcp`, `cli/best-practices` |
-| WSL 2 (Windows) | `docs/wsl/` | `INDEX.md`, `install-manual`, `wsl-config` |
 | Strix (testes de segurança; **não adotado por ora**, custa por uso; a preparação local foi removida em 2026-10-22, a documentação fica como referência) | `docs/strix/` | `INDEX.md`, `usage/cli`, `advanced/configuration`, `usage/scan-modes` |
 | Superpowers (skills de método; 5 instaladas em `.claude/skills/`) | `docs/superpowers/` | `INDEX.md`, `skills/{test-driven-development,systematic-debugging,verification-before-completion}/SKILL.md` |
 | UI UX Pro Max (skill de design; 1 instalada em `.claude/skills/`) | `docs/ui-ux-pro-max/` | `INDEX.md`, `SKILL.md` |
 
 **Ferramenta ou repositório novo:** antes de usar, traga a documentação para `docs/<ferramenta>/` (Firecrawl), **prefira o Markdown original do site** (muitos servem a página com `.md` no fim do endereço) e **confira o resultado**: a raspagem "só conteúdo principal" já perdeu nomes de opções. Crie o `INDEX.md` da pasta, acrescente a linha na tabela acima e rode `tests/docs/check_docs.sh`. Registre o que foi lido em `docs/plano/PROGRESS.md`.
+
+Documentação que não vale mais fica em `docs/arquivo/` (ex.: WSL e o roteiro do instalador Windows), **fora da tabela ativa**; o `check_docs.sh` trava para ela não voltar sem revisão.
 
 ## Como trabalhar, passo a passo
 1. Leia `docs/plano/PROGRESS.md` (onde paramos) e a seção relevante de `docs/plano/`.

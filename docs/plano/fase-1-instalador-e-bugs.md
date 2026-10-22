@@ -1,5 +1,7 @@
 # Instalador de um clique, tela de onboarding e relatório de bugs
 
+> **Histórico (2026-10-22):** este documento descreve o instalador do **Windows**, removido junto com `iniciar.cmd`, `instalar/` e os testes daquela camada. O Heimdall é **Linux-only** desde 2026-10-22; as partes que ainda valem são o relatório de bugs sem segredos e a tela de onboarding. Para a instalação atual, veja `README.md` e `docs/plano/fase-2-execucao.md`.
+
 Decisão do dono (2026-10-19): ele só baixa o ZIP do GitHub (`main`), descompacta, abre a pasta e executa **um arquivo**. Isso instala o que falta, liga a pasta ao Git e abre a tela de configuração. Se algo falhar, fica um **relatório de bug** que a IA transforma em teste, correção e commit. Na primeira rodada ele acompanha com uma IA; no futuro a meta é **só executar** e ver a tela.
 
 ## O fluxo hoje (`iniciar.cmd` → `instalar/instalar.ps1`)

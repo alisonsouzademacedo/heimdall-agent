@@ -1,5 +1,7 @@
 # 1. Docker
 
+> **Histórico (2026-10-22):** as seções de Windows/Docker Desktop/WSL não valem mais; o alvo é **Linux** (Omarchy na máquina do dono e VPS). A instalação Linux está em `docs/docker/engine/install/` e no `README.md`; confira a versão instalada contra a documentação antes de seguir. Os limites de memória e as portas em `127.0.0.1` continuam valendo.
+
 Fontes: `docs/docker/desktop/setup/install/{windows-install,mac-install}.md`, `docs/docker/engine/install/ubuntu.md`, `docs/docker/engine/network/port-publishing.md`.
 
 ## Requisitos

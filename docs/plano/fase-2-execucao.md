@@ -22,7 +22,7 @@ Removidos 26 arquivos: `iniciar.cmd`, `instalar/` (instalador, launcher `heimdal
 Instalar com o mesmo processo das skills do Superpowers: clone e revisão de segurança, cópia da documentação em `docs/ui-ux-pro-max/` (com origem e licença), skill em `.claude/skills/`, entrada em `.claude/skills/ORIGEM.md`, linha na tabela do `AGENTS.md` e ajuste de `tests/docs/check_docs.sh`. Só então usar na tela (item 4).
 
 ### 3. Limpeza da documentação
-Fazer **inventário antes de apagar**: classificar cada documento em *manter / atualizar / fundir / arquivar*. Nada é apagado sem revisão do dono; o histórico fica no git e, quando útil, em `docs/plano/arquivo/`. Já ajustados nesta data: `README.md`, `AGENTS.md`, `PROMPT-CONTINUIDADE-LINUX.md`, nota de histórico no runbook 10. Pendentes: runbooks 01/08/09/10, `fase-1-*` concluídos, `PROMPT-INICIAL-NOTEBOOK.md` (obsoleto), menções a Windows em testes (comentários), `docs/wsl/` (decidir se sai da biblioteca).
+Fazer **inventário antes de apagar**: classificar cada documento em *manter / atualizar / fundir / arquivar*. Nada é apagado sem revisão do dono; o histórico fica no git e, quando útil, em `docs/arquivo/`. Já ajustados: `README.md`, `AGENTS.md`, `PROMPT-CONTINUIDADE-LINUX.md`, nota de histórico no runbook 10. **Feito em 2026-10-22:** `docs/wsl/` e `PROMPT-INICIAL-NOTEBOOK.md` movidos para `docs/arquivo/` (com índice e trava no `check_docs.sh`); `runbooks/09-ligar-as-pecas.md` (Windows) arquivado como `docs/arquivo/runbooks/09-ligar-as-pecas-windows.md`; notas de histórico nos runbooks 01/08 e nas specs `fase-1-*`. **Pendente:** menções a Windows em comentários de testes e revisão final dos links históricos em `PROGRESS.md`/`LICOES.md` (são registro, não instrução).
 
 ### 4. Tela de onboarding (não genérica)
 Base visual: protótipo em `docs/plano/prototipo-onboarding/` (glassmorphism escuro, Fira Code/Fira Sans, Cormorant, dourado, formato canvas) — nunca aplicado à tela real. A tela deve **mostrar a verdade** de cada etapa (fonte e estado ao vivo), não só ilustração. Por isso a ordem recomendada é estabilizar os estados da frente 5 e só então fechar o visual; o esqueleto visual pode começar depois da frente 2.
@@ -36,10 +36,10 @@ Base visual: protótipo em `docs/plano/prototipo-onboarding/` (glassmorphism esc
 | Whisper (faster-whisper) | media-worker, fila, testes | rodar áudio real de ponta a ponta, estado no onboarding | — |
 | Markitdown (PDF) | media-worker, testes | rodar PDF real, estado no onboarding | — |
 | ChatGPT Plus | plano do dono, uso pelo Hermes | detectar login/estado e provar extração real | login |
-| Krayin (CRM) | decisão D17/D18, documentação em `docs/krayin/` | **maior trabalho novo**: subir no Compose, funil de 5 etapas, API/token, propor movimentos no relatório e aprovar no self-chat, estado no onboarding | credenciais/configuração |
+| Krayin (CRM) | decisão D17/D18, documentação em `docs/krayin/`, **fundação local** (config segura, cliente REST, teste de conexão e passo 13) | **maior trabalho novo**: subir no Compose da VPS, funil de 5 etapas, API/token real, propor movimentos no relatório e aprovar no self-chat | credenciais/configuração |
 
 ### 6. Onboarding como facilitador para leigo
-Cada etapa precisa de: **status ao vivo** (fonte real, não texto fixo), **ação guiada** (com confirmação), **explicação simples** e **critério de pronto**. Cobrir todos os passos 1–12, incluindo WhatsApp, provedor de LLM/ChatGPT Plus, memória, CRM, testes e relatórios. Requer endpoints de estado no núcleo e testes de navegador (`tests/navegadores/`).
+Cada etapa precisa de: **status ao vivo** (fonte real, não texto fixo), **ação guiada** (com confirmação), **explicação simples** e **critério de pronto**. Cobrir todos os passos 1–13, incluindo WhatsApp, provedor de LLM/ChatGPT Plus, memória, CRM, testes e relatórios. Requer endpoints de estado no núcleo e testes de navegador (`tests/navegadores/`).
 
 ## Ordem recomendada
 1. (feito) item 1 — Linux-only.

@@ -1,5 +1,7 @@
 # Onboarding visual (tela de configuração, só na primeira vez)
 
+> **Histórico (2026-10-22):** spec da fase 1, escrita quando o alvo era Windows. O instalador (`iniciar.cmd` + `instalar/instalar.ps1`) foi removido; a tela atual é **Linux-only** e o roteiro de instalação é o `README.md` da raiz + `docs/plano/fase-2-execucao.md`. O protótipo e as decisões de 2026-10-19 continuam aqui como registro; onde o texto falar de Windows, não vale mais.
+
 Pedido do usuário (2026-10-19): uma tela visual, passo a passo, em que **qualquer pessoa** configura o Heimdall e **testa cada passo**: botão para gerar o QR Code e mostrar se a conexão está ok; barra de progresso da sincronização com o telefone; botão para começar a extração, com barra de progresso; botão para conectar a LLM (plano da OpenAI); processamento dos dados extraídos, com barra; e, depois, tudo automático (relatórios, conversa no self-chat, CRM). **Faz sentido? Sim**, e as barras de progresso têm fonte de dados real, conforme abaixo.
 
 ## Divisão de trabalho
@@ -98,4 +100,4 @@ Primeira versão do desenho das telas em `docs/plano/prototipo-onboarding/` (bas
 
 ## Decisões de 2026-10-19 (sem material de teste; instalador)
 - **O dono não fornece material de teste.** No passo "Processar" a tela oferece **"Teste rápido com os seus próprios arquivos"**: escolhe, entre os PDFs e áudios reais já extraídos do WhatsApp, alguns poucos, converte/transcreve e mostra o resultado (só na tela, nunca no git) para o dono conferir a qualidade antes de processar tudo.
-- **A única ação manual do dono é baixar o código.** O `iniciar.cmd` + `instalar/instalar.ps1` detectam o que falta (Git, Node.js 22.18+, Python 3, Docker Desktop), perguntam e instalam. Ver `PROMPT-INICIAL-NOTEBOOK.md`. O que depende do dono de verdade (QR, logins) continua na tela de onboarding.
+- **A única ação manual do dono é baixar o código.** O instalador Windows (`iniciar.cmd` + `instalar/instalar.ps1`) foi **removido em 2026-10-22** junto com a camada Windows; o roteiro antigo está em `docs/arquivo/PROMPT-INICIAL-NOTEBOOK.md` (histórico). No Linux, a instalação é `README.md` + `docs/plano/fase-2-execucao.md`. O que depende do dono de verdade (QR, logins) continua na tela de onboarding.
