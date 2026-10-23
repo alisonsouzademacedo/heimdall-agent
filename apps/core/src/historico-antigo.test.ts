@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { abrirBanco, migrar, contar, type Banco } from './db.ts';
 import { criarEscuta } from './whatsapp/escuta.ts';
-import { lerConfigHistorico, gravarConfigHistorico, proximoPedido, iniciarPedido, concluirPedido, falharPedido, resumoHistoricoAntigo, PRAZO_PEDIDO_PRESO_MS } from './historico-antigo.ts';
+import { lerConfigHistorico, gravarConfigHistorico, proximoPedido, iniciarPedido, concluirPedido, falharPedido, resumoHistoricoAntigo, PRAZO_PEDIDO_PRESO_MS, LIMITE_VAZIAS_SEGUIDAS, LIMITE_FALHAS_SEGUIDAS } from './historico-antigo.ts';
 
 const DONO = { pn: '5511900000000@s.whatsapp.net' };
 const T0 = 1_760_000_000_000;
@@ -109,4 +109,85 @@ test('falha ao enviar o pedido: tenta de novo mais tarde e desiste depois de 3 f
   for (let i = 0; i < 3; i++) { const p = proximoPedido(db, T0 + i * 100_000)!; iniciarPedido(db, p.conversaId, T0 + i * 100_000); falharPedido(db, p.conversaId, T0 + i * 100_000 + 1); }
   assert.equal(proximoPedido(db, T0 + 10_000_000), null);
   assert.equal(resumoHistoricoAntigo(db).esgotadas, 1);
+});
+
+// ---- Freio global (2026-10-23): o celular ja mostrou que nao tem mais historico -> nao esperar 2 respostas vazias de CADA conversa (~39 h) ----
+function conversas(n: number) {
+  const x = novo();
+  for (let i = 0; i < n; i++) x.msg(`C${i}`, `551199999${String(1000 + i)}@s.whatsapp.net`, seg(1 + i));
+  return x;
+}
+function pedir(db: Banco, agora: number, quantasNovas = 0): string | null {
+  const p = proximoPedido(db, agora);
+  if (!p) return null;
+  iniciarPedido(db, p.conversaId, agora);
+  if (quantasNovas > 0) for (let k = 0; k < quantasNovas; k++) db.prepare("INSERT INTO mensagens (conversa_id, wa_msg_id, de_mim, enviada_em, tipo, texto, origem_evento) VALUES (?, ?, 0, ?, 'texto', 'antiga', 'historico')").run(p.conversaId, `ANT-${agora}-${k}`, p.tsMs - 1000 * (k + 1));
+  const r = concluirPedido(db, p.conversaId, agora);
+  return r.estado;
+}
+
+test('freio: com N respostas vazias seguidas (de conversas diferentes) a busca se encerra sozinha e o resto vira "esgotada" (sem esperar 2 por conversa)', () => {
+  const { db } = conversas(25);
+  cfg(db);
+  let t = T0;
+  for (let i = 0; i < LIMITE_VAZIAS_SEGUIDAS - 1; i++) { pedir(db, t += 60_000); assert.equal(lerConfigHistorico(db).liberado, true, `ainda no pedido ${i + 1}`); }
+  assert.equal(resumoHistoricoAntigo(db).encerrada, null);
+  pedir(db, t += 60_000); // a N-esima resposta vazia
+  const r = resumoHistoricoAntigo(db);
+  assert.equal(lerConfigHistorico(db).liberado, false, 'para de pedir');
+  assert.equal(r.encerrada, 'sem_retorno');
+  assert.deepEqual({ pendentes: r.pendentes, emAndamento: r.emAndamento, pedidos: r.pedidos }, { pendentes: 0, emAndamento: 0, pedidos: LIMITE_VAZIAS_SEGUIDAS }, 'so os N pedidos foram feitos; as 25 conversas estao resolvidas');
+  assert.equal(r.esgotadas, 25, 'todas viram "esgotada" (nao ha mais o que pedir)');
+  assert.equal(proximoPedido(db, t + 1), null);
+});
+
+test('freio: uma resposta que TRAZ mensagens antigas zera a contagem (a busca continua enquanto o celular devolver algo)', () => {
+  const { db } = conversas(40);
+  cfg(db);
+  let t = T0;
+  for (let i = 0; i < LIMITE_VAZIAS_SEGUIDAS - 1; i++) pedir(db, t += 60_000);
+  pedir(db, t += 60_000, 3); // trouxe mensagens: zera
+  for (let i = 0; i < LIMITE_VAZIAS_SEGUIDAS - 1; i++) { pedir(db, t += 60_000); assert.equal(resumoHistoricoAntigo(db).encerrada, null); }
+  assert.equal(lerConfigHistorico(db).liberado, true);
+  pedir(db, t += 60_000);
+  assert.equal(resumoHistoricoAntigo(db).encerrada, 'sem_retorno');
+});
+
+test('freio: conversa ja concluida continua concluida (o encerramento so resolve o que estava pendente)', () => {
+  const { db } = conversas(25);
+  cfg(db);
+  let t = T0;
+  // duas vazias seguidas na MESMA conversa a concluem; depois o freio encerra o resto
+  const p = proximoPedido(db, t)!; iniciarPedido(db, p.conversaId, t); concluirPedido(db, p.conversaId, t);
+  db.prepare("UPDATE historico_pedidos SET estado = 'pendente' WHERE conversa_id = ?").run(p.conversaId);
+  iniciarPedido(db, p.conversaId, t); assert.equal(concluirPedido(db, p.conversaId, t).estado, 'concluida');
+  for (let i = 0; i < LIMITE_VAZIAS_SEGUIDAS; i++) pedir(db, t += 60_000);
+  const r = resumoHistoricoAntigo(db);
+  assert.equal(r.encerrada, 'sem_retorno');
+  assert.equal(r.concluidas, 1); assert.equal(r.esgotadas, 24);
+});
+
+test('freio de seguranca: varias falhas seguidas (o celular nao responde) PAUSAM a busca sem descartar nada', () => {
+  const { db } = conversas(12);
+  cfg(db);
+  let t = T0;
+  for (let i = 0; i < LIMITE_FALHAS_SEGUIDAS; i++) {
+    const p = proximoPedido(db, t += 600_000)!; iniciarPedido(db, p.conversaId, t); falharPedido(db, p.conversaId, t);
+  }
+  const r = resumoHistoricoAntigo(db);
+  assert.equal(lerConfigHistorico(db).liberado, false);
+  assert.equal(r.encerrada, 'sem_resposta');
+  assert.equal(r.esgotadas, 0, 'nada foi descartado: so pausou');
+  assert.ok(r.pendentes > 0);
+});
+
+test('liberar de novo recomeca: zera as contagens e limpa o aviso de encerramento', () => {
+  const { db } = conversas(25);
+  cfg(db);
+  let t = T0;
+  for (let i = 0; i < LIMITE_VAZIAS_SEGUIDAS; i++) pedir(db, t += 60_000);
+  assert.equal(resumoHistoricoAntigo(db).encerrada, 'sem_retorno');
+  cfg(db); // o dono libera outra vez
+  assert.equal(resumoHistoricoAntigo(db).encerrada, null);
+  assert.equal(lerConfigHistorico(db).liberado, true);
 });

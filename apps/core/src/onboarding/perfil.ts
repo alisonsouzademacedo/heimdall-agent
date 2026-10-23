@@ -1,7 +1,7 @@
 // Perfil ideal POR TIPO DE COMPUTADOR (docs/plano/fase-1-perfis-de-computador.md). Funcao pura: medidas entram, recomendacao sai.
 // Regra de honestidade: cada item diz de onde vem ("medido" na maquina do dono em 2026-10-20, "documentacao" ou "estimativa").
 // So o perfil de 8 GB tem itens medidos; os outros NAO foram medidos e dizem isso. Texto sem acentos, como as outras mensagens do instalador.
-import type { Medidas } from './ambiente.ts';
+import { tudoInstalado, DISCO_INSTALADO_OK_GB, DISCO_INSTALADO_ATENCAO_GB, type Medidas } from './ambiente.ts';
 
 export type Adequacao = 'ok' | 'apertado' | 'nao_recomendado';
 export type Origem = 'medido' | 'documentacao' | 'estimativa';
@@ -118,7 +118,11 @@ export function escolherPerfil(m: Medidas): Perfil {
 
   if (!SISTEMAS.includes(m.plataforma)) { adequacao = 'nao_recomendado'; avisos.push(`Sistema nao suportado (${m.plataforma}): use Windows 11, Linux ou macOS.`); }
   if (id !== 'insuficiente' && livreGb < 2) avisos.push(`Pouca memoria livre agora (${livreGb.toFixed(1)} GB): feche navegadores e outros programas antes de processar.`);
-  if (disco < 30) { adequacao = 'nao_recomendado'; avisos.push(`Disco com menos de 30 GB livres (${disco} GB): as imagens do projeto ocupam cerca de 11 GB e os modelos e os dados crescem.`); }
+  if (tudoInstalado(m)) {
+    // Com tudo instalado o limite de 30 GB (reserva para baixar as imagens) nao se aplica; ver tudoInstalado() em ambiente.ts.
+    if (disco < DISCO_INSTALADO_ATENCAO_GB) { adequacao = 'nao_recomendado'; avisos.push(`Disco com menos de ${DISCO_INSTALADO_ATENCAO_GB} GB livres (${disco} GB): libere espaco antes que o Docker ou o banco parem de gravar.`); }
+    else if (disco < DISCO_INSTALADO_OK_GB) avisos.push(`Folga de disco pequena (${disco} GB livres): tudo ja esta instalado, mas atualizar uma imagem pode pedir ate 5 GB.`);
+  } else if (disco < 30) { adequacao = 'nao_recomendado'; avisos.push(`Disco com menos de 30 GB livres (${disco} GB): as imagens do projeto ocupam cerca de 11 GB e os modelos e os dados crescem.`); }
   else if (disco < 50) avisos.push(`Folga de disco pequena (${disco} GB livres): as imagens ocupam cerca de 11 GB e os dados crescem.`);
   if (m.cpus !== undefined && m.cpus < 4) avisos.push(`Poucas CPUs (${m.cpus}): a transcricao sera lenta (nao medido).`);
 

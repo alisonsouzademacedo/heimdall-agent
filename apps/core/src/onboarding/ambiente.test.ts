@@ -183,3 +183,22 @@ test('imagens: faltando mostra os comandos exatos (so mostra, nao baixa) e Docke
   assert.equal(avaliar({ ...bom, imagensFaltando: ['x:1'], dockerRodando: false }).some((x) => x.id === 'imagens'), false);
   assert.equal(avaliar(bom).some((x) => x.id === 'imagens'), false);
 });
+
+// Com tudo ja instalado (Docker rodando e nenhuma imagem faltando) o limite de 30 GB nao faz sentido: ele reserva espaco para BAIXAR as imagens.
+test('disco com tudo instalado: so avisa quando falta espaco para os dados crescerem (ok >= 15 GB, atencao 8 a 15, falha < 8)', () => {
+  const instalado = { ...bom, imagensFaltando: [] as string[] };
+  assert.equal(estado(avaliar({ ...instalado, discoLivreBytes: 28 * GIB }), 'disco'), 'ok', '28 GB livres com tudo instalado e folga');
+  assert.equal(estado(avaliar({ ...instalado, discoLivreBytes: 15 * GIB }), 'disco'), 'ok');
+  assert.equal(estado(avaliar({ ...instalado, discoLivreBytes: 14.5 * GIB }), 'disco'), 'atencao');
+  assert.equal(estado(avaliar({ ...instalado, discoLivreBytes: 8 * GIB }), 'disco'), 'atencao');
+  assert.equal(estado(avaliar({ ...instalado, discoLivreBytes: 7.5 * GIB }), 'disco'), 'falha');
+  const d = avaliar({ ...instalado, discoLivreBytes: 28 * GIB }).find((x) => x.id === 'disco')!;
+  assert.match(d.detalhe, /ja esta instalado/);
+  assert.doesNotMatch(d.detalhe, /30 GB/);
+});
+
+test('disco ANTES de instalar (imagens faltando) ou sem saber (nao medido) continua exigindo 30 GB', () => {
+  assert.equal(estado(avaliar({ ...bom, imagensFaltando: ['nousresearch/hermes-agent:v0.22.2'], discoLivreBytes: 28 * GIB }), 'disco'), 'falha');
+  assert.equal(estado(avaliar({ ...bom, discoLivreBytes: 28 * GIB }), 'disco'), 'falha', 'imagensFaltando ausente = nao medido');
+  assert.equal(estado(avaliar({ ...bom, dockerRodando: false, imagensFaltando: [], discoLivreBytes: 28 * GIB }), 'disco'), 'falha', 'sem Docker rodando nao da para dizer que esta instalado');
+});

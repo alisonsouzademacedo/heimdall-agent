@@ -623,3 +623,15 @@ test('/api/clientes/cadastrar-respondidos: exige sessao e confirmacao; cadastra 
     assert.equal(JSON.parse((await req(c, 'POST', '/api/clientes/cadastrar-respondidos', h, '{"confirmar":true}')).texto).criados, 0, 'idempotente');
   } finally { await c.fim(); }
 });
+
+test('/api/historico-antigo informa o limite do freio e, quando a busca se encerrou sozinha, o motivo', async () => {
+  const c = await subir();
+  try {
+    const h = POST(await entrar(c));
+    const g = JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto);
+    assert.equal(g.config.limiteVazias, 10);
+    assert.equal(g.resumo.encerrada, null);
+    c.banco.prepare("INSERT INTO configuracao (chave, valor) VALUES ('historico.encerrada', 'sem_retorno')").run();
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto).resumo.encerrada, 'sem_retorno');
+  } finally { await c.fim(); }
+});

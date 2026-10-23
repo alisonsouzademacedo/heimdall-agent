@@ -153,3 +153,10 @@ test('descreverPerfil: texto para o console com nome, adequacao, cada item, avis
   for (const a of p.avisos) assert.ok(junto.includes(a));
   for (const s of p.passos) assert.ok(junto.includes(s));
 });
+
+test('disco com tudo instalado: 28 GB livres nao reprova o perfil (o limite de 30 GB e para instalar)', () => {
+  const instalado = escolherPerfil(maq({ plataforma: 'linux', memTotalBytes: 7.8 * GIB, memLivreBytes: 5 * GIB, discoLivreBytes: 28 * GIB, cpus: 4, dockerRodando: true, imagensFaltando: [] }));
+  assert.doesNotMatch(instalado.avisos.join(' '), /30 GB/);
+  const naoInstalado = escolherPerfil(maq({ plataforma: 'linux', memTotalBytes: 7.8 * GIB, memLivreBytes: 5 * GIB, discoLivreBytes: 28 * GIB, cpus: 4, dockerRodando: true, imagensFaltando: ['x:1'] }));
+  assert.match(naoInstalado.avisos.join(' '), /30 GB/);
+});

@@ -15,7 +15,7 @@ import { CSS, JS, HTML } from './recursos.ts';
 import { definirDestinoDeBackup, backupDoDia, lerBackup } from '../backup-copia.ts';
 import { montarPainel, pedirTesteSelfChat, gerarRelatorioDeTeste, atualizarEtapas, estadosAoVivo, type EstadoAoVivo } from './painel.ts';
 import { montarFontes } from './fontes.ts';
-import { lerConfigHistorico, gravarConfigHistorico, resumoHistoricoAntigo } from '../historico-antigo.ts';
+import { lerConfigHistorico, gravarConfigHistorico, resumoHistoricoAntigo, LIMITE_VAZIAS_SEGUIDAS } from '../historico-antigo.ts';
 import { cadastrarMembro, listarEquipe, normalizarTelefone } from '../cadastro.ts';
 import { lerTesteDoModelo, pedirTesteDoModelo } from '../modelo-teste.ts';
 import { extracaoLiberada, definirExtracaoLiberada } from '../extracao.ts';
@@ -166,7 +166,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/api/estado') return json(res, 200, estado());
         if (url.pathname === '/api/historico-antigo') {
           const c = lerConfigHistorico(op.banco);
-          return json(res, 200, { config: { liberado: c.liberado, ritmoSegundos: Math.round(c.ritmoMs / 1000), esperaRespostaSegundos: Math.round(c.esperaRespostaMs / 1000), tamanhoPagina: c.tamanhoPagina, maxPaginas: c.maxPaginas }, resumo: resumoHistoricoAntigo(op.banco) });
+          return json(res, 200, { config: { liberado: c.liberado, ritmoSegundos: Math.round(c.ritmoMs / 1000), esperaRespostaSegundos: Math.round(c.esperaRespostaMs / 1000), tamanhoPagina: c.tamanhoPagina, maxPaginas: c.maxPaginas, limiteVazias: LIMITE_VAZIAS_SEGUIDAS }, resumo: resumoHistoricoAntigo(op.banco) });
         }
         if (url.pathname === '/api/cadastro') return json(res, 200, { equipe: listarEquipe(op.banco) });
         if (url.pathname === '/api/crm') {

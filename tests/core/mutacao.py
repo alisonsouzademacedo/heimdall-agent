@@ -157,6 +157,9 @@ MUTACOES = [
     ("src/extracao.ts", "if (c.origem === 'provisorio') {", "if (true) {", "identificacao: nome do cadastro ou do dono nunca e trocado pelo modelo"),
     ("src/extracao.ts", "(diaDe(a) < diaDe(b) ? 1 : diaDe(a) > diaDe(b) ? -1 : a < b ? -1 : 1)", "(diaDe(a) < diaDe(b) ? -1 : diaDe(a) > diaDe(b) ? 1 : a < b ? -1 : 1)", "extracao: do dia mais novo para o mais antigo"),
     ("src/extracao.ts", "v.identificacao.confianca >= CONFIANCA_IDENTIFICACAO", "true", "identificacao: confianca baixa nao troca o nome"),
+    ("src/historico-antigo.ts", "if (seguidas >= LIMITE_VAZIAS_SEGUIDAS) encerrarBusca(db, agora);", "", "historico antigo: respostas vazias seguidas encerram a busca inteira"),
+    ("src/historico-antigo.ts", "const seguidas = novas > 0 ? 0 : lerNum(db, K_VAZIAS) + 1;", "const seguidas = lerNum(db, K_VAZIAS) + 1;", "historico antigo: resposta com mensagens zera a contagem do freio"),
+    ("src/onboarding/ambiente.ts", "return m.dockerRodando && m.imagensFaltando !== undefined && m.imagensFaltando.length === 0;", "return true;", "ambiente: so com tudo instalado o disco usa o limite menor"),
 ]
 
 falhas = 0

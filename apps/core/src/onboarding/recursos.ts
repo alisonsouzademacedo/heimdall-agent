@@ -305,11 +305,22 @@ export const JS = `
       kpi(kg,'pedidos ja feitos',res.pedidos||0);
       infoAntigo.appendChild(kg);
       var faltam=(res.pendentes||0)+(res.emAndamento||0);
-      if(!cfg.liberado)infoAntigo.appendChild(el('div','det','A busca esta pausada: nenhum pedido sai ate voce liberar. O que ja chegou continua guardado.'));
+      var lim=cfg.limiteVazias||10;
+      if(res.encerrada==='sem_retorno'){
+        var avE=el('div','aviso');
+        avE.appendChild(el('div','','A busca terminou sozinha: depois de '+lim+' pedidos seguidos sem nenhuma mensagem nova, o Heimdall concluiu que o seu celular nao tem mais historico para entregar. As conversas foram consideradas completas (aparecem em atingiram o limite). Para tentar de novo, clique em Liberar busca antiga.'));
+        infoAntigo.appendChild(avE);
+      }else if(res.encerrada==='sem_resposta'){
+        var avR=el('div','aviso');
+        avR.appendChild(el('div','','A busca foi pausada: o celular nao respondeu varias vezes seguidas. Nada foi descartado; as conversas continuam pendentes. Quando o celular estiver ligado e com internet, clique em Liberar busca antiga.'));
+        infoAntigo.appendChild(avR);
+      }else if(!cfg.liberado)infoAntigo.appendChild(el('div','det','A busca esta pausada: nenhum pedido sai ate voce liberar. O que ja chegou continua guardado.'));
       else if(faltam===0)infoAntigo.appendChild(el('div','det','Nao ha conversa nova para pedir agora; o Heimdall segue esperando mensagem nova chegar.'));
       else {
-        var minutos=Math.round(faltam*((cfg.ritmoSegundos||60)+(cfg.esperaRespostaSegundos||45))/60);
-        infoAntigo.appendChild(el('div','det','Estimativa so de tempo: cerca de '+(minutos>=90?Math.round(minutos/60)+' horas':minutos+' minutos')+' para as '+faltam+' conversas que faltam, no ritmo escolhido (depende do tamanho de cada conversa e do ritmo do WhatsApp).'));
+        var porPedido=(cfg.ritmoSegundos||60)+(cfg.esperaRespostaSegundos||45);
+        var minSemRetorno=Math.max(1,Math.round(lim*porPedido/60));
+        var minTudo=Math.round(faltam*porPedido/60);
+        infoAntigo.appendChild(el('div','det','Estimativa: se o celular continuar sem devolver nada, a busca se encerra sozinha depois de '+lim+' pedidos seguidos sem nenhuma mensagem nova (cerca de '+minSemRetorno+' minutos). Se ele devolver mensagens antigas, segue conversa por conversa, o que no pior caso leva '+(minTudo>=90?'cerca de '+Math.round(minTudo/60)+' horas':minTudo+' minutos')+' para as '+faltam+' conversas que faltam.'));
       }
       bLibAnt.textContent=cfg.liberado?'Busca liberada (em andamento)':'Liberar busca antiga';
       bLibAnt.disabled=!!cfg.liberado;

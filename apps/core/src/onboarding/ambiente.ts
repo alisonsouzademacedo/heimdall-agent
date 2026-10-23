@@ -75,6 +75,16 @@ export function imagensDoCompose(texto: string): string[] {
   return achadas;
 }
 
+/**
+ * Tudo instalado = Docker rodando e NENHUMA imagem do Compose faltando. Nao medido (undefined) conta como nao instalado.
+ * Importa para o disco: o limite de 30 GB reserva espaco para BAIXAR as imagens (~17 GB medidos). Depois de instaladas, a pergunta e outra:
+ * sobra espaco para os dados crescerem e para atualizar a maior imagem (Hermes, ~4,6 GB)? Aqui: ok a partir de 15 GB, atencao de 8 a 15, falha abaixo de 8.
+ */
+export function tudoInstalado(m: Pick<Medidas, 'dockerRodando' | 'imagensFaltando'>): boolean {
+  return m.dockerRodando && m.imagensFaltando !== undefined && m.imagensFaltando.length === 0;
+}
+export const DISCO_INSTALADO_OK_GB = 15, DISCO_INSTALADO_ATENCAO_GB = 8;
+
 // Funcao pura: transforma medidas em verificacoes (limites do verificador: docs/plano/fase-1-requisitos-e-preflight.md).
 export function avaliar(m: Medidas): Verificacao[] {
   const v: Verificacao[] = [];
@@ -84,7 +94,15 @@ export function avaliar(m: Medidas): Verificacao[] {
   const livreGb = m.memLivreBytes / GIB;
   v.push({ id: 'memoria-livre', rotulo: `Memória livre agora: ${livreGb.toFixed(1)} GB`, detalhe: livreGb >= 2 ? 'Suficiente para comecar' : 'Feche navegadores e outros programas.', estado: livreGb >= 2 ? 'ok' : 'atencao' });
   const disco = Math.floor(m.discoLivreBytes / GIB);
-  v.push({ id: 'disco', rotulo: `Disco: ${disco} GB livres`, detalhe: disco >= 50 ? 'Folgado' : disco >= 30 ? 'Acima do minimo de 30 GB' : 'Abaixo do minimo de 30 GB (as imagens do projeto ocupam cerca de 17 GB e os dados crescem).', estado: disco >= 50 ? 'ok' : disco >= 30 ? 'atencao' : 'falha' });
+  if (tudoInstalado(m)) {
+    v.push({
+      id: 'disco', rotulo: `Disco: ${disco} GB livres`,
+      detalhe: disco >= DISCO_INSTALADO_OK_GB ? 'Folgado: tudo ja esta instalado e os dados do Heimdall crescem devagar.' : disco >= DISCO_INSTALADO_ATENCAO_GB ? 'Pouco espaco livre. Tudo ja esta instalado, mas acompanhe: atualizar uma imagem do Docker pode pedir ate 5 GB.' : 'Muito pouco espaco livre (menos de 8 GB): libere espaco antes que o Docker ou o banco parem de gravar.',
+      estado: disco >= DISCO_INSTALADO_OK_GB ? 'ok' : disco >= DISCO_INSTALADO_ATENCAO_GB ? 'atencao' : 'falha'
+    });
+  } else {
+    v.push({ id: 'disco', rotulo: `Disco: ${disco} GB livres`, detalhe: disco >= 50 ? 'Folgado' : disco >= 30 ? 'Acima do minimo de 30 GB' : 'Abaixo do minimo de 30 GB (as imagens do projeto ocupam cerca de 17 GB e os dados crescem).', estado: disco >= 50 ? 'ok' : disco >= 30 ? 'atencao' : 'falha' });
+  }
   v.push({ id: 'node', rotulo: `Node.js ${m.nodeVersao}`, detalhe: nodeSuficiente(m.nodeVersao) ? 'Versao suficiente' : 'Precisa de 22.18 ou mais', estado: nodeSuficiente(m.nodeVersao) ? 'ok' : 'falha' });
   if (m.virtualizacao !== undefined) {
     v.push({ id: 'virtualizacao', rotulo: `Virtualização: ${m.virtualizacao ? 'ligada' : 'desligada'}`, detalhe: m.virtualizacao ? 'O Docker Desktop consegue rodar' : 'Desligada. Ligue na BIOS/UEFI (reinicie o computador e entre na configuracao da placa; o nome da opcao varia: Intel VT-x, Virtualization Technology ou SVM). Sem isso o Docker nao abre.', estado: m.virtualizacao ? 'ok' : 'falha' });

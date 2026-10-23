@@ -27,12 +27,13 @@ const processamento = (sobre: Record<string, unknown> = {}) => ({
 });
 function soma(c = 0, e = 0, s = 0) { const z = { chamadas: c, entrada: e, saida: s }; return { conversa: { ...z }, extracao: { ...z }, relatorio: { chamadas: 0, entrada: 0, saida: 0 }, teste: { chamadas: 0, entrada: 0, saida: 0 }, todas: { ...z } }; }
 
-async function tela(inicial: Record<string, unknown>) {
+async function tela(inicial: Record<string, unknown>, passo: string = 'processar', extras: Record<string, unknown> = {}) {
   const dados: Record<string, unknown> = {
-    '/api/estado': { passos: [{ id: 'processar', titulo: 'Processar', mito: 'm', explicacao: 'e', estado: 'pendente', pronto: true }], fontes: null, verificacoes: [], bugsAbertos: 0 },
+    '/api/estado': { passos: [{ id: passo, titulo: passo, mito: 'm', explicacao: 'e', estado: 'pendente', pronto: true }], fontes: null, verificacoes: [], bugsAbertos: 0 },
     '/api/painel': { whatsapp: {}, fila: { total: {}, porTipo: {} }, acervo: {}, backup: {}, selfchat: {}, servicos: {} },
     '/api/ambiente/testar': { verificacoes: [], perfil: null },
-    '/api/processamento': inicial
+    '/api/processamento': inicial,
+    ...extras
   };
   const posts: { url: string; corpo: unknown }[] = [];
   const ids: Record<string, No> = {};
@@ -141,4 +142,31 @@ test('contatos que responderam e ainda nao sao clientes: a tela mostra quantos e
   assert.equal(botao(), undefined, 'sem candidatos o botao some');
   assert.equal(t.painel.achar((n) => n.style.display === 'none').length >= 1, true, 'e o aviso fica escondido');
   assert.doesNotMatch(t.painel.textContent, /Ainda nao ha clientes cadastrados/);
+});
+
+const painelSinc = { whatsapp: { estado: 'conectado', dono: '0000', historico: { ultima: true, progresso: 100 }, contagem: { inseridas: 5, duplicadas: 0, editadas: 0, apagadas: 0 } }, fila: { total: {}, porTipo: {} }, acervo: { mensagens: 100, conversas: 10, audios: 0, pdfs: 0 }, backup: {}, selfchat: {}, servicos: {}, historicoAntigo: {}, processamento: {} };
+const antigo = (resumo: Record<string, unknown>, config: Record<string, unknown> = {}) => ({ config: { liberado: false, ritmoSegundos: 60, esperaRespostaSegundos: 45, tamanhoPagina: 50, maxPaginas: 40, limiteVazias: 10, ...config }, resumo: { conversas: 669, pendentes: 0, emAndamento: 0, concluidas: 0, esgotadas: 0, pedidos: 0, novas: 0, liberado: false, encerrada: null, ...resumo } });
+
+test('busca antiga: a estimativa conta o freio (ate 10 pedidos sem retorno encerram) em vez de prometer dezenas de horas', async () => {
+  const t = await tela({}, 'sincronizar', { '/api/painel': painelSinc, '/api/historico-antigo': antigo({ pendentes: 668, emAndamento: 1, liberado: true }, { liberado: true }) });
+  const txt = t.painel.textContent;
+  assert.match(txt, /Estimativa/);
+  assert.match(txt, /10 pedidos seguidos sem nenhuma mensagem/);
+  assert.match(txt, /encerra sozinha/);
+  assert.doesNotMatch(txt, /39 horas|40 horas/);
+});
+
+test('busca antiga encerrada sozinha: a tela explica que o celular nao tem mais historico e que as conversas foram consideradas completas', async () => {
+  const t = await tela({}, 'sincronizar', { '/api/painel': painelSinc, '/api/historico-antigo': antigo({ esgotadas: 669, pedidos: 10, encerrada: 'sem_retorno' }) });
+  const txt = t.painel.textContent;
+  assert.match(txt, /terminou sozinha/);
+  assert.match(txt, /nao tem mais historico/);
+  assert.match(txt, /669 de 669 conversas/);
+});
+
+test('busca antiga pausada por falta de resposta do celular: avisa e diz que nada foi descartado', async () => {
+  const t = await tela({}, 'sincronizar', { '/api/painel': painelSinc, '/api/historico-antigo': antigo({ pendentes: 600, pedidos: 5, encerrada: 'sem_resposta' }) });
+  const txt = t.painel.textContent;
+  assert.match(txt, /nao respondeu varias vezes seguidas/);
+  assert.match(txt, /nada foi descartado/i);
 });
