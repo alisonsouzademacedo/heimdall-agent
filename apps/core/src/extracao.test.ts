@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { abrirBanco, migrar, type Banco } from './db.ts';
 import { criarEscuta } from './whatsapp/escuta.ts';
 import { pegarProximo, resumoDaFila } from './fila.ts';
-import { contarDescartes, agendarExtracao, diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
+import { contarDescartes, corrigirDatasImpossiveis, agendarExtracao, diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
 
 const DONO = { pn: '5511900000000@s.whatsapp.net' };
 const D10 = Date.UTC(2025, 9, 10, 15, 0, 0); // 10/10/2025 12:00 em SP (sexta)
@@ -366,4 +366,57 @@ test('item COM conteudo que o codigo recusa (nome com mensagem inventada, aguard
   assert.deepEqual([agu.brutos, agu.aceitos], [1, 0]);
   const ok = validarSaidaDaExtracao(JSON.stringify({ identificacao: { nome: 'Ana', empresa: null, mensagem_origem: 2, confianca: 0.9 }, aguardando_resposta_do_dono: { valor: true, mensagem_origem: '3' } }), ids)!;
   assert.deepEqual([ok.brutos, ok.aceitos], [2, 2]);
+});
+
+// ---- Datas dos compromissos (revisao do 1o processamento real, 2026-10-23): 3 de 4 reunioes com data RELATIVA ("sexta as 14h") saíram com data ERRADA e ANTERIOR
+// a propria conversa (9 de 63 compromissos). Correcao por codigo: calendario de referencia no pedido + data anterior ao dia da conversa e descartada. ----
+test('o pedido leva um CALENDARIO DE REFERENCIA do dia da conversa (14 dias, com o dia da semana): o modelo nao precisa fazer a conta', () => {
+  const { db } = cenario();
+  const p = montarPedidoDeExtracao(db, 'ext:1:2025-10-10', instr)!; // 2025-10-10 foi uma sexta-feira
+  assert.match(p.pedido, /CALENDARIO DE REFERENCIA/);
+  assert.match(p.pedido, /sexta-feira 2025-10-10 \(o dia da conversa\)/);
+  assert.match(p.pedido, /sabado 2025-10-11|sábado 2025-10-11/);
+  assert.match(p.pedido, /segunda-feira 2025-10-13/);
+  assert.match(p.pedido, /quinta-feira 2025-10-23/); // 13o dia a frente
+  assert.doesNotMatch(p.pedido, /2025-10-24/, 'so 14 dias');
+});
+
+test('compromisso com data ANTERIOR ao dia da conversa nao fica com essa data (e impossivel para algo a marcar): titulo fica, data vira vazia e entra uma duvida', async () => {
+  const { db } = cenario(); agendarExtracao(db, HOJE);
+  const s = saidaBase(db);
+  const saida = { ...s, compromissos: [
+    { ...s.compromissos[0]!, titulo: 'Reuniao marcada com data impossivel', data_hora: '2025-10-08' },          // antes do dia 10: descartada
+    { ...s.compromissos[0]!, titulo: 'Reuniao na terca que vem', data_hora: '2025-10-14T14:00:00-03:00' },        // depois: vale
+    { ...s.compromissos[0]!, titulo: 'Retorno no mesmo dia', data_hora: '2025-10-10' }                            // mesmo dia: vale
+  ] };
+  await processarExtrair(db, pegarProximo(db, ['extrair'], HOJE)!, porta(saida), instr, HOJE);
+  const k = db.prepare('SELECT titulo, data_hora FROM compromissos ORDER BY id').all() as { titulo: string; data_hora: string | null }[];
+  assert.deepEqual(k.map((x) => ({ ...x })), [
+    { titulo: 'Reuniao marcada com data impossivel', data_hora: null },
+    { titulo: 'Reuniao na terca que vem', data_hora: '2025-10-14T14:00:00-03:00' },
+    { titulo: 'Retorno no mesmo dia', data_hora: '2025-10-10' }
+  ]);
+  assert.equal((db.prepare("SELECT COUNT(*) AS n FROM duvidas WHERE texto LIKE '%data%'").get() as { n: number }).n, 1, 'o dono e avisado de que a data ficou incerta');
+});
+
+test('corrigirDatasImpossiveis: conserta o que ja esta gravado (data anterior ao dia da mensagem de origem vira vazia), sem tocar nas datas validas; idempotente', () => {
+  const { db } = cenario();
+  const origem = id(db, 'M2'); // mensagem de 2025-10-10
+  const ins = (t: string, d: string | null) => db.prepare("INSERT INTO compromissos (cliente_id, tipo, titulo, data_hora, estado, origem_mensagem_id) VALUES (1, 'reuniao', ?, ?, 'marcado', ?)").run(t, d, origem);
+  ins('passada', '2025-10-08T10:00:00-03:00'); ins('mesmo dia', '2025-10-10'); ins('futura', '2025-10-20'); ins('sem data', null);
+  assert.deepEqual(corrigirDatasImpossiveis(db), { corrigidos: 1 });
+  const k = db.prepare('SELECT titulo, data_hora FROM compromissos ORDER BY id').all() as { titulo: string; data_hora: string | null }[];
+  assert.deepEqual(k.map((x) => x.data_hora), [null, '2025-10-10', '2025-10-20', null]);
+  assert.deepEqual(corrigirDatasImpossiveis(db), { corrigidos: 0 });
+});
+
+test('falha ao gravar a extracao: o erro guardado diz a causa tecnica (sem conteudo de conversa) e o dia volta para a fila', async () => {
+  const { db } = cenario(); agendarExtracao(db, HOJE);
+  db.exec("CREATE TRIGGER barra_teste BEFORE INSERT ON sinais_potencial BEGIN SELECT RAISE(ABORT, 'causa-forcada-no-teste'); END;");
+  const r = await processarExtrair(db, pegarProximo(db, ['extrair'], HOJE)!, porta(saidaBase(db)), instr, HOJE);
+  assert.equal(r, 'reagendada');
+  const erro = (db.prepare("SELECT erro FROM fila WHERE tipo = 'extrair'").get() as { erro: string }).erro;
+  assert.match(erro, /^falha_ao_gravar_extracao: .*causa-forcada-no-teste/);
+  assert.doesNotMatch(erro, /proposta|Alfa|Ana/i, 'nada da conversa no erro');
+  assert.equal((db.prepare('SELECT COUNT(*) AS n FROM compromissos').get() as { n: number }).n, 0, 'nada ficou pela metade (rollback)');
 });

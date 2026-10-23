@@ -167,6 +167,9 @@ MUTACOES = [
     ("src/historico-antigo.ts", "WHERE estado = 'esgotada' AND pedidos = 0", "WHERE estado = 'esgotada'", "historico antigo: reabrir so as conversas nunca pedidas"),
     ("src/extracao.ts", "(aguardandoComOrigem ? 1 : 0) + (identComConteudo ? 1 : 0)", "(objeto(a) ? 1 : 0) + (objeto(idt) ? 1 : 0)", "extracao: nada encontrado legitimo nao e descarte (falso alarme)"),
     ("src/onboarding/recursos.ts", "bLiberar.textContent=r.liberada?'Processamento em andamento':'Comecar o processamento';", "", "tela: o botao Comecar muda quando o processamento esta liberado"),
+    ("src/extracao.ts", "if (origem && dataHora.slice(0, 10) < diaLocal(origem.t, fuso)) { dataHora = null; incertas.push(c.titulo); }", "", "extracao: data anterior ao dia da conversa nao vale"),
+    ("src/extracao.ts", "    calendarioDeReferencia(c.dia),", "", "extracao: o pedido leva o calendario de referencia"),
+    ("src/extracao.ts", "if (l.dh.slice(0, 10) < diaLocal(l.em, fuso)) { db.prepare('UPDATE compromissos SET data_hora = NULL WHERE id = ?').run(l.id); corrigidos++; }", "", "extracao: corrige as datas impossiveis ja gravadas"),
 ]
 
 falhas = 0
