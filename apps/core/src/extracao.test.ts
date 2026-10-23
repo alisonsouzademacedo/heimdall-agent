@@ -346,3 +346,24 @@ test('descartes: resposta com itens que o codigo recusou TODOS fica contada (a t
   await processarExtrair(c.db, pegarProximo(c.db, ['extrair'], HOJE)!, porta(saidaBase(c.db)), instr, HOJE);
   assert.equal(contarDescartes(c.db), 0, 'resposta boa');
 });
+
+// Falso alarme visto no 1o processamento real (2026-10-23): em dias curtos o modelo responde "nada encontrado" como identificacao com nome e empresa NULOS e
+// aguardando sem mensagem de origem. Isso NAO e formato errado e nao pode acender o aviso de descarte.
+test('"nada encontrado" legitimo (identificacao toda nula, aguardando sem origem) NAO conta como descarte', async () => {
+  const { db } = cenario(); agendarExtracao(db, HOJE);
+  const nada = { compromissos: [], sinais_potencial: [], identificacao: { nome: null, empresa: null, mensagem_origem: null, confianca: 0.9, motivo: '' }, aguardando_resposta_do_dono: { valor: false, mensagem_origem: null, motivo: '' }, objecoes: [], duvidas: [] };
+  await processarExtrair(db, pegarProximo(db, ['extrair'], HOJE)!, porta(nada), instr, HOJE);
+  assert.equal(contarDescartes(db), 0);
+  const v = validarSaidaDaExtracao(JSON.stringify(nada), new Set([1, 2, 3]))!;
+  assert.deepEqual([v.brutos, v.aceitos], [0, 0]);
+});
+
+test('item COM conteudo que o codigo recusa (nome com mensagem inventada, aguardando apontando mensagem que nao existe) continua contando', () => {
+  const ids = new Set([1, 2, 3]);
+  const ident = validarSaidaDaExtracao(JSON.stringify({ identificacao: { nome: 'Ana', empresa: null, mensagem_origem: 999, confianca: 0.9 } }), ids)!;
+  assert.deepEqual([ident.brutos, ident.aceitos], [1, 0]);
+  const agu = validarSaidaDaExtracao(JSON.stringify({ aguardando_resposta_do_dono: { valor: true, mensagem_origem: 999 } }), ids)!;
+  assert.deepEqual([agu.brutos, agu.aceitos], [1, 0]);
+  const ok = validarSaidaDaExtracao(JSON.stringify({ identificacao: { nome: 'Ana', empresa: null, mensagem_origem: 2, confianca: 0.9 }, aguardando_resposta_do_dono: { valor: true, mensagem_origem: '3' } }), ids)!;
+  assert.deepEqual([ok.brutos, ok.aceitos], [2, 2]);
+});

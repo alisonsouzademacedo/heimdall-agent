@@ -175,7 +175,11 @@ export function validarSaidaDaExtracao(texto: string, idsValidos: ReadonlySet<nu
   }
   if (Array.isArray(o.duvidas)) saida.duvidas = o.duvidas.map((d) => limpar(d, 300)).filter((d) => d !== '').slice(0, 3);
   const objeto = (v: unknown): boolean => typeof v === 'object' && v !== null && !Array.isArray(v);
-  saida.brutos = lista(o.compromissos).length + lista(o.sinais_potencial).length + (objeto(a) ? 1 : 0) + (objeto(idt) ? 1 : 0);
+  // So conta como "item enviado" o que TEM conteudo: "nada encontrado" legitimo (identificacao com nome e empresa nulos; aguardando sem mensagem de origem) nao e erro
+  // de formato (falso alarme visto no 1o processamento real, 2026-10-23, em dias de 2 mensagens).
+  const identComConteudo = objeto(idt) && (limpar((idt as Record<string, unknown>).nome, 80) !== '' || limpar((idt as Record<string, unknown>).empresa, 80) !== '');
+  const aguardandoComOrigem = objeto(a) && (a as Record<string, unknown>).mensagem_origem !== null && (a as Record<string, unknown>).mensagem_origem !== undefined;
+  saida.brutos = lista(o.compromissos).length + lista(o.sinais_potencial).length + (aguardandoComOrigem ? 1 : 0) + (identComConteudo ? 1 : 0);
   saida.aceitos = saida.compromissos.length + saida.sinais.length + (saida.aguardando ? 1 : 0) + (saida.identificacao ? 1 : 0);
   return saida;
 }

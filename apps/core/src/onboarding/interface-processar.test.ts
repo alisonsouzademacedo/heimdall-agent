@@ -93,12 +93,17 @@ test('teto atingido aparece como pausa ate amanha; os botoes seguem o estado (li
   const t = await tela(processamento({ liberada: true, clientes: 2, teto: { diario: 10000, usadoHoje: 10100, atingido: true } }));
   assert.match(t.painel.textContent, /em pausa ate amanha/);
   const botao = (rotulo: string) => t.painel.achar((n) => n.tag === 'button' && n._t === rotulo)[0]!;
-  assert.equal(botao('Comecar o processamento').disabled, true);
+  // Liberado: o botao MUDA o texto (antes so ficava desabilitado, sem estilo, e parecia que o clique nao fazia nada) e fica desabilitado.
+  assert.equal(botao('Processamento em andamento').disabled, true);
+  assert.equal(t.painel.achar((n) => n.tag === 'button' && n._t === 'Comecar o processamento').length, 0, 'o rotulo "Comecar" some enquanto esta liberado');
   assert.equal(botao('Pausar processamento').disabled, false);
   t.dados['/api/processamento'] = processamento({ liberada: false, clientes: 2 });
   await t.tique();
   assert.equal(botao('Comecar o processamento').disabled, false);
   assert.equal(botao('Pausar processamento').disabled, true);
+  t.dados['/api/processamento'] = processamento({ liberada: true, clientes: 2 });
+  await t.tique();
+  assert.equal(botao('Processamento em andamento').disabled, true, 'volta a mostrar o andamento quando libera de novo');
 });
 
 test('Comecar pede confirmacao e manda liberar+confirmar; Pausar manda liberar:false', async () => {

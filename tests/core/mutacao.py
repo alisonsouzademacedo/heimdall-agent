@@ -165,6 +165,8 @@ MUTACOES = [
     ("src/processamento.ts", "const restantes = c.novos + c.refeitos;", "const restantes = c.novos + c.refeitos + naFila;", "processamento: o que falta nao conta a fila duas vezes"),
     ("src/historico-antigo.ts", "(SELECT COUNT(*) FROM mensagens m WHERE m.conversa_id = h.conversa_id) DESC, h.conversa_id", "h.conversa_id", "historico antigo: pede primeiro as conversas com mais mensagens"),
     ("src/historico-antigo.ts", "WHERE estado = 'esgotada' AND pedidos = 0", "WHERE estado = 'esgotada'", "historico antigo: reabrir so as conversas nunca pedidas"),
+    ("src/extracao.ts", "(aguardandoComOrigem ? 1 : 0) + (identComConteudo ? 1 : 0)", "(objeto(a) ? 1 : 0) + (objeto(idt) ? 1 : 0)", "extracao: nada encontrado legitimo nao e descarte (falso alarme)"),
+    ("src/onboarding/recursos.ts", "bLiberar.textContent=r.liberada?'Processamento em andamento':'Comecar o processamento';", "", "tela: o botao Comecar muda quando o processamento esta liberado"),
 ]
 
 falhas = 0

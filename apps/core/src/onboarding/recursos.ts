@@ -69,6 +69,7 @@ textarea{width:100%;min-height:90px;background:var(--bg);color:var(--fg);border:
 .item-lista b{display:inline-block;margin-right:8px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:700px){header{padding:18px 16px 12px}.marca{font-size:34px}.ponte{margin:0 16px}main{padding:16px 16px 28px}section{padding:22px 20px}h1{font-size:34px}.fontes{padding:12px 16px 0;grid-template-columns:1fr 1fr}.fonte .sigla{display:none}}
+button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.5)}
 `;
 
 export const JS = `
@@ -490,6 +491,7 @@ export const JS = `
         ul.appendChild(el('li','',x[1]+': hoje '+fmt(h.chamadas)+' consulta(s), '+fmt(h.entrada+h.saida)+' tokens; total '+fmt(tt.chamadas)+' consulta(s), '+fmt(tt.entrada+tt.saida)+' tokens.'));
       });
       vivo.appendChild(ul);
+      bLiberar.textContent=r.liberada?'Processamento em andamento':'Comecar o processamento';
       bLiberar.disabled=r.liberada;
       bPausar.disabled=!r.liberada;
       if(!cfgPronta){cfgPronta=true;montarConfig(r)}

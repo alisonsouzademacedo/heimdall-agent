@@ -635,3 +635,8 @@ test('/api/historico-antigo informa o limite do freio e, quando a busca se encer
     assert.equal(JSON.parse((await req(c, 'GET', '/api/historico-antigo', { Cookie: h.Cookie })).texto).resumo.encerrada, 'sem_retorno');
   } finally { await c.fim(); }
 });
+
+test('CSS: botao desabilitado tem aparencia propria (apagado, cursor de proibido); sem isso o clique parecia nao fazer nada', () => {
+  assert.match(CSS, /button:disabled\s*\{[^}]*opacity/);
+  assert.match(CSS, /button:disabled\s*\{[^}]*cursor:\s*not-allowed/);
+});
