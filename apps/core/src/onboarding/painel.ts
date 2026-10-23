@@ -138,7 +138,8 @@ export function estadosAoVivo(p: EntradaAoVivo): { sincronizar: EstadoAoVivo; ex
 
   const b = p.fila.porTipo.baixar_midia ?? {};
   const total = soma(b), ok = b.ok ?? 0, pend = (b.pendente ?? 0) + (b.em_andamento ?? 0), sem = (b.abandonada ?? 0) + (b.erro ?? 0);
-  const texto = `${ok} de ${total} arquivos${sem > 0 ? ` (${sem} sem arquivo: expirados no WhatsApp)` : ''}`;
+  const semArq = sem > 0 ? `${sem} sem arquivo (o WhatsApp nao entregou)` : '';
+  const texto = pend > 0 || sem === 0 ? `${ok} de ${total} arquivos${semArq ? ` (${semArq})` : ''}` : `${ok} baixados; ${semArq}`;
   let extrair: EstadoAoVivo;
   if (!conectado) extrair = { estado: 'pendente', percentual: null, detalhe: 'Conecte o WhatsApp primeiro.' };
   else if (!recebido || pend > 0) extrair = { estado: 'processando', percentual: total > 0 ? pct(ok, total) : null, detalhe: total > 0 ? texto : 'Aguardando o historico chegar.' };

@@ -89,6 +89,21 @@ test('fontes: QR pendente, teste falhou, Hindsight sem resposta e midia com falh
   assert.equal(f.crm.estado, 'vermelho');
 });
 
+test('fontes: download que o WhatsApp nao entregou (abandonado) NAO e falha: midia fica verde e conta separado', () => {
+  const p = painel({
+    acervo: { mensagens: 10, conversas: 1, audios: 3, pdfs: 0 },
+    fila: {
+      total: { pendente: 0, em_andamento: 0, ok: 4, erro: 0, abandonada: 5 },
+      porTipo: { baixar_midia: { ok: 2, abandonada: 5 }, transcrever: { ok: 2 } }
+    }
+  });
+  const f = montarFontes(p, { estado: 'nao_feito' }, SEM_CRM);
+  assert.equal(f.midia.estado, 'verde');
+  assert.match(f.midia.detalhe, /4 de 4 etapa/);
+  assert.match(f.midia.detalhe, /5 sem arquivo/);
+  assert.doesNotMatch(f.midia.detalhe, /falha/);
+});
+
 test('fontes: CRM conectado mas com funil incompleto fica em andamento, nunca verde', () => {
   const f = montarFontes(painel(), { estado: 'nao_feito' }, { configurado: true, estado: 'ok', completo: false, faltando: ['2ª Reunião Agendada'] });
   assert.equal(f.crm.estado, 'processando');

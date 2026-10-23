@@ -185,6 +185,17 @@ test('extrair: download abandonado nao trava o verde, mas aparece no texto (arqu
   assert.match(x.detalhe, /2 sem arquivo/);
 });
 
+test('extrair: com tudo que o WhatsApp entrega ja baixado, o texto diz "N baixados; M sem arquivo", nao "N de TOTAL" (parecia incompleto)', () => {
+  const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1); gravarHistorico(db, { progresso: 100, ultima: true }, 2);
+  comMidias(db, 4, 2);
+  db.prepare("UPDATE fila SET estado = 'abandonada' WHERE estado = 'pendente'").run();
+  const x = vivo(db).extrair!;
+  assert.equal(x.estado, 'verde');
+  assert.match(x.detalhe, /2 baixados/);
+  assert.match(x.detalhe, /2 sem arquivo/);
+  assert.doesNotMatch(x.detalhe, /2 de 4/);
+});
+
 test('sincronizar com historico antigo ligado: enquanto ha conversa a pedir, e processando com conversas concluidas / total', () => {
   const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1); gravarHistorico(db, { progresso: 100, ultima: true }, 2);
   const e = criarEscuta(db, DONO, { agora: () => T });

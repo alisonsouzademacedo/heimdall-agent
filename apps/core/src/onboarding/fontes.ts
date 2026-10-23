@@ -64,13 +64,16 @@ function fonteMemoria(p: Painel): Fonte {
 function fonteMidia(p: Painel): Fonte {
   const q = (tipo: string): Record<string, number> => p.fila.porTipo[tipo] ?? {};
   const tipos = ['baixar_midia', 'transcrever', 'converter_pdf'];
-  const total = tipos.reduce((a, t) => a + soma(q(t)), 0);
+  // Download abandonado = o WhatsApp nao entregou o arquivo (expirado ou sem chave): nao ha o que consertar, entao NAO e falha; conta a parte.
+  const semArquivo = q('baixar_midia').abandonada ?? 0;
+  const total = tipos.reduce((a, t) => a + soma(q(t)), 0) - semArquivo;
   const ok = tipos.reduce((a, t) => a + (q(t).ok ?? 0), 0);
   const pend = tipos.reduce((a, t) => a + (q(t).pendente ?? 0) + (q(t).em_andamento ?? 0), 0);
-  const falhas = tipos.reduce((a, t) => a + (q(t).erro ?? 0) + (q(t).abandonada ?? 0), 0);
-  if (pend > 0) return { estado: 'processando', detalhe: `${ok} de ${total} etapa(s) concluída(s); ${pend} na fila.` };
-  if (falhas > 0) return { estado: 'vermelho', detalhe: `${falhas} arquivo(s) com falha; ${ok} de ${total} etapa(s) concluída(s).` };
-  if (total > 0) return { estado: 'verde', detalhe: `${p.acervo.audios} áudio(s) e ${p.acervo.pdfs} PDF(s); ${ok} de ${total} etapa(s) concluída(s).` };
+  const falhas = tipos.reduce((a, t) => a + (q(t).erro ?? 0) + (t === 'baixar_midia' ? 0 : (q(t).abandonada ?? 0)), 0);
+  const sem = semArquivo > 0 ? `; ${semArquivo} sem arquivo (o WhatsApp não entregou)` : '';
+  if (pend > 0) return { estado: 'processando', detalhe: `${ok} de ${total} etapa(s) concluída(s); ${pend} na fila${sem}.` };
+  if (falhas > 0) return { estado: 'vermelho', detalhe: `${falhas} arquivo(s) com falha; ${ok} de ${total} etapa(s) concluída(s)${sem}.` };
+  if (total > 0) return { estado: 'verde', detalhe: `${p.acervo.audios} áudio(s) e ${p.acervo.pdfs} PDF(s); ${ok} de ${total} etapa(s) concluída(s)${sem}.` };
   if (p.acervo.audios + p.acervo.pdfs > 0) return { estado: 'pendente', detalhe: `${p.acervo.audios} áudio(s) e ${p.acervo.pdfs} PDF(s) aguardando processamento.` };
   return { estado: 'pendente', detalhe: 'nenhum áudio ou PDF recebido ainda.' };
 }
