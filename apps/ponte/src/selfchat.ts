@@ -21,6 +21,7 @@ export interface PortasSelfChat {
 
 function formatarRespostaCrm(r: RespostaCrm): string {
   if (r.semPropostas) return 'Não há propostas de CRM abertas. O próximo relatório traz as pendentes.';
+  if (r.ambigua) return 'Não entendi com segurança quais propostas aprovar e quais recusar, então nada foi alterado. Responda com os códigos, por exemplo: C1 ok, C2 não.';
   const recusadas = new Set(r.recusados);
   const linhas: string[] = [];
   for (const x of r.resultados) {

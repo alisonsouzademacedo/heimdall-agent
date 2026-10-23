@@ -20,6 +20,11 @@ print("[LINHA DE BASE] os testes passam sem mutacao")
 
 # (arquivo, trecho original, trecho estragado, regra protegida)
 MUTACOES = [
+    ("src/crm/fluxo.ts", "if (!m && SINAL_DE_RECUSA.test(resto)) decisao = 'recusar';", "", "\"o 2 fica\" na mesma mensagem do \"ok 1 e 3\" recusa o 2 (defeito de 2026-10-22: aprovava os tres)"),
+    ("src/crm/fluxo.ts", "if (aprovados.some((n) => recusados.includes(n))) ambigua = true;", "", "o mesmo numero aprovado e recusado e ambiguo (nada e feito)"),
+    ("src/crm/fluxo.ts", "if (m && decisao === 'aprovar' && SINAL_DE_RECUSA.test(resto)) ambigua = true;", "", "\"ok 1 e 3 e nao o 2\" (sem separador) e ambiguo"),
+    ("src/crm/fluxo.ts", "if (pedido.ambigua) return {", "if (false) return {", "resposta ambigua nunca chama nem altera o CRM"),
+    ("src/ingestao.ts", " || (alt !== undefined && mesmoUsuario(alt, dono.pn))", "", "o self-chat tambem e reconhecido pelo numero do dono em remoteJidAlt (sem cliente falso)"),
     ("src/crm/krayin.ts", "/api/v1${caminho}", "/api/admin${caminho}", "o CRM chama o prefixo real da API do Krayin (/api/v1, medido no Krayin 2.2.0)"),
     ("src/crm/krayin.ts", "chaveEtapa(x.nome) === chaveEtapa(e.nome)", "x.nome === e.nome", "nome da etapa e comparado sem acento, caixa e simbolo ordinal"),
     ("src/crm/krayin.ts", "redirect: 'error'", "redirect: 'follow'", "o token do CRM nunca segue redirecionamento para outro endereco"),

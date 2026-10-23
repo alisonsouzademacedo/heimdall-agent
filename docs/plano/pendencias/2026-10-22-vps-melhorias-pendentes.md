@@ -26,14 +26,18 @@
   - Não apagar a imagem do trabalhador de áudio: ela aparece como "reclaimable" só porque o contêiner dela roda sob demanda.
 - **Não verificado:** quanto o acervo vai ocupar com o histórico real.
 
-## 2. Parada limpa do MySQL do Krayin
+## 2. Parada limpa do MySQL do Krayin — **MEDIDO: não é necessário (2026-10-22, noite)**
+> `docker stop` do MySQL e do Krayin: **1,4 s, código de saída 0**, com o banco quase vazio. Nada foi mudado. Reavaliar só se, com a carga do WhatsApp, algum serviço sair com 137.
+
 - **Por quê:** a mesma lição do Postgres (`LICOES.md`, 2026-10-21: código 137 ao parar). O `krayin-mysql` está com a espera padrão.
 - **Onde:** `infra/compose/docker-compose.yml` (serviço `krayin-mysql`, e talvez `krayin`). A opção `stop_grace_period` está documentada em `docs/docker/reference/compose-file/services.md`.
 - **Teste primeiro:** ampliar a verificação de `tests/infra/check_infra.sh` (a que exige `stop_grace_period` em postgres/hindsight/hermes) para incluir `krayin-mysql`. Isso deixa o teste mais rígido, não mais frouxo: explicar ao dono.
 - **Aplicar:** `sh scripts/heimdall.sh iniciar`. Desde 2026-10-22 o supervisor **não** aplica mudança do Compose sozinho.
 - **Não verificado:** quanto tempo o MySQL leva para parar.
 
-## 3. Rodízio dos logs
+## 3. Rodízio dos logs — **FEITO (2026-10-22, noite)**
+> Implementado no supervisor (`rodar_logs`, 10 MB, `.log.1` modo 600), com teste. Falta só conferir, com o WhatsApp real, que nenhum processo grava conversa/QR/token nesses logs (regra 2).
+
 - **Por quê:** `scripts/heimdall.sh` (`iniciar_um`) grava com `>>` em `data/logs/<processo>.log` e `.erro.log`, e nada corta. Hoje são 32 KB, mas o listener com WhatsApp real vai crescer.
 - **Proposta:** antes de subir um processo, se o log passar de N MB (sugestão: 10 MB), renomear para `.1`, guardando só uma cópia. Não usar o `logrotate` do sistema (precisa de `sudo` e mexe em `/etc`).
 - **Teste primeiro:** em `tests/ops/check_supervisor.sh`, com um log falso grande.
@@ -48,7 +52,9 @@
 - **Fato:** `infra/krayin/instalar.sh` roda `krayin-crm:install --skip-env-check`. Com essa opção o instalador usa `locale` `en` e moeda `USD` (código lido em `packages/Webkul/Installer/src/Console/Commands/Installer.php`, dentro da imagem). A interface usa `APP_LOCALE=pt_BR`, mas os dados criados pelo instalador ("Default Pipeline", "New/Won/Lost") ficaram em inglês.
 - **O que fazer:** ver nas Configurações do Krayin se dá para trocar moeda e idioma pela tela. É o caminho preferido: o dono faz, sem mexer no banco. Não rodar o instalador de novo: ele usa `migrate:fresh` e **apaga tudo**.
 
-## 6. Link novo da tela sem reiniciar tudo
+## 6. Link novo da tela sem reiniciar tudo — **FEITO (2026-10-22, noite): `sh scripts/heimdall.sh novo-link`**
+> Reinicia só a tela e mostra o link novo; teste prova que os outros 4 processos mantêm o pid. Não verificado: se o listener reconecta sem QR depois de um reinício completo do serviço (WhatsApp real).
+
 - **Hoje:** para gerar um código novo é preciso `systemctl --user restart heimdall.service`, que reinicia os 5 processos, inclusive o listener.
 - **Proposta:** uma ação `novo-link` em `scripts/heimdall.sh`. Ela para **só a tela**, pelo registro pid + hora de início; espera o supervisor subi-la de novo (~10 a 15 s); e mostra o link. Teste primeiro em `check_supervisor.sh`.
 - **Não verificado:** se o listener reconecta sem pedir QR depois de reiniciar, com o WhatsApp real.

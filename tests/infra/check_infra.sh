@@ -46,6 +46,11 @@ CP=apps/media-worker/converter_pdf.py
 grep -qE '^COPY .*transcrever\.py.*converter_pdf\.py|^COPY .*converter_pdf\.py.*transcrever\.py' "$MW" && pass "a imagem leva os dois comandos" || fail "a imagem nao copia os comandos"
 grep -q 'local_files_only=True' "$TR" && pass "transcrever: modelo so do disco (local_files_only=True), nunca da internet" || fail "transcrever pode baixar modelo da internet"
 grep -qE "language=['\"]pt['\"]" "$TR" && grep -q 'vad_filter=True' "$TR" && grep -q 'condition_on_previous_text=False' "$TR" && pass "transcrever: portugues, filtro de silencio e sem repeticao em cadeia" || fail "transcrever sem os parametros combinados (language, vad_filter, condition_on_previous_text)"
+# Medido em 2026-10-22 (CPU sem AVX, teto de 2 CPUs, 30 s de audio): 1 thread 117 s; 2 threads 73 s; 3 threads 130 s; padrao (4) 128 s. Mais threads que CPUs piora muito:
+# cpu_threads do Whisper tem de ser IGUAL ao teto de CPU do trabalhador no Compose (runbook 06).
+TH=$(sed -n 's/.*cpu_threads=\([0-9][0-9]*\).*/\1/p' "$TR" | head -1)
+CPUS=$(awk '/^  media-worker:/{f=1;next} /^  [a-z]/{f=0} f && /^    cpus:/{gsub(/[^0-9.]/,"",$2); print $2; exit}' "$DC")
+{ [ -n "$TH" ] && [ -n "$CPUS" ] && [ "$TH" = "${CPUS%.*}" ]; } && pass "transcrever: cpu_threads=$TH igual ao teto de CPU do trabalhador no Compose (cpus: $CPUS)" || fail "transcrever: cpu_threads ('$TH') nao confere com o cpus do Compose ('$CPUS'); com mais threads que CPUs a transcricao fica ate 1,7x mais lenta"
 grep -q 'convert_local' "$CP" && ! grep -qE '\.convert\(' "$CP" && pass "PDF: so convert_local (a forma estreita que o README manda; nunca convert() com URL)" || fail "PDF usa convert() em vez de convert_local()"
 grep -q '%PDF-' "$CP" && pass "PDF: confere o cabecalho %PDF- (um arquivo qualquer com nome .pdf nao vira \"texto\")" || fail "PDF: nao confere o cabecalho %PDF-"
 grep -q 'enable_plugins=False' "$CP" && pass "PDF: plugins desligados" || fail "PDF com plugins ligados"

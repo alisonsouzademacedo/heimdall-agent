@@ -197,6 +197,54 @@ test('interpreta as respostas curtas do dono', () => {
   assert.equal(interpretarRespostaCrm('bom dia'), null);
 });
 
+test('mensagem com aprovacao E recusa no mesmo texto: a recusa vale (defeito achado contra o Krayin real, 2026-10-22)', () => {
+  // Antes: "ok 1 e 3, nao o 2 fica" aprovava [1, 3, 2]: o 2, que o dono acabou de recusar, entrava como aprovado.
+  assert.deepEqual(interpretarRespostaCrm('ok 1 e 3, nao o 2 fica'), { aprovados: [1, 3], recusados: [2] });
+  assert.deepEqual(interpretarRespostaCrm('ok 1 e 3, o 2 fica'), { aprovados: [1, 3], recusados: [2] });
+  assert.deepEqual(interpretarRespostaCrm('Ok 1 e 3, não, o 2 fica.'), { aprovados: [1, 3], recusados: [2] });
+  assert.deepEqual(interpretarRespostaCrm('ok 1 mas o 2 nao'), { aprovados: [1], recusados: [2] });
+  assert.deepEqual(interpretarRespostaCrm('sim 1, nao 2'), { aprovados: [1], recusados: [2] });
+  assert.deepEqual(interpretarRespostaCrm('nao 2, ok 1 e 3'), { aprovados: [1, 3], recusados: [2] });
+  // Lista com virgulas continua aprovando todos.
+  assert.deepEqual(interpretarRespostaCrm('ok 1, 2 e 3'), { aprovados: [1, 2, 3], recusados: [] });
+  assert.deepEqual(interpretarRespostaCrm('nao 1, 2'), { aprovados: [], recusados: [1, 2] });
+});
+
+test('mensagem ambigua nao aprova nem recusa nada: pede para repetir com os codigos', () => {
+  // "ok" e "nao" na mesma frase sem separador: nao da para saber o que vale para cada numero.
+  assert.deepEqual(interpretarRespostaCrm('ok 1 e 3 e nao o 2'), { aprovados: [], recusados: [], ambigua: true });
+  // O mesmo numero aprovado e recusado.
+  assert.deepEqual(interpretarRespostaCrm('ok 2, nao 2'), { aprovados: [], recusados: [], ambigua: true });
+});
+
+test('aprovar e recusar na mesma mensagem: so os aprovados chamam a API; o recusado fica recusado', async () => {
+  const db = banco();
+  cliente(db, 1, 'Alfa', '5511911110001@s.whatsapp.net');
+  cliente(db, 2, 'Beta', '5511911110002@s.whatsapp.net');
+  cliente(db, 3, 'Gama', '5511911110003@s.whatsapp.net');
+  salvarPropostas(db, DIA, proporMovimentos(db, ETAPAS, AGORA, DIA), AGORA);
+  const chamadas: unknown[] = []; let seq = 100; // ids crescentes: dois leads criados no mesmo teste nao podem ter o mesmo id
+  const api: ApiCrm = { async criarLead(e) { chamadas.push(['criar', e]); return { ok: true, id: seq++ }; }, async moverEtapa(l, e) { chamadas.push(['mover', l, e]); return { ok: true }; } };
+  const r = await aplicarRespostaCrm(db, 'ok 1 e 3, nao o 2 fica', api, { selfChat: true }, AGORA);
+  assert.deepEqual(r!.aprovados, [1, 3]);
+  assert.deepEqual(r!.recusados, [2]);
+  assert.equal(chamadas.length, 2, 'so duas chamadas ao CRM: as dos aprovados');
+  assert.equal((db.prepare("SELECT estado FROM crm_propostas WHERE numero = 2").get() as { estado: string }).estado, 'recusada');
+  assert.equal((db.prepare("SELECT COUNT(*) AS n FROM crm_leads").get() as { n: number }).n, 2);
+});
+
+test('mensagem ambigua com propostas abertas: nada e chamado nem alterado', async () => {
+  const db = banco();
+  cliente(db, 1, 'Alfa', '5511911110001@s.whatsapp.net');
+  cliente(db, 2, 'Beta', '5511911110002@s.whatsapp.net');
+  salvarPropostas(db, DIA, proporMovimentos(db, ETAPAS, AGORA, DIA), AGORA);
+  const { api, chamadas } = apiFalsa();
+  const r = await aplicarRespostaCrm(db, 'ok 1 e nao o 2', api, { selfChat: true }, AGORA);
+  assert.equal(r!.ambigua, true);
+  assert.equal(chamadas.length, 0, 'nenhuma chamada ao CRM');
+  assert.equal(lerPropostasAbertas(db).length, 2, 'as duas propostas continuam abertas');
+});
+
 test('aprovacao cria o lead, grava o vinculo e marca a proposta como aplicada', async () => {
   const db = banco();
   cliente(db, 1, 'Alfa', '5511911110001@s.whatsapp.net');

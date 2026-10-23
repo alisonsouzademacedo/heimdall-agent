@@ -103,6 +103,20 @@ test('CRM no self-chat: aprova movimento sem chamar o Hermes; mensagem que nao e
   assert.match(respostas[1]!, /resposta para: quem esta esperando/);
 });
 
+test('CRM no self-chat: resposta ambigua nao altera nada e o dono recebe o pedido para repetir com os codigos (sem ir ao Hermes)', async () => {
+  const c = cenario();
+  c.portas.crm = {
+    propor: async () => [],
+    aplicar: async () => ({ aprovados: [], recusados: [], ignorados: [], resultados: [], semPropostas: false, ambigua: true })
+  };
+  c.dono('ok 1 e nao o 2');
+  await processarSelfChat(c.db, c.portas, T + 1000);
+  assert.equal(c.perguntas.length, 0, 'nao vai ao Hermes');
+  const r = c.saidas()[0]!.texto;
+  assert.match(r, /nada foi alterado/i);
+  assert.match(r, /C1 ok, C2 n(a|ã)o/);
+});
+
 test('CRM fora do ar: responde que nao conseguiu e NAO manda o "ok 1" ao Hermes', async () => {
   const c = cenario();
   c.portas.crm = { propor: async () => [], aplicar: async () => { throw new Error('krayin fora'); } };

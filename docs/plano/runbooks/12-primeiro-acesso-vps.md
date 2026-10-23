@@ -23,7 +23,9 @@ Copie o endereço `http://127.0.0.1:8765/?codigo=...` e cole **no navegador**. O
 
 ## 3. Na tela, nesta ordem
 1. **Ambiente:** "Testar".
-2. **Conectar o WhatsApp:** no celular, Aparelhos conectados → Conectar um aparelho → ler o QR. Espere "conectado".
+2. **ANTES do QR, pause a busca antiga:** no passo **Sincronizar com o telefone**, clique em **"Pausar busca antiga"**. Ela vem **ligada** do Windows e, assim que o WhatsApp conectar, começaria sozinha a pedir mensagens antigas (um pedido a cada ~105 s; no Windows as 29 respostas vieram vazias e o risco de o WhatsApp limitar a conta não foi medido). Libere depois, só se quiser testar.
+   **Conectar o WhatsApp:** no celular, Aparelhos conectados → Conectar um aparelho → ler o QR. Espere "conectado".
+   **O que esperar no primeiro QR:** o WhatsApp pode mandar o histórico de uma vez (milhares de mensagens, alguns minutos; o celular mostra "sincronizando"). O Heimdall **nunca guarda a mesma mensagem duas vezes**, então o que já veio do Windows (6.526 mensagens, as 134 transcrições) não duplica nem volta atrás (teste `tests/carga/reentrega-apos-troca-de-aparelho.test.ts`). Se o WhatsApp mandar só o novo ou tudo de novo, o resultado é o mesmo.
 3. **Cadastro:** a equipe interna (nome, função, telefone).
 4. **Sincronizar / Extrair:** acompanhe as barras (histórico do WhatsApp; download de áudio e PDF). Áudios são lentos nesta VPS (~5× a duração do áudio).
 5. **Conectar o modelo (login do ChatGPT, só no terminal):**

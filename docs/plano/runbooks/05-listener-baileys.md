@@ -51,3 +51,10 @@ Envio de documento; alcance real do histórico; tratamento do nono dígito de n�
 - Funcionamento: por conversa (DM e grupo; self-chat nunca) pede a pagina mais antiga que a mais antiga guardada; espera a resposta (chega como `messaging-history.set`, gravada pela escuta, duplicadas ignoradas); duas respostas vazias seguidas = conversa concluida; limite de paginas = esgotada; 3 falhas = esgotada. Estado em `historico_pedidos` (v12): queda no meio continua de onde parou, sem repetir pedido concluido.
 - **Padrao FECHADO.** So roda com `historico.antigo.liberado` e WhatsApp `conectado`. Ritmo padrao: **60 s** entre pedidos (escolha do dono em 2026-10-21), paginas de 50, espera de resposta de 45 s (minimo aceito 15 s). **O risco de o WhatsApp limitar a conta com muitos pedidos NAO esta verificado:** o valor deve ser decidido pelo dono antes de rodar de verdade.
 - **Nao verificado (so o celular responde):** quanto o WhatsApp devolve por conversa; se o aparelho atende pedidos de conversas muito antigas.
+
+## Troca de aparelho / QR novo sobre um acervo que já existe (2026-10-22)
+- **Mensagem repetida nunca duplica:** `UNIQUE (conversa_id, wa_msg_id)` + `INSERT OR IGNORE`; a escuta para na duplicada (não reabre download nem tarefa). Contrato com teste: `tests/carga/reentrega-apos-troca-de-aparelho.test.ts` (reenvio embaralhado, em `append`, com ids LID e outro índice de dispositivo do dono).
+- O reenvio em LID **ensina** o apelido LID de cada contato (linhas novas em `contato_jids` para o mesmo contato); isso é desejado.
+- **Trava `historico.antigo` vem junto com o acervo.** Se estava `liberado: true`, a busca antiga recomeça sozinha assim que o WhatsApp conectar (um pedido a cada ~105 s; as 29 respostas do Windows vieram vazias). **Pausar no passo "Sincronizar" antes de ler o QR.**
+- Mídia abandonada (expirada) continua abandonada; transcrição existente fica. Reenvio das abandonadas depois do QR novo: possibilidade futura, não feita.
+- O chat do dono é reconhecido por PN, pelo LID de `creds.me.lid` **e** pelo número em `remoteJidAlt`.

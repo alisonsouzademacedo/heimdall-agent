@@ -118,6 +118,18 @@ test('resolverContato recusa JID que nao e de usuario e nao duplica ao repetir',
   assert.equal(contar(db, 'contatos'), 1);
 });
 
+test('self-chat que chega como LID desconhecido mas com o numero do dono em remoteJidAlt continua sendo a MESMA conversa (sem criar cliente falso)', () => {
+  const db = novoBanco();
+  const semLid = { pn: DONO.pn }; // identidade sem o LID do dono (o Baileys nao informou creds.me.lid)
+  assert.equal(registrarMensagem(db, msg({ waMsgId: 'S1', remoteJid: '5555999990000@s.whatsapp.net', fromMe: true }), semLid), 'inserida');
+  // Reenvio do historico no aparelho novo: o chat do dono vem na forma LID (que o acervo nao conhece), com o numero em remoteJidAlt.
+  assert.equal(registrarMensagem(db, msg({ waMsgId: 'S1', remoteJid: '123123123123123@lid', remoteJidAlt: '5555999990000@s.whatsapp.net', fromMe: true }), semLid), 'duplicada');
+  assert.equal(registrarMensagem(db, msg({ waMsgId: 'S2', remoteJid: '123123123123123@lid', remoteJidAlt: '5555999990000@s.whatsapp.net', fromMe: true }), semLid), 'inserida');
+  assert.equal((db.prepare("SELECT COUNT(*) AS n FROM conversas WHERE tipo = 'self'").get() as { n: number }).n, 1, 'uma conversa de self-chat');
+  assert.equal((db.prepare("SELECT COUNT(*) AS n FROM conversas WHERE tipo = 'dm'").get() as { n: number }).n, 0, 'nenhuma conversa de cliente falsa com o numero do dono');
+  assert.equal(contar(db, 'mensagens'), 2);
+});
+
 test('mensagens para o motor de regras: so DM do cliente; self-chat e grupo ficam de fora', () => {
   const db = novoBanco();
   db.prepare("INSERT INTO clientes (id, nome) VALUES (1, 'Alfa')").run();

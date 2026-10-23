@@ -82,7 +82,8 @@ function conversaDe(db: Banco, remoteJid: string, alt: string | undefined, dono:
     return (db.prepare('SELECT id FROM conversas WHERE jid = ?').get(jid) as { id: number }).id;
   }
   if (t !== 'pn' && t !== 'lid') return null; // transmissao, status, canal: ignorados
-  const ehSelf = mesmoUsuario(jid, dono.pn) || (dono.lid !== undefined && mesmoUsuario(jid, dono.lid));
+  // O chat do dono tambem vale quando o Baileys o entrega como LID desconhecido mas informa o NUMERO dele em remoteJidAlt (reenvio em aparelho novo).
+  const ehSelf = mesmoUsuario(jid, dono.pn) || (dono.lid !== undefined && mesmoUsuario(jid, dono.lid)) || (alt !== undefined && mesmoUsuario(alt, dono.pn));
   if (ehSelf) {
     // PN e LID do dono sao a MESMA conversa: reaproveita a que ja existir para qualquer das duas formas.
     const existente = db.prepare("SELECT id FROM conversas WHERE tipo = 'self'").get() as { id: number } | undefined;

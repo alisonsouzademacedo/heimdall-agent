@@ -10,6 +10,7 @@ Substitui o antigo `instalar/heimdall.ps1` (Windows, removido em 2026-10-22). Fo
 | `parar` | para só os processos que são NOSSOS (`--com-docker` também faz `docker compose stop`). |
 | `estado` | mostra cada processo (pid e desde quando) e `docker compose ps`; para os parados mostra até 3 linhas do `erro.log`. |
 | `link` | mostra o endereço da tela **com o código de uso único** (lido de `data/logs/tela.log`). **Nunca cole na conversa nem em log** (regra 2). |
+| `novo-link` | reinicia **só a tela** (código de uso único novo) e mostra o link novo; listener, executor, memória e ponte não são tocados (com o supervisor ativo ele religa a tela sozinho; sem ele, o comando religa). |
 | `supervisionar` | fica em primeiro plano: sobe tudo e **reinicia quem cair**, com espera crescente (`HEIMDALL_BACKOFF_BASE_S`, dobra a cada falha seguida até 300 s; zera depois de 60 s de pé). A cada ~30 ciclos garante o Compose de pé (o Docker pode demorar no boot). |
 | `instalar-servico` | escreve `~/.config/systemd/user/heimdall.service` (unidade de **usuário**, `Restart=always`) e **mostra** os comandos de ativar; não ativa nada. |
 | `config-hermes` | gera o `config.yaml` do Hermes (lista branca de ferramentas), copia para o volume (`docker cp`) e reinicia o Hermes. |
@@ -36,3 +37,9 @@ Ver: `systemctl --user status heimdall.service`. Desativar: `systemctl --user di
 
 ## Não verificado
 Execução real sob o systemd do servidor (a unidade foi só escrita e lida pelo teste); comportamento do `Restart=always` com `loginctl enable-linger`; consumo de memória dos 5 processos do Node com WhatsApp real.
+
+## Acrescentado em 2026-10-22 (noite)
+- **Rodízio de logs:** a cada ciclo (e antes de subir um processo), log acima de `HEIMDALL_LOG_MAX_BYTES` (padrão 10 MB) vira `<nome>.log.1` (modo 600, só uma cópia) e o original recomeça vazio. Teste em `check_supervisor.sh` (3 quebras detectadas).
+- **Trava de partida** (`data/supervisor/partida.trava`): evita dois processos subirem ao mesmo tempo (supervisor + `novo-link`). Trava velha (processo morto) é removida sozinha.
+- **Medido:** o MySQL e o Krayin param em **1,4 s com código 0** (a pendência "parada limpa do MySQL" não se confirmou; nada foi mudado).
+- **Cuidado ao rodar a bateria de testes neste servidor:** use `nice -n 19 sh tests/run-all.sh`; o teste de mutação ocupa os 4 núcleos por ~30 min e o servidor também atende sites de clientes.

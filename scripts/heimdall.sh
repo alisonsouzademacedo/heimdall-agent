@@ -5,13 +5,15 @@
 #   sh scripts/heimdall.sh parar             para os processos (o Docker continua; --com-docker para tambem)
 #   sh scripts/heimdall.sh estado            mostra o que esta rodando
 #   sh scripts/heimdall.sh link              mostra o endereco da tela (com o codigo de uso unico: NAO cole em conversa nem em log)
+#   sh scripts/heimdall.sh novo-link         reinicia SO a tela (codigo de uso unico novo) e mostra o link novo; os outros 4 processos nao sao tocados
 #   sh scripts/heimdall.sh supervisionar     fica em primeiro plano, sobe tudo e REINICIA quem cair (espera crescente); e o que o systemd executa
 #   sh scripts/heimdall.sh instalar-servico  escreve a unidade do systemd de USUARIO e mostra os comandos de ativar (nao ativa nada sozinho)
 #   sh scripts/heimdall.sh config-hermes     gera o config.yaml do Hermes, grava no volume dele e reinicia o Hermes
 #   --somente-mostrar  so mostra o plano       --sem-docker  nao mexe no Docker
 # Registro em data/processos.json: para cada processo {pid, inicio} (inicio = campo 22 de /proc/<pid>/stat). So conta como "nosso" se o pid esta
 # vivo, a hora de inicio confere E a linha de comando e o nosso script: o Linux reaproveita pids (LICOES.md, 2026-10-21).
-# Variaveis: HEIMDALL_DATA, HEIMDALL_INTERVALO_S (10), HEIMDALL_BACKOFF_BASE_S (5), HEIMDALL_MAX_CICLOS (0 = sem fim), HEIMDALL_UNIT_DIR.
+# Variaveis: HEIMDALL_DATA, HEIMDALL_INTERVALO_S (10), HEIMDALL_BACKOFF_BASE_S (5), HEIMDALL_MAX_CICLOS (0 = sem fim), HEIMDALL_UNIT_DIR,
+#   HEIMDALL_LOG_MAX_BYTES (10485760: acima disso o log vira .log.1), HEIMDALL_ESPERA_SUPERVISOR_S (15: tempo que o novo-link espera o supervisor religar a tela).
 set -u
 RAIZ=$(cd "$(dirname "$0")/.." && pwd)
 cd "$RAIZ" || exit 2
@@ -84,9 +86,38 @@ docker_subir() { # $1 = --no-recreate na checagem periodica: so sobe o que esta 
   compose up -d ${1:-} 2>&1 | while IFS= read -r l; do info "$l"; done
 }
 
-iniciar_um() {
+# Rodizio de logs: acima do limite o log vira .log.1 (so uma copia, modo 600: pode ter dado sensivel) e o original recomeca vazio.
+# Copia e esvazia no lugar (o processo escreve com ">>", entao continua gravando no mesmo arquivo).
+rodar_logs() {
+  [ -d "$LOGS" ] || return 0
+  _lmax=${HEIMDALL_LOG_MAX_BYTES:-10485760}
+  for _lf in "$LOGS"/*.log; do
+    [ -f "$_lf" ] || continue
+    _lsz=$(wc -c < "$_lf" 2>/dev/null || echo 0)
+    if [ "$_lsz" -gt "$_lmax" ]; then (umask 077; cp "$_lf" "$_lf.1") && : > "$_lf"; fi
+  done
+}
+
+libera_trava() { rm -f "$SUP/partida.trava/pid"; rmdir "$SUP/partida.trava" 2>/dev/null; }
+# Trava de partida: evita dois processos subirem ao mesmo tempo (supervisor e novo-link no mesmo instante). mkdir e atomico.
+com_trava() {
+  mkdir -p "$SUP"; _tw=0
+  until mkdir "$SUP/partida.trava" 2>/dev/null; do
+    _tp=$(cat "$SUP/partida.trava/pid" 2>/dev/null)
+    if [ -n "$_tp" ] && ! vivo "$_tp"; then libera_trava; continue; fi
+    sleep 0.2; _tw=$((_tw+1)); [ "$_tw" -gt 100 ] && return 1
+  done
+  echo $$ > "$SUP/partida.trava/pid"
+  "$@"; _tr=$?
+  libera_trava
+  return $_tr
+}
+
+iniciar_um() { com_trava iniciar_um_sem_trava "$1"; }
+iniciar_um_sem_trava() {
   n=$1; s=$(script_de "$n")
   if nosso "$n"; then ok "$n ja esta rodando (pid $(reg_get "$n" pid))"; return 0; fi
+  rodar_logs
   if [ "$SOMENTE" = 1 ]; then plano "node $s   (registro em data/logs/$n.log)"; return 0; fi
   pasta=$(pasta_de "$n")
   if [ ! -d "$RAIZ/$pasta/node_modules" ] && [ -f "$RAIZ/$pasta/package-lock.json" ]; then
@@ -159,6 +190,29 @@ acao_link() {
   else aviso "Ainda nao achei o link: a tela esta rodando? (sh scripts/heimdall.sh estado)"; return 1; fi
 }
 
+acao_novo_link() {
+  if [ "$SOMENTE" = 1 ]; then plano "pararia so a tela, esperaria o supervisor religar (ou religaria) e mostraria o link novo"; return 0; fi
+  _re='http://127\.0\.0\.1:[0-9]+/\?codigo=[A-Za-z0-9_-]+'
+  _velho=$(grep -oE "$_re" "$LOGS/tela.log" 2>/dev/null | tail -1)
+  nosso tela || info "a tela nao estava rodando; vou subi-la"
+  parar_um tela
+  # Com o supervisor ativo, ele religa a tela sozinho no proximo ciclo; sem ele, religamos aqui depois da espera.
+  _nw=0; _nmax=${HEIMDALL_ESPERA_SUPERVISOR_S:-15}
+  while [ "$_nw" -lt "$_nmax" ] && ! nosso tela; do sleep 1; _nw=$((_nw+1)); done
+  nosso tela || iniciar_um tela
+  # O link novo e o primeiro DIFERENTE do que havia antes de parar (o log so cresce).
+  _nw=0; _novo=""
+  while [ "$_nw" -lt 40 ]; do
+    _novo=$(grep -oE "$_re" "$LOGS/tela.log" 2>/dev/null | tail -1)
+    [ -n "$_novo" ] && [ "$_novo" != "$_velho" ] && break
+    sleep 0.5; _nw=$((_nw+1))
+  done
+  if [ -n "$_novo" ] && [ "$_novo" != "$_velho" ]; then
+    echo "$_novo"
+    info "(vale para uma entrada; abra pelo tunel SSH. Nao cole este endereco em conversa, issue ou log.)"
+  else aviso "A tela reiniciou, mas ainda nao achei o link novo: tente 'sh scripts/heimdall.sh link' em instantes."; return 1; fi
+}
+
 espera_de() { # $1 = nome: BASE * 2^(falhas-1), no maximo 300 s
   _ef=$(cat "$SUP/$1.falhas" 2>/dev/null || echo 0); _ee=$BACKOFF_BASE; _ek=1
   while [ "$_ek" -lt "$_ef" ] && [ "$_ee" -lt 300 ]; do _ee=$((_ee*2)); _ek=$((_ek+1)); done
@@ -173,6 +227,7 @@ acao_supervisionar() {
   ciclo=0
   while :; do
     ciclo=$((ciclo+1)); agora=$(date +%s)
+    rodar_logs
     for n in $PROCESSOS; do
       if nosso "$n"; then
         # de pe ha mais de 60 s: a fila de falhas zera
@@ -251,8 +306,9 @@ case "$ACAO" in
   parar) acao_parar;;
   estado) acao_estado;;
   link) acao_link;;
+  novo-link) acao_novo_link;;
   supervisionar) acao_supervisionar;;
   config-hermes) acao_config_hermes;;
   instalar-servico) acao_instalar_servico;;
-  *) echo "acao desconhecida: $ACAO (use iniciar, parar, estado, link, supervisionar, config-hermes ou instalar-servico)"; exit 2;;
+  *) echo "acao desconhecida: $ACAO (use iniciar, parar, estado, link, novo-link, supervisionar, config-hermes ou instalar-servico)"; exit 2;;
 esac

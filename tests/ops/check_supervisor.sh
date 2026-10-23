@@ -29,7 +29,7 @@ cat > "$B/node" <<'FAKE'
 if [ "$1" = "--version" ]; then echo "${FAKE_NODE_VERSION:-v24.22.1}"; exit 0; fi
 case "$1" in
   *scripts/gerar-config.ts) echo "timezone: x"; exit 0;;
-  *onboarding/iniciar.ts) echo "Se o navegador nao abrir sozinho, copie este endereco: http://127.0.0.1:8765/?codigo=teste123";;
+  *onboarding/iniciar.ts) echo "Se o navegador nao abrir sozinho, copie este endereco: http://127.0.0.1:8765/?codigo=c$$";;
   *trabalhos/src/iniciar.ts) echo x >> "$FAKE_CONTADOR"; [ -n "$FAKE_EXECUTOR_MORRE" ] && exit 1;;
 esac
 trap 'exit 0' TERM
@@ -81,7 +81,7 @@ OK=1; for p in $PIDS; do s=$(cat /proc/$p/stat); r=${s##*) }; set -- $r; ini=${2
 [ -s "$R/data/logs/listener.log" ] || [ -e "$R/data/logs/listener.log" ] && [ -e "$R/data/logs/listener.erro.log" ] && pass "cada processo tem log e log de erro em data/logs" || fail "faltam os logs"
 ! grep -q 'codigo=' "$T/saida.txt" && pass "iniciar NAO imprime o link com o codigo de uso unico da tela (nao vaza para chat/log)" || fail "iniciar imprimiu o codigo da tela"
 sleep 1
-roda link; grep -q 'http://127.0.0.1:8765/?codigo=teste123' "$T/saida.txt" && pass "'link' mostra o endereco da tela lido do log (so quando o dono pede)" || fail "'link' nao mostrou o endereco da tela"
+roda link; grep -qE 'http://127.0.0.1:8765/\?codigo=c[0-9]+' "$T/saida.txt" && pass "'link' mostra o endereco da tela lido do log (so quando o dono pede)" || fail "'link' nao mostrou o endereco da tela"
 
 # 5) iniciar de novo: nao duplica
 roda iniciar; [ "$(grep -c 'ja esta rodando' "$T/saida.txt")" -eq 5 ] && [ "$(pids_do_registro)" = "$PIDS" ] && pass "iniciar de novo nao duplica processos nem muda os pids" || fail "duplicou processos"
@@ -143,6 +143,29 @@ rm -f "$R/data/processos.json"; : > "$T/docker-chamadas.txt"
 grep -q 'up -d --no-recreate' "$T/docker-chamadas.txt" && pass "checagem periodica usa 'up -d --no-recreate' (nao recria servico sozinho)" || { fail "checagem periodica pode recriar conteineres (falta --no-recreate)"; cat "$T/docker-chamadas.txt"; }
 [ "$(grep -c 'up -d$' "$T/docker-chamadas.txt")" -le 1 ] && pass "so a subida inicial usa 'up -d' simples" || fail "'up -d' simples repetido nos ciclos"
 for p in $(pids_do_registro); do kill "$p" 2>/dev/null; done; sleep 1
+
+# 9c) rodizio de logs: log grande vira .log.1 (so uma copia, modo 600) e o original recomeca pequeno; log pequeno nao e tocado
+mkdir -p "$R/data/logs"; head -c 4000 /dev/zero | tr '\000' 'x' > "$R/data/logs/listener.log"; head -c 200 /dev/zero | tr '\000' 'y' > "$R/data/logs/memoria.log"; rm -f "$R/data/processos.json" "$R/data/logs/listener.log.1"
+(cd "$R" && PATH="$B:$PATH" HEIMDALL_INTERVALO_S=1 HEIMDALL_MAX_CICLOS=2 HEIMDALL_LOG_MAX_BYTES=1000 sh "$R/scripts/heimdall.sh" supervisionar > "$T/sup.txt" 2>&1)
+{ [ -f "$R/data/logs/listener.log.1" ] && [ "$(wc -c < "$R/data/logs/listener.log.1")" -ge 4000 ]; } && pass "log acima do limite foi copiado para .log.1" || fail "log grande nao foi rodado"
+[ "$(wc -c < "$R/data/logs/listener.log")" -lt 1000 ] && pass "e o log original recomecou pequeno" || fail "o log original continua grande"
+[ "$(stat -c %a "$R/data/logs/listener.log.1" 2>/dev/null)" = 600 ] && pass "a copia do log tem modo 600 (pode ter dado sensivel)" || fail "a copia do log nao e 600"
+{ [ "$(wc -c < "$R/data/logs/memoria.log")" -ge 200 ] && [ ! -e "$R/data/logs/memoria.log.1" ]; } && pass "log abaixo do limite nao e tocado" || fail "log pequeno foi rodado sem precisar"
+for p in $(pids_do_registro); do kill "$p" 2>/dev/null; done; sleep 1
+
+# 9d) novo-link: reinicia SO a tela (os outros 4 processos ficam com o mesmo pid) e mostra o link do processo novo
+rm -f "$R/data/processos.json" "$R/data/logs/"*.log "$R/data/logs/"*.log.1
+roda iniciar; PIDS_A=$(pids_do_registro); for p in $PIDS_A; do : > "$T/pids/$p"; done
+TELA_A=$(sed -n '/"tela"/p' "$R/data/processos.json" | grep -oE '"pid": *[0-9]+' | grep -oE '[0-9]+' | head -1)
+HEIMDALL_ESPERA_SUPERVISOR_S=1 roda novo-link; C=$?
+TELA_B=$(sed -n '/"tela"/p' "$R/data/processos.json" | grep -oE '"pid": *[0-9]+' | grep -oE '[0-9]+' | head -1)
+{ [ "$C" -eq 0 ] && [ -n "$TELA_B" ] && [ "$TELA_B" != "$TELA_A" ]; } && pass "novo-link trocou so o processo da tela ($TELA_A -> $TELA_B)" || fail "novo-link nao trocou a tela (codigo $C)"
+vivo "$TELA_A" && fail "a tela antiga continua viva" || pass "a tela antiga foi encerrada"
+OUTROS_A=$(for p in $PIDS_A; do [ "$p" != "$TELA_A" ] && echo $p; done | sort -n | tr '\n' ' ')
+OUTROS_B=$(for p in $(pids_do_registro); do [ "$p" != "$TELA_B" ] && echo $p; done | sort -n | tr '\n' ' ')
+{ [ "$OUTROS_A" = "$OUTROS_B" ] && [ -n "$OUTROS_A" ]; } && pass "listener, executor, memoria e ponte NAO foram reiniciados (mesmos pids)" || fail "novo-link mexeu nos outros processos"
+grep -q "codigo=c$TELA_B" "$T/saida.txt" && ! grep -q "codigo=c$TELA_A" "$T/saida.txt" && pass "o link mostrado e o da tela nova (nao o da antiga)" || fail "novo-link mostrou o link errado"
+for p in $(pids_do_registro); do kill "$p" 2>/dev/null; done; sleep 1; rm -f "$T/pids/"*
 
 # 10) config-hermes
 : > "$T/docker-chamadas.txt"

@@ -59,6 +59,8 @@ export interface RespostaCrm {
   ignorados: number[];
   resultados: ResultadoAplicacaoCrm[];
   semPropostas: boolean;
+  /** A mensagem misturou aprovar e recusar de um jeito que nao da para separar com seguranca: nada foi feito. */
+  ambigua?: boolean;
 }
 
 export const MAX_PROPOSTAS = 5;
@@ -230,11 +232,19 @@ function numerosDe(texto: string): number[] {
   return dedupe([...texto.matchAll(/\b(\d{1,3})\b/g)].map((m) => Number(m[1])));
 }
 
-// Respostas aceitas: "ok 1 e 3", "não, o 2 fica", "C1 ok, C2 não", "aprovar 2, 4".
+// Respostas aceitas: "ok 1 e 3", "não, o 2 fica", "C1 ok, C2 não", "aprovar 2, 4" e, na mesma mensagem, "ok 1 e 3, não o 2 fica".
+// A mensagem e lida CLAUSULA por clausula (separadas por virgula, ponto e virgula, ponto ou "mas"): cada uma que comeca por ok/sim/aprovar ou
+// nao/recusar define a decisao dos numeros dela; uma clausula sem palavra de decisao herda a anterior, a menos que ela mesma diga "nao"/"fica".
+// Defeito de 2026-10-22: antes, "ok 1 e 3, nao o 2 fica" aprovava o 2 (todos os numeros depois do "ok" entravam como aprovados).
+// Se nao der para separar com seguranca (decisoes opostas na mesma clausula, ou o mesmo numero aprovado e recusado), devolve ambigua: nada e feito.
 // Devolve null quando a mensagem nao e uma aprovacao/recusa do CRM (ela segue para o Hermes).
-export function interpretarRespostaCrm(texto: string): { aprovados: number[]; recusados: number[] } | null {
+const DECISAO = /^(ok|aprovar|aprovado|sim|nao|recusar|recusado)\b[\s:;-]*(.*)$/;
+const AFIRMA = new Set(['ok', 'aprovar', 'aprovado', 'sim']);
+const SINAL_DE_RECUSA = /\b(nao|fica|ficar|deixa|deixe|segura|espera|recusa|recusar|recusado|cancela)\b/;
+
+export function interpretarRespostaCrm(texto: string): { aprovados: number[]; recusados: number[]; ambigua?: boolean } | null {
   if (typeof texto !== 'string') return null;
-  const t = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const t = texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
   const porCodigo = [...t.matchAll(/\bc(\d{1,3})\s*,?\s*(ok|aprovar|aprovado|sim|nao|recusar|recusado)\b/g)];
   if (porCodigo.length > 0) {
@@ -242,19 +252,33 @@ export function interpretarRespostaCrm(texto: string): { aprovados: number[]; re
     const recusados: number[] = [];
     for (const m of porCodigo) {
       const n = Number(m[1]);
-      if (['ok', 'aprovar', 'aprovado', 'sim'].includes(m[2]!)) aprovados.push(n);
+      if (AFIRMA.has(m[2]!)) aprovados.push(n);
       else recusados.push(n);
     }
     return { aprovados: dedupe(aprovados), recusados: dedupe(recusados) };
   }
 
-  const m = /^(ok|aprovar|aprovado|sim|nao|recusar|recusado)\b[\s,.:;-]*(.*)$/.exec(t);
-  if (!m) return null;
-  const ns = numerosDe(m[2]!);
-  if (ns.length === 0) return null;
-  return ['ok', 'aprovar', 'aprovado', 'sim'].includes(m[1]!)
-    ? { aprovados: ns, recusados: [] }
-    : { aprovados: [], recusados: ns };
+  const clausulas = t.split(/\s*[,;.]\s*|\s+(?:mas|porem)\s+/).filter((c) => c !== '');
+  const aprovados: number[] = [];
+  const recusados: number[] = [];
+  let atual: 'aprovar' | 'recusar' | null = null;
+  let ambigua = false;
+  for (const c of clausulas) {
+    const m = DECISAO.exec(c);
+    let resto = c;
+    if (m) { atual = AFIRMA.has(m[1]!) ? 'aprovar' : 'recusar'; resto = m[2]!; }
+    else if (atual === null) return null; // a mensagem tem de COMECAR por uma palavra de decisao
+    const ns = numerosDe(resto);
+    if (ns.length === 0) continue;
+    let decisao = atual!;
+    if (m && decisao === 'aprovar' && SINAL_DE_RECUSA.test(resto)) ambigua = true; // "ok 1 e 3 e nao o 2": sem separador, nao da para saber
+    if (!m && SINAL_DE_RECUSA.test(resto)) decisao = 'recusar'; // "o 2 fica", "o 2 nao"
+    (decisao === 'aprovar' ? aprovados : recusados).push(...ns);
+  }
+  if (aprovados.some((n) => recusados.includes(n))) ambigua = true;
+  if (ambigua) return { aprovados: [], recusados: [], ambigua: true };
+  if (aprovados.length + recusados.length === 0) return null;
+  return { aprovados: dedupe(aprovados), recusados: dedupe(recusados) };
 }
 
 // Aplica a resposta do dono. So o self-chat pode chamar. A API e chamada UMA vez por proposta; falha deixa a proposta
@@ -268,8 +292,10 @@ export async function aplicarRespostaCrm(
   const abertas = lerPropostasAbertas(db);
   const pedidos = dedupe([...pedido.aprovados, ...pedido.recusados]);
   if (abertas.length === 0) {
-    return { ...pedido, ignorados: pedidos, resultados: [], semPropostas: true };
+    return { aprovados: pedido.aprovados, recusados: pedido.recusados, ignorados: pedidos, resultados: [], semPropostas: true };
   }
+  // Mensagem ambigua: nao chama o CRM nem muda proposta alguma; o dono recebe o pedido para repetir com os codigos.
+  if (pedido.ambigua) return { aprovados: [], recusados: [], ignorados: [], resultados: [], semPropostas: false, ambigua: true };
 
   const porNumero = new Map(abertas.map((p) => [p.numero, p]));
   const ignorados: number[] = [];

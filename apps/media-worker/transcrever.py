@@ -26,7 +26,7 @@ def main(argv: list) -> None:
     try:
         from faster_whisper import WhisperModel
 
-        modelo = WhisperModel(os.environ["HEIMDALL_MODELO_WHISPER"], device="cpu", compute_type="int8", local_files_only=True)
+        modelo = WhisperModel(os.environ["HEIMDALL_MODELO_WHISPER"], device="cpu", compute_type="int8", local_files_only=True, cpu_threads=2)  # = cpus do Compose; medido: 2 threads em 2 CPUs ficou 1,7x mais rapido que o padrao de 4
         # Portugues fixo, filtro de silencio e sem "condicionar no texto anterior" (evita repeticao em cadeia e alucinacao em trechos mudos).
         segmentos, info = modelo.transcribe(caminho, language="pt", beam_size=5, vad_filter=True, condition_on_previous_text=False)
         if info.duration > MAX_SEGUNDOS:
