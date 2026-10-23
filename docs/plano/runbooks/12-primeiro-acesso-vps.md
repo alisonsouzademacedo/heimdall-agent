@@ -1,6 +1,6 @@
 # 12. Primeiro acesso do dono na VPS (túnel, tela, logins e CRM)
 
-Para o **dono** fazer, na ordem. O IP da VPS e a porta do SSH **não entram no repositório** (`fase-2-migracao-para-vps.md`): aqui aparecem como `<IP-DA-VPS>` e `<PORTA-SSH>`; os valores reais ficam com o dono. Nada disto abre porta pública: tudo passa pelo túnel SSH.
+Para o **dono** fazer, na ordem. O IP da VPS e a porta do SSH **não entram no repositório** (`fase-2-migracao-para-vps.md`): aqui aparecem como `<IP-DA-VPS>` e `<PORTA-SSH>`; os valores reais ficam com o dono. O computador do dono é Omarchy/Linux. Nada disto abre porta pública: tudo passa pelo túnel SSH.
 
 **Nunca cole em conversa (nem com a IA), issue ou log:** o link da tela (tem um código de uso único), a senha do Krayin, tokens e o código do login do ChatGPT.
 
@@ -8,18 +8,38 @@ Para o **dono** fazer, na ordem. O IP da VPS e a porta do SSH **não entram no r
 1. No computador antigo (Windows/Omarchy): o Heimdall de lá tem de estar **parado**.
 2. No celular: WhatsApp → Configurações → **Aparelhos conectados**. Se houver um aparelho antigo do Heimdall, **desconecte**. Só então leia o QR da VPS (passo 3).
 
-## 1. Abrir o túnel (PowerShell no PC do dono; deixe a janela aberta)
+## 1. Preparar o computador do dono (uma vez só) — Omarchy/Linux, terminal (bash)
+O computador do dono é **Omarchy (Linux)**: todos os comandos são de terminal, **não PowerShell**. Troque `<IP-DA-VPS>` e `<PORTA-SSH>` pelos valores reais (ficam só no `~/.ssh/config` dele, nunca no repositório).
 ```
-ssh -N -L 8765:127.0.0.1:8765 -L 8082:127.0.0.1:8082 -i "$env:USERPROFILE\.ssh\<SUA-CHAVE>" -p <PORTA-SSH> pedro@<IP-DA-VPS>
-```
-- Use **as mesmas portas dos dois lados** (8765 e 8082). A tela recusa outro endereço (confere o cabeçalho `Host`: só `127.0.0.1:8765` ou `localhost:8765`) e o Krayin monta os links com `APP_URL=http://127.0.0.1:8082`. Se o PC disser que a porta está ocupada, feche o programa que a usa; não troque o número.
-- A janela fica "parada" sem mostrar nada: é normal (`-N` = só túnel). Para fechar o túnel: `Ctrl+C`.
+mkdir -p ~/.ssh ~/.local/bin && chmod 700 ~/.ssh
+cat >> ~/.ssh/config <<'EOF2'
 
-## 2. Pegar o link da tela (outra janela do PowerShell)
+Host heimdall
+    HostName <IP-DA-VPS>
+    Port <PORTA-SSH>
+    User pedro
+    LocalForward 8765 127.0.0.1:8765
+    LocalForward 8082 127.0.0.1:8082
+EOF2
+chmod 600 ~/.ssh/config
+cat > ~/.local/bin/heimdall <<'EOF2'
+#!/bin/sh
+# abre o túnel em segundo plano (pede a senha uma vez) e mostra o link da tela
+ssh -fN heimdall || exit 1
+ssh -o ClearAllForwardings=yes heimdall "cd ~/heimdall && sh scripts/heimdall.sh link"
+EOF2
+cat > ~/.local/bin/heimdall-parar <<'EOF2'
+#!/bin/sh
+pkill -f "ssh -fN heimdall" && echo "túnel fechado"
+EOF2
+chmod +x ~/.local/bin/heimdall ~/.local/bin/heimdall-parar
 ```
-ssh -i "$env:USERPROFILE\.ssh\<SUA-CHAVE>" -p <PORTA-SSH> pedro@<IP-DA-VPS> "cd ~/heimdall && sh scripts/heimdall.sh link"
-```
-Copie o endereço `http://127.0.0.1:8765/?codigo=...` e cole **no navegador**. O código vale **uma entrada**; depois o navegador fica com a sessão. Se precisar de um código novo: `ssh ... "systemctl --user restart heimdall.service"` (reinicia os 5 processos; espere ~20 s) e rode o `link` de novo.
+- **Sem senha (opcional, recomendado):** `ssh-keygen -t ed25519 -f ~/.ssh/heimdall` (Enter nas perguntas), `ssh-copy-id -i ~/.ssh/heimdall.pub heimdall` e `echo "    IdentityFile ~/.ssh/heimdall" >> ~/.ssh/config`. Só acrescenta uma chave ao usuário dele; não mexe no SSH do servidor.
+- Use **as mesmas portas dos dois lados** (8765 e 8082). A tela recusa outro endereço (confere o cabeçalho `Host`: só `127.0.0.1:8765` ou `localhost:8765`) e o Krayin monta os links com `APP_URL=http://127.0.0.1:8082`. Se o PC disser que a porta está ocupada, feche o programa que a usa; não troque o número.
+- Se `heimdall` não for achado, `~/.local/bin` não está no PATH: use `~/.local/bin/heimdall`.
+
+## 2. Todo dia: túnel e link da tela
+Digite `heimdall` no terminal. Ele pede a senha (se não houver chave), deixa o túnel aberto em segundo plano e mostra o endereço `http://127.0.0.1:8765/?codigo=...`. Copie **só para o navegador**. O código vale **uma entrada**; depois o navegador fica com a sessão. Para fechar o túnel: `heimdall-parar`. Para um código novo: `ssh heimdall "cd ~/heimdall && sh scripts/heimdall.sh novo-link"` (reinicia só a tela).
 
 ## 3. Na tela, nesta ordem
 1. **Ambiente:** "Testar".
@@ -30,14 +50,14 @@ Copie o endereço `http://127.0.0.1:8765/?codigo=...` e cole **no navegador**. O
 4. **Sincronizar / Extrair:** acompanhe as barras (histórico do WhatsApp; download de áudio e PDF). Áudios são lentos nesta VPS (~5× a duração do áudio).
 5. **Conectar o modelo (login do ChatGPT, só no terminal):**
    ```
-   ssh -t -i "$env:USERPROFILE\.ssh\<SUA-CHAVE>" -p <PORTA-SSH> pedro@<IP-DA-VPS> "docker exec -it heimdall-hermes-1 hermes model"
+   ssh -t heimdall "docker exec -it heimdall-hermes-1 hermes model"
    ```
    Escolha **ChatGPT or Codex Subscription**, abra o endereço mostrado no navegador do PC e digite o código. Volte à tela e clique em **"Fazer chamada de teste"**.
 6. **Processar:** libere quando quiser (gasta a cota do ChatGPT Plus, janela de 5 horas compartilhada).
 7. **Self-chat:** peça a mensagem de teste e responda no seu self-chat. **Agenda:** gere o relatório de teste. **Backup:** escolha a pasta.
 8. **CRM (Krayin):** abra `http://127.0.0.1:8082` e entre com `dono@heimdall.local` e a senha que está no servidor:
    ```
-   ssh -i "$env:USERPROFILE\.ssh\<SUA-CHAVE>" -p <PORTA-SSH> pedro@<IP-DA-VPS> "grep KRAYIN_ADMIN_PASSWORD ~/heimdall/infra/compose/.env"
+   ssh heimdall "grep KRAYIN_ADMIN_PASSWORD ~/heimdall/infra/compose/.env"
    ```
    Em **Settings → Pipeline → Create Pipeline**: dê um nome, marque **Mark as default** e, entre as etapas fixas (**Novo** no começo; **Ganho** e **Perdido** no fim, que o Krayin não deixa renomear), **adicione três**: `Contato iniciado`, `1ª Reunião Agendada`, `2ª Reunião Agendada` (pode digitar sem acento e "1a"). Salve. Na tela do Heimdall, passo CRM: **"Testar de novo"** → deve ficar verde (o token já está configurado no servidor).
 9. **Pronto:** o painel mostra o estado de tudo.

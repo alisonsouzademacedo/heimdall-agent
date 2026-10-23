@@ -84,7 +84,7 @@ export function avaliar(m: Medidas): Verificacao[] {
   const livreGb = m.memLivreBytes / GIB;
   v.push({ id: 'memoria-livre', rotulo: `Memória livre agora: ${livreGb.toFixed(1)} GB`, detalhe: livreGb >= 2 ? 'Suficiente para comecar' : 'Feche navegadores e outros programas.', estado: livreGb >= 2 ? 'ok' : 'atencao' });
   const disco = Math.floor(m.discoLivreBytes / GIB);
-  v.push({ id: 'disco', rotulo: `Disco: ${disco} GB livres`, detalhe: disco >= 50 ? 'Folgado' : disco >= 30 ? 'Acima do minimo de 30 GB' : 'Abaixo do minimo de 30 GB (so a imagem do Hindsight pesa cerca de 9 GB).', estado: disco >= 50 ? 'ok' : disco >= 30 ? 'atencao' : 'falha' });
+  v.push({ id: 'disco', rotulo: `Disco: ${disco} GB livres`, detalhe: disco >= 50 ? 'Folgado' : disco >= 30 ? 'Acima do minimo de 30 GB' : 'Abaixo do minimo de 30 GB (as imagens do projeto ocupam cerca de 17 GB e os dados crescem).', estado: disco >= 50 ? 'ok' : disco >= 30 ? 'atencao' : 'falha' });
   v.push({ id: 'node', rotulo: `Node.js ${m.nodeVersao}`, detalhe: nodeSuficiente(m.nodeVersao) ? 'Versao suficiente' : 'Precisa de 22.18 ou mais', estado: nodeSuficiente(m.nodeVersao) ? 'ok' : 'falha' });
   if (m.virtualizacao !== undefined) {
     v.push({ id: 'virtualizacao', rotulo: `Virtualização: ${m.virtualizacao ? 'ligada' : 'desligada'}`, detalhe: m.virtualizacao ? 'O Docker Desktop consegue rodar' : 'Desligada. Ligue na BIOS/UEFI (reinicie o computador e entre na configuracao da placa; o nome da opcao varia: Intel VT-x, Virtualization Technology ou SVM). Sem isso o Docker nao abre.', estado: m.virtualizacao ? 'ok' : 'falha' });

@@ -467,6 +467,7 @@ test('/api/modelo: pedir teste (uma vez), ler o resultado e as instrucoes; sem s
     const g0 = JSON.parse((await req(c, 'GET', '/api/modelo', { Cookie: h.Cookie })).texto);
     assert.equal(g0.teste.estado, 'nenhum');
     assert.ok(g0.passos.some((p: string) => /hermes model/.test(p)), 'guia o login no terminal');
+    assert.ok(g0.passos.some((p: string) => /ssh -t/.test(p) && /servidor/.test(p)), 'explica como chegar ao terminal quando o Heimdall esta num servidor');
     assert.ok(g0.passos.some((p: string) => /5 horas|cota/i.test(p)), 'avisa da cota compartilhada');
     assert.doesNotMatch(g0.passos.join(' '), /runbooks\/|docs\/|decisao D26/i, 'a tela do dono nao mostra caminho de documentacao interna');
     assert.deepEqual(JSON.parse((await req(c, 'POST', '/api/modelo/testar', h, '{}')).texto), { pedido: true });

@@ -33,6 +33,12 @@ test('limites de disco: 29 GB falha, 30 atencao, 50 ok', () => {
   assert.equal(estado(avaliar({ ...bom, discoLivreBytes: 50 * GIB }), 'disco'), 'ok');
 });
 
+test('aviso de disco usa o tamanho medido das imagens (17 GB), nao so o Hindsight', () => {
+  const detalhe = avaliar({ ...bom, discoLivreBytes: 29.5 * GIB }).find((x) => x.id === 'disco')!.detalhe;
+  assert.match(detalhe, /17 GB/);
+  assert.doesNotMatch(detalhe, /9 GB/);
+});
+
 test('Node: 22.17 falha, 22.18 e 24 passam', () => {
   assert.equal(estado(avaliar({ ...bom, nodeVersao: 'v22.17.9' }), 'node'), 'falha');
   assert.equal(estado(avaliar({ ...bom, nodeVersao: 'v22.18.0' }), 'node'), 'ok');

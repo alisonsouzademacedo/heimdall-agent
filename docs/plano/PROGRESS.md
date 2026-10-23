@@ -14,6 +14,13 @@ Memória do projeto para qualquer IA que continue o trabalho. **Atualize ao fim 
 - **Fechado em 2026-10-22 23:23:** bateria final verde (13 arquivos de teste, 0 falhas), commit `ffe4969` enviado à branch e à `main` (sem `--force`), **CI verde** (execução 39889329534). Registro em `~/heimdall-fechamento.txt` (fora do git).
 - **Próximo passo:** `PROMPT-CONTINUIDADE-VPS.md` (conectar WhatsApp, ChatGPT e CRM com o dono pela tela e acompanhar a extração); validar de ponta a ponta (histórico, áudio/PDF reais, modelo real, relatório de teste, CRM com lead real) e registrar no runbook 08.
 
+## Estado atual (2026-10-23) — WhatsApp conectado na VPS; falta o ChatGPT (conta nova do dono)
+- **QR lido** pelo dono (busca antiga pausada antes: `historico.antigo.liberado = false` conferido no banco). Acervo 6.526 → 6.704 mensagens, **0 duplicadas**; 149 mídias ok, 137 transcrições ok. Detalhes e observações do dono na tela: `pendencias/2026-10-23-observacoes-do-dono-na-tela.md`.
+- **Acesso do dono:** computador **Omarchy/Linux** (não PowerShell): `runbooks/12` reescrito (alias `heimdall` no `~/.ssh/config`, comandos `heimdall` e `heimdall-parar`). IP e porta ficam só no `~/.ssh/config` dele.
+- **Esperando o dono:** conta nova do ChatGPT (login do Hermes); decisão sobre o disco (aviso vermelho: 29,5 GB < 30 GB; cache de construção do Docker 9,5 GB e crescendo, de outro projeto); regra v1 de candidatos a cliente (seção 6 da pendência); pedido de "login do modelo pela tela" (seção 3 da pendência).
+- **Feito sem o dono:** textos da tela corrigidos (disco e guia do modelo, com testes); `candidatos-cliente.ts` (só leitura, 3 testes): 663 conversas diretas = 261 ida e volta, 76 só eles, 315 só o dono, 11 vazias.
+- **Segurança de segredo:** a senha do SSH do dono foi colada na conversa; não foi gravada em arquivo nenhum. Recomendado trocar (`passwd`) e usar chave.
+
 ## Estado anterior (2026-10-22, antes da VPS)
 - Fase: **fase 2 — conclusão do produto e preparação da VPS** (`fase-2-execucao.md`; decisão D31). O projeto é **Linux-only** desde hoje: a camada Windows foi removida (26 arquivos; registro em `pendencias/2026-10-22-revisao-linux-only.md`) e o CI tem um único job Ubuntu.
 - **Onde roda (D31):** validação de ponta a ponta **direto na VPS** (Linux); o Omarchy na máquina do dono fica como desenvolvimento. Sessão única do WhatsApp (D2): VPS e máquina local **nunca** ao mesmo tempo.

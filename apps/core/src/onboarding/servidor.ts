@@ -172,6 +172,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/api/modelo') {
           return json(res, 200, { teste: lerTesteDoModelo(op.banco), passos: [
             'O login e feito por voce, no terminal, nunca nesta tela. Abra um terminal e rode: docker exec -it heimdall-hermes-1 hermes model (esta tela nunca ve nem guarda senha, token ou chave).',
+            'Se o Heimdall roda em um servidor (VPS), entre nele por SSH com terminal interativo e rode o mesmo comando la: ssh -t <apelido-do-servidor> "docker exec -it heimdall-hermes-1 hermes model".',
             'Para trocar de conta: rode o mesmo comando e escolha a nova conta; depois volte aqui e clique em "Fazer chamada de teste".',
             'A cota de 5 horas do plano do ChatGPT e compartilhada com os outros aplicativos que usam a mesma conta: se voce usar o ChatGPT ao mesmo tempo, o Heimdall pode esperar.',
             'Alternativa: usar uma chave de API, tambem configurada no terminal; esta tela nunca recebe a chave.',
