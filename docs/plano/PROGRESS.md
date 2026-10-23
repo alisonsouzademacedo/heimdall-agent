@@ -12,7 +12,7 @@ Memória do projeto para qualquer IA que continue o trabalho. **Atualize ao fim 
 - **Pedidos ao dono em aberto:** OK para instalar o Playwright (teste de navegador da tela; faltam 4 bibliotecas gráficas no servidor); atualizar o Hindsight ou seguir sem modelo (recomendado: seguir sem); apagar `~/heimdall-import/` só quando ele confirmar.
 - **Envio ao GitHub:** autorizado pelo dono. O `pedro` não tem credencial HTTPS salva, mas a chave SSH dele autentica como a conta dona do repositório: enviar com a URL SSH explícita (sem mudar o `origin`), sem `--force`.
 - **Fechado em 2026-10-22 23:23:** bateria final verde (13 arquivos de teste, 0 falhas), commit `ffe4969` enviado à branch e à `main` (sem `--force`), **CI verde** (execução 39889329534). Registro em `~/heimdall-fechamento.txt` (fora do git).
-- **Próximo passo:** `PROMPT-CONTINUIDADE-VPS.md` (conectar WhatsApp, ChatGPT e CRM com o dono pela tela e acompanhar a extração); validar de ponta a ponta (histórico, áudio/PDF reais, modelo real, relatório de teste, CRM com lead real) e registrar no runbook 08.
+- **Próximo passo:** `PROMPT-CONTINUIDADE-VPS.md` (atualizado em 2026-10-23: acompanhar ao vivo o primeiro processamento real com o dono); validar de ponta a ponta (histórico, áudio/PDF reais, modelo real, relatório de teste, CRM com lead real) e registrar no runbook 08.
 
 ## Estado atual (2026-10-23) — WhatsApp conectado na VPS; falta o ChatGPT (conta nova do dono)
 - **QR lido** pelo dono (busca antiga pausada antes: `historico.antigo.liberado = false` conferido no banco). Acervo 6.526 → 6.704 mensagens, **0 duplicadas**; 149 mídias ok, 137 transcrições ok. Detalhes e observações do dono na tela: `pendencias/2026-10-23-observacoes-do-dono-na-tela.md`.

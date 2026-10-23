@@ -194,3 +194,11 @@ test('/heimdall com comando exato responde por codigo e NAO chama o Hermes; com 
   assert.match(c.saidas()[0]!.texto, /hoje/);
   assert.match(c.saidas()[1]!.texto, /resposta para: hoje quem espera/);
 });
+
+test('o contexto manda o modelo consultar a memoria (recall) com poucos tokens: max_tokens=600 e budget=low (o padrao do Hindsight e 4.096)', async () => {
+  const c = cenario(); c.dono('/heimdall o que combinei com a Ana?');
+  await processarSelfChat(c.db, c.portas, T + 1000);
+  const sistema = c.perguntas[0]!.sistema!;
+  assert.match(sistema, /max_tokens=600/);
+  assert.match(sistema, /budget=low/);
+});
