@@ -1,7 +1,7 @@
 // O que a tela do passo "Processar" mostra: quanto falta, quanto ja foi, quanto custou (tokens) e quanto ainda deve custar. Tudo calculado aqui,
 // por codigo, a partir do banco (fila, consumo, configuracao); a tela so desenha. Nenhuma consulta ao modelo acontece neste arquivo.
 import type { Banco } from './db.ts';
-import { diasDeExtracaoPendentes, extracaoLiberada } from './extracao.ts';
+import { contarDescartes, diasDeExtracaoPendentes, extracaoLiberada } from './extracao.ts';
 import { mediaDaTarefa, resumoDeConsumo, tetoDiario, type SomaPorTarefa } from './consumo.ts';
 import { contarCandidatosACliente } from './candidatos-cliente.ts';
 import { lerModelo, TAREFAS, type ModeloDaTarefa, type Tarefa } from './modelos.ts';
@@ -16,6 +16,8 @@ export interface EstadoProcessamento {
   clientes: number;
   /** Contatos que responderam e ainda nao sao clientes (o botao da tela cadastra todos). */
   candidatos: number;
+  /** Dias de conversa em que o modelo respondeu com itens e o codigo recusou TODOS (formato inesperado). */
+  descartes: number;
   diasNovos: number;
   diasRefeitos: number;
   naFila: number;
@@ -53,9 +55,9 @@ function montarRodada(db: Banco): Rodada | null {
 export function iniciarRodada(db: Banco, agora: number): void {
   const atual = montarRodada(db);
   if (atual && atual.concluidas + atual.falhas < atual.total) return;
+  // "Dias de conversa" ainda nao extraidos (cliente x dia). Os que ja estao na fila continuam sendo pendentes: NAO somar a fila de novo (dobrava a conta).
   const c = diasDeExtracaoPendentes(db, agora);
-  const naFila = (db.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair' AND estado IN ('pendente','em_andamento')").get() as { n: number }).n;
-  db.prepare('INSERT INTO configuracao (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor').run(CHAVE_RODADA, JSON.stringify({ inicio: agora, total: c.novos + c.refeitos + naFila }));
+  db.prepare('INSERT INTO configuracao (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor').run(CHAVE_RODADA, JSON.stringify({ inicio: agora, total: c.novos + c.refeitos }));
 }
 
 export function estadoDoProcessamento(db: Banco, agora: number): EstadoProcessamento {
@@ -63,7 +65,7 @@ export function estadoDoProcessamento(db: Banco, agora: number): EstadoProcessam
   const naFila = (db.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair' AND estado IN ('pendente','em_andamento')").get() as { n: number }).n;
   const consumo = resumoDeConsumo(db, agora);
   const media = mediaDaTarefa(db, 'extracao');
-  const restantes = c.novos + c.refeitos + naFila;
+  const restantes = c.novos + c.refeitos; // a fila e um subconjunto destes: somar dobrava (1.026 em vez de 513 no 1o processamento)
   const porConsulta = media.entrada + media.saida;
   const diario = tetoDiario(db);
   const usado = consumo.hoje.extracao.entrada + consumo.hoje.extracao.saida;
@@ -72,10 +74,11 @@ export function estadoDoProcessamento(db: Banco, agora: number): EstadoProcessam
     liberada: extracaoLiberada(db),
     clientes: (db.prepare('SELECT COUNT(*) AS n FROM clientes').get() as { n: number }).n,
     candidatos: contarCandidatosACliente(db),
+    descartes: contarDescartes(db),
     diasNovos: c.novos,
     diasRefeitos: c.refeitos,
     naFila,
-    consultasPrevistas: c.novos + c.refeitos + naFila,
+    consultasPrevistas: restantes,
     rodada: montarRodada(db),
     consumo,
     media,

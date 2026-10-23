@@ -108,6 +108,9 @@ export interface SaidaExtracao {
   duvidas: string[];
   /** Nome e empresa do CLIENTE, quando estao escritos na conversa (o dono cita nome e empresa nas mensagens). */
   identificacao: { nome: string | null; empresa: string | null; origem: number; confianca: number } | null;
+  /** Itens que o modelo mandou (compromissos, sinais, aguardando, identificacao) e quantos o codigo aceitou: tudo recusado = a tela avisa. */
+  brutos: number;
+  aceitos: number;
 }
 /** Abaixo disto o modelo nao troca o nome do cliente (um nome errado em todo relatorio custa mais que um nome provisorio). */
 export const CONFIANCA_IDENTIFICACAO = 0.7;
@@ -122,6 +125,13 @@ function dataValida(v: unknown): string | null {
   if (m[4] !== undefined && (+m[4] > 23 || +m[5]! > 59)) return null;
   return v;
 }
+/** O modelo devolve o numero da mensagem como numero OU como texto ("123", "#123", "[#123]"): o prompt desenhava "id" entre aspas e o formato real e texto (defeito de 2026-10-23). */
+const numeroDe = (v: unknown): number | null => {
+  if (typeof v === 'number') return Number.isInteger(v) ? v : null;
+  if (typeof v !== 'string') return null;
+  const m = /^\s*\[?#?(\d{1,15})\]?\s*$/.exec(v);
+  return m ? Number(m[1]) : null;
+};
 const conf = (v: unknown): number | null => (typeof v === 'number' && v >= 0 && v <= 1 ? v : null);
 
 export function validarSaidaDaExtracao(texto: string, idsValidos: ReadonlySet<number>): SaidaExtracao | null {
@@ -132,35 +142,52 @@ export function validarSaidaDaExtracao(texto: string, idsValidos: ReadonlySet<nu
   if (typeof j !== 'object' || j === null || Array.isArray(j)) return null;
   const o = j as Record<string, unknown>;
   const lista = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x)) : []);
-  const saida: SaidaExtracao = { compromissos: [], sinais: [], aguardando: null, duvidas: [], identificacao: null };
+  const saida: SaidaExtracao = { compromissos: [], sinais: [], aguardando: null, duvidas: [], identificacao: null, brutos: 0, aceitos: 0 };
   for (const c of lista(o.compromissos)) {
     const acao = c.acao;
     if (acao !== 'novo' && acao !== 'atualizar' && acao !== 'cancelar') continue;
     if (typeof c.tipo !== 'string' || !TIPOS_COMPROMISSO.has(c.tipo)) continue;
-    if (typeof c.mensagem_origem !== 'number' || !idsValidos.has(c.mensagem_origem)) continue;
+    const origemC = numeroDe(c.mensagem_origem);
+    if (origemC === null || !idsValidos.has(origemC)) continue;
     const titulo = limpar(c.titulo, 120); if (titulo === '') continue;
     const confianca = conf(c.confianca); if (confianca === null) continue;
     const dataHora = c.data_hora === null || c.data_hora === undefined ? null : dataValida(c.data_hora);
     if (c.data_hora !== null && c.data_hora !== undefined && dataHora === null) continue;
-    const idExistente = Number.isInteger(c.id_existente) ? (c.id_existente as number) : null;
+    const idExistente = numeroDe(c.id_existente);
     if (acao !== 'novo' && idExistente === null) continue;
-    saida.compromissos.push({ acao, idExistente, tipo: c.tipo, titulo, dataHora, origem: c.mensagem_origem, confianca, motivo: limpar(c.motivo, 200) });
+    saida.compromissos.push({ acao, idExistente, tipo: c.tipo, titulo, dataHora, origem: origemC, confianca, motivo: limpar(c.motivo, 200) });
   }
   for (const s of lista(o.sinais_potencial)) {
-    if (typeof s.tipo !== 'string' || !TIPOS_SINAL.has(s.tipo) || typeof s.mensagem_origem !== 'number' || !idsValidos.has(s.mensagem_origem)) continue;
+    const origemS = numeroDe(s.mensagem_origem);
+    if (typeof s.tipo !== 'string' || !TIPOS_SINAL.has(s.tipo) || origemS === null || !idsValidos.has(origemS)) continue;
     const confianca = conf(s.confianca); if (confianca === null) continue;
-    saida.sinais.push({ tipo: s.tipo, origem: s.mensagem_origem, confianca });
+    saida.sinais.push({ tipo: s.tipo, origem: origemS, confianca });
   }
   const a = o.aguardando_resposta_do_dono as Record<string, unknown> | undefined;
-  if (a && typeof a.valor === 'boolean' && typeof a.mensagem_origem === 'number' && idsValidos.has(a.mensagem_origem)) saida.aguardando = { valor: a.valor, origem: a.mensagem_origem };
+  const origemA = a ? numeroDe(a.mensagem_origem) : null;
+  if (a && typeof a.valor === 'boolean' && origemA !== null && idsValidos.has(origemA)) saida.aguardando = { valor: a.valor, origem: origemA };
   const idt = o.identificacao as Record<string, unknown> | null | undefined;
-  if (idt && typeof idt === 'object' && !Array.isArray(idt) && typeof idt.mensagem_origem === 'number' && idsValidos.has(idt.mensagem_origem)) {
+  const origemI = idt && typeof idt === 'object' && !Array.isArray(idt) ? numeroDe(idt.mensagem_origem) : null;
+  if (idt && origemI !== null && idsValidos.has(origemI)) {
     const confianca = conf(idt.confianca);
     const nome = limpar(idt.nome, 80), empresa = limpar(idt.empresa, 80);
-    if (confianca !== null && (nome !== '' || empresa !== '')) saida.identificacao = { nome: nome === '' ? null : nome, empresa: empresa === '' ? null : empresa, origem: idt.mensagem_origem, confianca };
+    if (confianca !== null && (nome !== '' || empresa !== '')) saida.identificacao = { nome: nome === '' ? null : nome, empresa: empresa === '' ? null : empresa, origem: origemI, confianca };
   }
   if (Array.isArray(o.duvidas)) saida.duvidas = o.duvidas.map((d) => limpar(d, 300)).filter((d) => d !== '').slice(0, 3);
+  const objeto = (v: unknown): boolean => typeof v === 'object' && v !== null && !Array.isArray(v);
+  saida.brutos = lista(o.compromissos).length + lista(o.sinais_potencial).length + (objeto(a) ? 1 : 0) + (objeto(idt) ? 1 : 0);
+  saida.aceitos = saida.compromissos.length + saida.sinais.length + (saida.aguardando ? 1 : 0) + (saida.identificacao ? 1 : 0);
   return saida;
+}
+
+/** Quantos dias o modelo respondeu com itens e o codigo recusou TODOS (formato errado): a tela mostra aviso; antes disso o defeito era silencioso. */
+export function contarDescartes(db: Banco): number {
+  const r = db.prepare("SELECT valor FROM configuracao WHERE chave = 'extracao.descartes'").get() as { valor: string } | undefined;
+  const n = r ? Number(r.valor) : 0;
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+function registrarDescarte(db: Banco): void {
+  db.prepare("INSERT INTO configuracao (chave, valor) VALUES ('extracao.descartes', '1') ON CONFLICT(chave) DO UPDATE SET valor = CAST(CAST(valor AS INTEGER) + 1 AS TEXT)").run();
 }
 
 export async function processarExtrair(db: Banco, job: Trabalho, porta: PortaExtracao, instrucoes: string, agora: number = Date.now(), fuso: string = FUSO_PADRAO): Promise<Resultado> {
@@ -173,6 +200,7 @@ export async function processarExtrair(db: Banco, job: Trabalho, porta: PortaExt
   try { bruto = await porta.extrair(p.pedido, `heimdall:extracao:${job.referencia}`); } catch { return falha('falha_ao_consultar_o_modelo'); }
   const v = validarSaidaDaExtracao(bruto, p.ids);
   if (!v) return falha('resposta_invalida_do_modelo');
+  if (v.brutos > 0 && v.aceitos === 0) registrarDescarte(db); // o modelo respondeu com itens e o codigo recusou todos: nao e silencioso
 
   const dadosMsg = (id: number) => db.prepare('SELECT de_mim AS d, enviada_em AS t FROM mensagens WHERE id = ?').get(id) as { d: number; t: number } | undefined;
   db.exec('SAVEPOINT extrair');

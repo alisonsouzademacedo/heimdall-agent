@@ -74,3 +74,6 @@ Servidor compartilhado (Ubuntu 24.04, 4 vCPUs sem AVX, 7,8 GB). Tudo com dados *
 - **Hindsight com modelo** (1.1.0 + `chatgpt`) e o reprocessamento de documentos guardados em modo `chunks`.
 - **Krayin:** o funil de 3 etapas do dono criado por ele na tela; kanban; mover cartão à mão.
 - Itens de Windows (16 a 20) e `smoke_docker.sh` (recusa rodar com as portas reais ocupadas): não se aplicam a esta máquina.
+
+## Extração com o modelo REAL (obrigatória antes de dizer "pronto") — `tests/infra/smoke_extracao_real.sh`
+`sh tests/infra/smoke_extracao_real.sh 8`: roda a extração nos 8 dias de conversa mais ricos, **numa cópia do acervo** (o original não é aberto para escrita), com o Hermes logado, e imprime **só contagens**. Gasta cota (~5,6 mil tokens por dia). Passa quando: todos os dias processam sem erro, **nenhum dia tem a resposta inteira descartada pelo validador**, ao menos um nome/empresa é extraído e ao menos um compromisso ou sinal é achado. Existe porque o teste com modelo falso deixou passar um defeito real (`LICOES.md`, 2026-10-23); foi provado que ele **falha** com o defeito. Fora do `run-all` (depende do login e gasta cota); `REQUIRE_REAL=1` conta a ausência como falha.

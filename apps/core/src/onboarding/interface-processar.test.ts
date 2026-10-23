@@ -19,7 +19,7 @@ class No {
 }
 
 const processamento = (sobre: Record<string, unknown> = {}) => ({
-  liberada: false, clientes: 0, candidatos: 0, diasNovos: 0, diasRefeitos: 0, naFila: 0, consultasPrevistas: 0, rodada: null,
+  liberada: false, clientes: 0, candidatos: 0, descartes: 0, diasNovos: 0, diasRefeitos: 0, naFila: 0, consultasPrevistas: 0, rodada: null,
   consumo: { hoje: soma(), semana: soma(), total: soma() }, media: { amostras: 0, entrada: 0, saida: 0, ms: 0 }, estimativa: null,
   teto: { diario: 300000, usadoHoje: 0, atingido: false },
   modelos: { conversa: { model: 'gpt-6-luna', esforco: 'low' }, extracao: { model: 'gpt-6-luna', esforco: 'low' }, relatorio: { model: null, esforco: null }, teste: { model: 'gpt-6-luna', esforco: 'low' } },
@@ -78,7 +78,7 @@ test('com trabalho em andamento: a barra anda a cada tique do relogio, os tokens
     estimativa: { consultasRestantes: 10, tokens: 25200, minutos: 1, diasDeTeto: 1 },
     teto: { diario: 300000, usadoHoje: 12600, atingido: false } }));
   let txt = t.painel.textContent;
-  assert.match(txt, /4 de 20 dias concluidos \(1 sem conseguir\)/);
+  assert.match(txt, /4 de 20 dias de conversa concluidos \(1 sem conseguir\)/);
   assert.match(txt, /Estado: processamento LIBERADO/);
   assert.match(txt, /12\.600/); assert.match(txt, /Estimativa do que falta: cerca de 10 consultas, 25\.200 tokens/);
   const barra = () => t.painel.achar((n) => n.attrs.role === 'progressbar')[0]!.attrs['aria-valuenow'];
@@ -86,7 +86,7 @@ test('com trabalho em andamento: a barra anda a cada tique do relogio, os tokens
   t.dados['/api/processamento'] = processamento({ liberada: true, clientes: 5, rodada: { inicio: 1, total: 20, concluidas: 12, falhas: 1, percentual: 65 }, teto: { diario: 300000, usadoHoje: 12600, atingido: false } });
   await t.tique();
   assert.equal(barra(), '65', 'o relogio da tela redesenha a barra com o numero novo');
-  assert.match(t.painel.textContent, /12 de 20 dias concluidos/);
+  assert.match(t.painel.textContent, /12 de 20 dias de conversa concluidos/);
 });
 
 test('teto atingido aparece como pausa ate amanha; os botoes seguem o estado (liberado desliga Comecar, pausado desliga Pausar)', async () => {
@@ -169,4 +169,19 @@ test('busca antiga pausada por falta de resposta do celular: avisa e diz que nad
   const txt = t.painel.textContent;
   assert.match(txt, /nao respondeu varias vezes seguidas/);
   assert.match(txt, /nada foi descartado/i);
+});
+
+test('rotulos claros: "dia de conversa" = cliente x dia (nao dia de calendario), e a tela explica isso', async () => {
+  const t = await tela(processamento({ clientes: 5, diasNovos: 529, consultasPrevistas: 529 }));
+  const txt = t.painel.textContent;
+  assert.match(txt, /dias de conversa a extrair/);
+  assert.match(txt, /um cliente em um dia em que houve mensagens/);
+  assert.match(txt, /nao sao dias do calendario/);
+});
+
+test('descartes: se o modelo respondeu e o codigo recusou tudo, a tela avisa em destaque; sem descartes nao aparece', async () => {
+  const sem = await tela(processamento({ clientes: 5 }));
+  assert.doesNotMatch(sem.painel.textContent, /descartou o conteudo/);
+  const t = await tela(processamento({ clientes: 5, descartes: 24 }));
+  assert.match(t.painel.textContent, /descartou o conteudo de 24 dia\(s\) de conversa/);
 });

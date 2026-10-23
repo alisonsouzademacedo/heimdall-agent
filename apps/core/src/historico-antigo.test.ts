@@ -191,3 +191,32 @@ test('liberar de novo recomeca: zera as contagens e limpa o aviso de encerrament
   assert.equal(resumoHistoricoAntigo(db).encerrada, null);
   assert.equal(lerConfigHistorico(db).liberado, true);
 });
+
+// ---- Amostra mais forte (2026-10-23): o freio concluiu "o celular nao tem historico" com 10 conversas quaisquer, e o dono sabe que ha mensagens de nov/2025 ----
+test('o pedido vai primeiro as conversas com MAIS mensagens (mais chance de ter historico antigo); entre iguais, a ordem de sempre', () => {
+  const { db, msg } = novo();
+  msg('P1', '5511999991001@s.whatsapp.net', seg(1));                                                       // 1 mensagem
+  for (let i = 0; i < 5; i++) msg(`G${i}`, '5511999991002@s.whatsapp.net', seg(1 + i));                    // 5 mensagens
+  for (let i = 0; i < 3; i++) msg(`M${i}`, '5511999991003@s.whatsapp.net', seg(1 + i));                    // 3 mensagens
+  cfg(db);
+  const jid = (p: ReturnType<typeof proximoPedido>) => p!.remoteJid.split('@')[0];
+  const ordem: (string | undefined)[] = [];
+  for (let t = T0, i = 0; i < 3; i++) { const p = proximoPedido(db, t += 60_000)!; ordem.push(jid(p)); iniciarPedido(db, p.conversaId, t); concluirPedido(db, p.conversaId, t); }
+  assert.deepEqual(ordem, ['5511999991002', '5511999991003', '5511999991001'], 'a maior primeiro');
+});
+
+test('liberar de novo depois de a busca encerrar sozinha reabre so as conversas que NUNCA foram pedidas; as ja testadas continuam como estao', () => {
+  const { db } = conversas(25);
+  cfg(db);
+  let t = T0;
+  for (let i = 0; i < LIMITE_VAZIAS_SEGUIDAS; i++) pedir(db, t += 60_000);
+  const antes = resumoHistoricoAntigo(db);
+  assert.equal(antes.encerrada, 'sem_retorno');
+  assert.equal(antes.esgotadas, 25);
+  cfg(db); // o dono libera outra vez
+  const depois = resumoHistoricoAntigo(db);
+  assert.equal(depois.esgotadas, LIMITE_VAZIAS_SEGUIDAS, 'as 10 que foram pedidas e voltaram vazias seguem como estao');
+  assert.equal(depois.pendentes, 25 - LIMITE_VAZIAS_SEGUIDAS, 'as 15 que nunca foram pedidas voltam a ser pedidas');
+  assert.equal(depois.encerrada, null);
+  assert.ok(proximoPedido(db, t + 60_000), 'ha o que pedir de novo');
+});

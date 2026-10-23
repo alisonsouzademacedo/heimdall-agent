@@ -160,6 +160,11 @@ MUTACOES = [
     ("src/historico-antigo.ts", "if (seguidas >= LIMITE_VAZIAS_SEGUIDAS) encerrarBusca(db, agora);", "", "historico antigo: respostas vazias seguidas encerram a busca inteira"),
     ("src/historico-antigo.ts", "const seguidas = novas > 0 ? 0 : lerNum(db, K_VAZIAS) + 1;", "const seguidas = lerNum(db, K_VAZIAS) + 1;", "historico antigo: resposta com mensagens zera a contagem do freio"),
     ("src/onboarding/ambiente.ts", "return m.dockerRodando && m.imagensFaltando !== undefined && m.imagensFaltando.length === 0;", "return true;", "ambiente: so com tudo instalado o disco usa o limite menor"),
+    ("src/extracao.ts", "  return m ? Number(m[1]) : null;", "  return null;", "extracao: mensagem_origem em TEXTO vale (formato real do modelo)"),
+    ("src/extracao.ts", "if (v.brutos > 0 && v.aceitos === 0) registrarDescarte(db);", "", "extracao: resposta toda recusada fica contada (nao e silenciosa)"),
+    ("src/processamento.ts", "const restantes = c.novos + c.refeitos;", "const restantes = c.novos + c.refeitos + naFila;", "processamento: o que falta nao conta a fila duas vezes"),
+    ("src/historico-antigo.ts", "(SELECT COUNT(*) FROM mensagens m WHERE m.conversa_id = h.conversa_id) DESC, h.conversa_id", "h.conversa_id", "historico antigo: pede primeiro as conversas com mais mensagens"),
+    ("src/historico-antigo.ts", "WHERE estado = 'esgotada' AND pedidos = 0", "WHERE estado = 'esgotada'", "historico antigo: reabrir so as conversas nunca pedidas"),
 ]
 
 falhas = 0

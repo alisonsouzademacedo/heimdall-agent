@@ -55,7 +55,8 @@ test('conta dias novos, rodada, progresso, consumo, media, estimativa, teto e mo
   assert.equal(e.modelos.conversa.model, 'gpt-6-luna');
   // estimativa = o que falta (dias novos + refeitos + fila) x a media medida; so com amostras suficientes
   assert.ok(e.estimativa !== null);
-  assert.equal(e.estimativa!.consultasRestantes, e.diasNovos + e.diasRefeitos + e.naFila);
+  // o que falta = os dias ainda nao extraidos (inclui os que ja estao na fila; somar a fila de novo dobrava a conta)
+  assert.equal(e.estimativa!.consultasRestantes, e.diasNovos + e.diasRefeitos);
   assert.equal(e.estimativa!.tokens, e.estimativa!.consultasRestantes * 2500);
   assert.equal(e.estimativa!.minutos, Math.round((e.estimativa!.consultasRestantes * 5000) / 60000));
 });
@@ -95,4 +96,25 @@ test('candidatos: conta os contatos que responderam e ainda nao sao clientes (so
   escuta.mensagens([{ key: { id: 'X2', remoteJid: '5511999990009@s.whatsapp.net', fromMe: false }, message: { conversation: 'oi, aqui e a Bia da Padaria' }, messageTimestamp: Math.floor(D10 / 1000) + 60 }], 'notify');
   const e = estadoDoProcessamento(db, HOJE);
   assert.deepEqual({ candidatos: e.candidatos, clientes: e.clientes }, { candidatos: 1, clientes: 0 });
+});
+
+test('o que falta NAO conta duas vezes: os dias que ja estao na fila continuam sendo "dias ainda nao extraidos" (bug visto no 1o processamento: 1.026 em vez de 513)', () => {
+  const db = cenario(4);
+  assert.equal(estadoDoProcessamento(db, HOJE).consultasPrevistas, 4);
+  for (const ref of ['ext:1:a', 'ext:1:b', 'ext:1:c']) enfileirar(db, 'extrair', ref, HOJE); // 3 dias na fila: continuam entre os 4 pendentes
+  const e = estadoDoProcessamento(db, HOJE);
+  assert.equal(e.naFila, 3);
+  assert.equal(e.consultasPrevistas, 4, 'antes dava 7 (4 + 3)');
+  definirExtracaoLiberada(db, true);
+  iniciarRodada(db, HOJE);
+  assert.equal(estadoDoProcessamento(db, HOJE).rodada!.total, 4, 'o total da rodada tambem nao dobra');
+  for (let i = 0; i < 3; i++) registrarConsumo(db, { tarefa: 'extracao', modelo: null, entrada: 2400, saida: 100, ms: 5000 }, HOJE);
+  assert.equal(estadoDoProcessamento(db, HOJE).estimativa!.consultasRestantes, 4);
+});
+
+test('descartes aparecem no estado (a tela avisa quando o modelo responde e o codigo recusa tudo)', () => {
+  const db = abrirBanco(); migrar(db);
+  assert.equal(estadoDoProcessamento(db, HOJE).descartes, 0);
+  db.prepare("INSERT INTO configuracao (chave, valor) VALUES ('extracao.descartes', '3')").run();
+  assert.equal(estadoDoProcessamento(db, HOJE).descartes, 3);
 });

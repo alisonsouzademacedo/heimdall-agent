@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { abrirBanco, migrar, type Banco } from './db.ts';
 import { criarEscuta } from './whatsapp/escuta.ts';
 import { pegarProximo, resumoDaFila } from './fila.ts';
-import { agendarExtracao, diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
+import { contarDescartes, agendarExtracao, diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada, montarPedidoDeExtracao, processarExtrair, validarSaidaDaExtracao, type PortaExtracao } from './extracao.ts';
 
 const DONO = { pn: '5511900000000@s.whatsapp.net' };
 const D10 = Date.UTC(2025, 9, 10, 15, 0, 0); // 10/10/2025 12:00 em SP (sexta)
@@ -297,4 +297,52 @@ test('contato interno nunca recebe identificacao de cliente', async () => {
   db.prepare("UPDATE clientes SET nome = 'Colega', nome_origem = 'provisorio' WHERE id = 1").run();
   await extrairCom(db, comIdent(db, ident(db)));
   assert.deepEqual({ ...cliente(db) }, { nome: 'Colega', empresa: null, origem: 'provisorio' });
+});
+
+// ---- DEFEITO REAL (2026-10-23, 1o processamento): o modelo devolve mensagem_origem como TEXTO ("123"), como o prompt desenhava; o validador so aceitava
+// numero e descartava tudo em silencio, enquanto a fila marcava "ok". Os testes com modelo falso respondiam numero e nunca viram isso. ----
+const comoTexto = (o: unknown, formato: (n: number) => string = String): unknown => JSON.parse(JSON.stringify(o, (k, v) => ((k === 'mensagem_origem' || k === 'id_existente') && typeof v === 'number' ? formato(v) : v)));
+
+test('mensagem_origem como TEXTO ("123", "#123", "[#123]") vale e e normalizada para numero; texto que nao e numero continua recusado', () => {
+  const { db } = cenario();
+  const ids = new Set([id(db, 'M1'), id(db, 'M2'), id(db, 'M3')]);
+  const s = comIdent(db, ident(db));
+  for (const f of [(n: number) => String(n), (n: number) => `#${n}`, (n: number) => `[#${n}]`, (n: number) => ` ${n} `]) {
+    const v = validarSaidaDaExtracao(JSON.stringify(comoTexto(s, f)), ids)!;
+    assert.equal(v.compromissos.length, 1, f(1));
+    assert.equal(v.compromissos[0]!.origem, id(db, 'M2'));
+    assert.equal(v.sinais.length, 2);
+    assert.deepEqual(v.aguardando, { valor: true, origem: id(db, 'M3') });
+    assert.equal(v.identificacao?.origem, id(db, 'M1'));
+  }
+  const ruim = comoTexto(s, () => 'abc') as { compromissos: unknown[]; sinais_potencial: unknown[] };
+  const v = validarSaidaDaExtracao(JSON.stringify(ruim), ids)!;
+  assert.deepEqual([v.compromissos.length, v.sinais.length, v.aguardando, v.identificacao], [0, 0, null, null]);
+});
+
+test('processar com a resposta REAL do modelo (origem em texto): compromisso, sinais, "aguardando" e identificacao entram no banco', async () => {
+  const { db } = cenario();
+  db.prepare("UPDATE clientes SET nome = 'Contato final 0001', nome_origem = 'provisorio' WHERE id = 1").run();
+  agendarExtracao(db, HOJE);
+  await processarExtrair(db, pegarProximo(db, ['extrair'], HOJE)!, porta(comoTexto(comIdent(db, ident(db)))), instr, HOJE);
+  assert.equal((db.prepare('SELECT COUNT(*) AS n FROM compromissos').get() as { n: number }).n, 1);
+  assert.equal((db.prepare('SELECT COUNT(*) AS n FROM sinais_potencial').get() as { n: number }).n, 2);
+  assert.equal((db.prepare('SELECT pede_resposta AS p FROM mensagens WHERE id = ?').get(id(db, 'M3')) as { p: number }).p, 1);
+  assert.equal(cliente(db).nome, 'Ana Souza (Padaria Pão Quente)');
+  assert.equal(contarDescartes(db), 0, 'nada foi descartado');
+});
+
+test('descartes: resposta com itens que o codigo recusou TODOS fica contada (a tela avisa); resposta vazia legitima e resposta boa nao contam', async () => {
+  const a = cenario();
+  agendarExtracao(a.db, HOJE);
+  const s = saidaBase(a.db);
+  const toda_ruim = { ...s, compromissos: [{ ...s.compromissos[0]!, mensagem_origem: 999999 }], sinais_potencial: [{ ...s.sinais_potencial[0]!, tipo: 'hacker' }], aguardando_resposta_do_dono: { valor: true, mensagem_origem: 999999, motivo: 'x' }, identificacao: null };
+  await processarExtrair(a.db, pegarProximo(a.db, ['extrair'], HOJE)!, porta(toda_ruim), instr, HOJE);
+  assert.equal(contarDescartes(a.db), 1);
+  const b = cenario(); agendarExtracao(b.db, HOJE);
+  await processarExtrair(b.db, pegarProximo(b.db, ['extrair'], HOJE)!, porta({ compromissos: [], sinais_potencial: [], identificacao: null, aguardando_resposta_do_dono: null, objecoes: [], duvidas: [] }), instr, HOJE);
+  assert.equal(contarDescartes(b.db), 0, 'o modelo nao achou nada: legitimo');
+  const c = cenario(); agendarExtracao(c.db, HOJE);
+  await processarExtrair(c.db, pegarProximo(c.db, ['extrair'], HOJE)!, porta(saidaBase(c.db)), instr, HOJE);
+  assert.equal(contarDescartes(c.db), 0, 'resposta boa');
 });

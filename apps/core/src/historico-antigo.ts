@@ -48,7 +48,11 @@ export function gravarConfigHistorico(db: Banco, parcial: Partial<ConfigHistoric
   const antes = lerConfigHistorico(db);
   const novo = { ...antes, ...parcial };
   // Liberar (de novo) recomeca: zera as contagens do freio e limpa o aviso de encerramento.
-  if (parcial.liberado === true && !antes.liberado) { gravarTexto(db, K_VAZIAS, '0'); gravarTexto(db, K_FALHAS, '0'); gravarTexto(db, K_ENCERRADA, ''); } // vazio = sem aviso (nada e apagado: so apagar.ts apaga)
+  if (parcial.liberado === true && !antes.liberado) {
+    // Encerrada pelo freio: so uma AMOSTRA foi pedida. Reabre as que nunca foram pedidas (as testadas e vazias seguem como estao).
+    if (lerEncerramento(db) === 'sem_retorno') db.prepare("UPDATE historico_pedidos SET estado = 'pendente' WHERE estado = 'esgotada' AND pedidos = 0").run();
+    gravarTexto(db, K_VAZIAS, '0'); gravarTexto(db, K_FALHAS, '0'); gravarTexto(db, K_ENCERRADA, ''); // vazio = sem aviso (nada e apagado: so apagar.ts apaga)
+  }
   db.prepare('INSERT INTO configuracao (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor').run(CHAVE, JSON.stringify(novo));
 }
 
@@ -63,14 +67,16 @@ export interface PedidoHistorico {
 const maisAntiga = (db: Banco, conversaId: number) =>
   db.prepare('SELECT wa_msg_id AS id, de_mim AS d, enviada_em AS t FROM mensagens WHERE conversa_id = ? ORDER BY enviada_em ASC, id ASC LIMIT 1').get(conversaId) as { id: string; d: number; t: number } | undefined;
 
-// A proxima conversa a pedir, ou null (trava fechada, nada a pedir). Quem teve menos pedidos vai primeiro (reparte entre as conversas).
+// A proxima conversa a pedir, ou null (trava fechada, nada a pedir). Quem teve menos pedidos vai primeiro (reparte entre as conversas); entre iguais, a conversa
+// com MAIS mensagens (e a que mais provavelmente tem historico antigo: dez conversas vazias pequenas nao provam que o celular nao tem nada).
 export function proximoPedido(db: Banco, agora: number): PedidoHistorico | null {
   const c = lerConfigHistorico(db);
   if (!c.liberado) return null;
   db.prepare("INSERT OR IGNORE INTO historico_pedidos (conversa_id) SELECT cv.id FROM conversas cv WHERE cv.tipo IN ('dm','grupo') AND EXISTS (SELECT 1 FROM mensagens m WHERE m.conversa_id = cv.id)").run();
   const linhas = db.prepare(
     `SELECT h.conversa_id AS id, cv.jid AS jid, h.falhas AS falhas, h.atualizado_em AS em, h.estado AS estado FROM historico_pedidos h JOIN conversas cv ON cv.id = h.conversa_id
-     WHERE (h.estado = 'pendente' OR (h.estado = 'em_andamento' AND h.atualizado_em <= ?)) ORDER BY h.pedidos, h.conversa_id`
+     WHERE (h.estado = 'pendente' OR (h.estado = 'em_andamento' AND h.atualizado_em <= ?))
+     ORDER BY h.pedidos, (SELECT COUNT(*) FROM mensagens m WHERE m.conversa_id = h.conversa_id) DESC, h.conversa_id`
   ).all(agora - PRAZO_PEDIDO_PRESO_MS) as { id: number; jid: string; falhas: number; em: number; estado: string }[];
   for (const l of linhas) {
     if (l.estado === 'pendente' && l.falhas > 0 && agora < l.em + l.falhas * ESPERA_POR_FALHA_MS) continue; // espera depois de falha

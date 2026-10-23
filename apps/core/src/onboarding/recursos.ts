@@ -448,17 +448,23 @@ export const JS = `
       var st=el('div','aviso');
       st.appendChild(el('div','',r.liberada?(r.teto.atingido?'Estado: LIBERADO, mas em pausa ate amanha: o teto diario de tokens foi atingido.':'Estado: processamento LIBERADO'):'Estado: processamento PAUSADO (trava fechada)'));
       vivo.appendChild(st);
+      if(r.descartes>0){
+        var avD=el('div','aviso');
+        avD.appendChild(el('div','','ATENCAO: o modelo respondeu, mas o Heimdall descartou o conteudo de '+fmt(r.descartes)+' dia(s) de conversa (formato inesperado na resposta). Avise a IA antes de continuar gastando cota.'));
+        vivo.appendChild(avD);
+      }
       if(r.rodada){
-        barra(vivo,'Progresso desta rodada',r.rodada.percentual,fmt(r.rodada.concluidas)+' de '+fmt(r.rodada.total)+' dias concluidos'+(r.rodada.falhas>0?' ('+fmt(r.rodada.falhas)+' sem conseguir)':'')+'.');
+        barra(vivo,'Progresso desta rodada',r.rodada.percentual,fmt(r.rodada.concluidas)+' de '+fmt(r.rodada.total)+' dias de conversa concluidos'+(r.rodada.falhas>0?' ('+fmt(r.rodada.falhas)+' sem conseguir)':'')+'.');
       }else{
         barra(vivo,'Progresso desta rodada',0,'Nenhuma rodada ainda: clique em Comecar.');
       }
       var g=el('div','kpis');
-      kpi(g,'dias novos para extrair',r.diasNovos);
-      kpi(g,'dias refeitos (mudaram)',r.diasRefeitos);
+      kpi(g,'dias de conversa a extrair',r.diasNovos);
+      kpi(g,'dias de conversa refeitos (mudaram)',r.diasRefeitos);
       kpi(g,'trabalhos na fila',r.naFila);
       kpi(g,'clientes',r.clientes);
       vivo.appendChild(g);
+      vivo.appendChild(el('div','det','Um dia de conversa e um cliente em um dia em que houve mensagens; cada um e uma consulta ao modelo. Por isso os numeros nao sao dias do calendario.'));
 
       vivo.appendChild(el('h2','','Gasto de tokens'));
       var t=el('div','kpis');
