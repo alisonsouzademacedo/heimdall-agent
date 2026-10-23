@@ -4,6 +4,7 @@
 import type { Banco } from '../db.ts';
 import { lerEstado, lerQr, lerServicos, type EstadoLido } from '../whatsapp/estado.ts';
 import { resumoDaFila } from '../fila.ts';
+import { TRECHOS_MIDIA_INDISPONIVEL } from '../midia.ts';
 import { enfileirarSaida, ehMensagemNossa, resumoDaSaida } from '../saida.ts';
 import { lerBackup } from '../backup-copia.ts';
 import { caberEmUmaTela, contarPalavras, montarPacoteDiario, renderizarDiario, MAX_PALAVRAS_DIARIO, MAX_PALAVRAS_SEMANAL } from '../relatorio.ts';
@@ -54,7 +55,11 @@ export function montarPainel(db: Banco, agora: number = Date.now()): Painel {
   const w = lerEstado(db);
   const qr = w.estado === 'conectado' ? null : lerQr(db);
   const porTipo: Painel['fila']['porTipo'] = {};
-  for (const l of db.prepare('SELECT tipo, estado, COUNT(*) AS n FROM fila GROUP BY tipo, estado').all() as { tipo: string; estado: string; n: number }[]) (porTipo[l.tipo] ??= {})[l.estado] = l.n;
+  // Download abandonado porque o WhatsApp nao tem mais o arquivo vira o estado "indisponivel" (nao e falha: nao ha o que consertar);
+  // qualquer outro abandono (hash nao confere, arquivo vazio...) continua "abandonada" e aparece como falha.
+  const indisp = TRECHOS_MIDIA_INDISPONIVEL.map(() => 'erro LIKE ?').join(' OR ');
+  const sqlFila = `SELECT tipo, CASE WHEN tipo = 'baixar_midia' AND estado = 'abandonada' AND (${indisp}) THEN 'indisponivel' ELSE estado END AS estado, COUNT(*) AS n FROM fila GROUP BY 1, 2`;
+  for (const l of db.prepare(sqlFila).all(...TRECHOS_MIDIA_INDISPONIVEL.map((t) => `%${t}%`)) as { tipo: string; estado: string; n: number }[]) (porTipo[l.tipo] ??= {})[l.estado] = l.n;
   const n = (sql: string): number => (db.prepare(sql).get() as { n: number }).n;
   const ultimo = db.prepare("SELECT chave, criada_em AS criadaEm FROM saida WHERE tipo = 'relatorio' AND chave IS NOT NULL ORDER BY id DESC LIMIT 1").get() as { chave: string; criadaEm: number } | undefined;
   const servicos: Painel['servicos'] = {};
@@ -137,8 +142,8 @@ export function estadosAoVivo(p: EntradaAoVivo): { sincronizar: EstadoAoVivo; ex
   } else sincronizar = { estado: 'verde', percentual: 100, detalhe: ha.liberado && ha.conversas > 0 ? `Historico recebido; conversas antigas: ${ha.concluidas} concluidas, ${ha.esgotadas} no limite` : 'Historico recebido.' };
 
   const b = p.fila.porTipo.baixar_midia ?? {};
-  const total = soma(b), ok = b.ok ?? 0, pend = (b.pendente ?? 0) + (b.em_andamento ?? 0), sem = (b.abandonada ?? 0) + (b.erro ?? 0);
-  const semArq = sem > 0 ? `${sem} sem arquivo (o WhatsApp nao entregou)` : '';
+  const total = soma(b), ok = b.ok ?? 0, pend = (b.pendente ?? 0) + (b.em_andamento ?? 0), sem = (b.indisponivel ?? 0) + (b.abandonada ?? 0) + (b.erro ?? 0);
+  const semArq = sem > 0 ? `${sem} sem arquivo (nao estao mais no WhatsApp)` : '';
   const texto = pend > 0 || sem === 0 ? `${ok} de ${total} arquivos${semArq ? ` (${semArq})` : ''}` : `${ok} baixados; ${semArq}`;
   let extrair: EstadoAoVivo;
   if (!conectado) extrair = { estado: 'pendente', percentual: null, detalhe: 'Conecte o WhatsApp primeiro.' };

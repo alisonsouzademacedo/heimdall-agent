@@ -73,6 +73,20 @@ test('falhar: volta para a fila com espera crescente e guarda o erro; ao esgotar
   assert.deepEqual({ ...final }, { estado: 'abandonada', erro: `erro ${MAX_TENTATIVAS - 1}`, tentativas: MAX_TENTATIVAS });
 });
 
+test('falhar com limite proprio (midia indisponivel): abandona na 3a tentativa, antes das 5 normais', () => {
+  const db = novo();
+  enfileirar(db, 'baixar_midia', '1', T0);
+  let agora = T0;
+  const resultados: string[] = [];
+  for (let i = 0; i < 3; i++) {
+    const j = pegarProximo(db, ['baixar_midia'], agora)!;
+    resultados.push(falhar(db, j.id, 'erro', agora, { maximo: 3 }));
+    agora += 3 * 60 * 60_000;
+  }
+  assert.deepEqual(resultados, ['reagendada', 'reagendada', 'abandonada']);
+  assert.equal((db.prepare('SELECT estado FROM fila').get() as { estado: string }).estado, 'abandonada');
+});
+
 test('falha definitiva (ex.: PDF escaneado sem texto) abandona na hora, sem repetir', () => {
   const db = novo();
   enfileirar(db, 'converter_pdf', '9', T0);

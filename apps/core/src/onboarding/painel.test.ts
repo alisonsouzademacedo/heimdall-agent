@@ -196,6 +196,16 @@ test('extrair: com tudo que o WhatsApp entrega ja baixado, o texto diz "N baixad
   assert.doesNotMatch(x.detalhe, /2 de 4/);
 });
 
+test('painel separa download abandonado em "indisponivel" (o WhatsApp nao tem mais) e "abandonada" (falha de verdade, ex.: hash nao confere)', () => {
+  const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1);
+  comMidias(db, 4, 4);
+  const ids = (db.prepare('SELECT id FROM fila ORDER BY id').all() as { id: number }[]).map((x) => x.id);
+  const erros = ['Failed to fetch stream from https://exemplo.invalido/a', 'Unsupported state or unable to authenticate data', 'midia_indisponivel', 'hash_nao_confere'];
+  ids.forEach((id, i) => db.prepare("UPDATE fila SET estado = 'abandonada', erro = ? WHERE id = ?").run(erros[i]!, id));
+  const b = montarPainel(db, T).fila.porTipo.baixar_midia!;
+  assert.deepEqual({ indisponivel: b.indisponivel, abandonada: b.abandonada }, { indisponivel: 3, abandonada: 1 });
+});
+
 test('sincronizar com historico antigo ligado: enquanto ha conversa a pedir, e processando com conversas concluidas / total', () => {
   const db = novo(); gravarEstado(db, { estado: 'conectado', dono: DONO }, 1); gravarHistorico(db, { progresso: 100, ultima: true }, 2);
   const e = criarEscuta(db, DONO, { agora: () => T });

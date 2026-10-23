@@ -41,6 +41,12 @@ test('resposta que nao terminou bem nao vira mensagem para o dono: erro, interro
   }
 });
 
+test('aviso do proprio Hermes de que nao ha provedor/login NAO e resposta: vira falha (o dono nao recebe esse texto)', async () => {
+  const aviso = '⚠️ Provider authentication failed: Hermes is not connected to any AI provider yet. Run `hermes model` to pick one, type `/login` in chat, or add a key with `hermes auth add <provider>`.';
+  const s = await servidor((res) => json(res, 200, ok(aviso)));
+  try { await assert.rejects(criarClienteHermes({ url: s.url, chave: 'k-sintetica-123456' }).perguntar('oi', { sessao: 'x' }), /hermes_sem_provedor/); } finally { await s.fechar(); }
+});
+
 test('HTTP: 401/403 e 4xx sao erros claros sem o corpo; 429/5xx/queda de rede tambem falham (a ponte tenta de novo depois)', async () => {
   for (const status of [401, 403, 409, 429, 500, 503]) {
     const s = await servidor((res) => json(res, status, { error: { message: 'segredo-do-corpo' } }));

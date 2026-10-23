@@ -146,6 +146,9 @@ MUTACOES = [
     ("src/modelo-teste.ts", "if (lerTesteDoModelo(db).estado !== 'pedido') return false;", "", "modelo-teste: executarTeste so age se ha pedido"),
     ("src/modelo-teste.ts", "if (t.estado === 'pedido' && t.pedidoEm !== null && agora - t.pedidoEm < PEDIDO_VALE_MS) return false;", "", "modelo-teste: pedido recente nao empilha"),
     ("src/onboarding/servidor.ts", "esperaRespostaSegundos: Math.round(c.esperaRespostaMs / 1000),", "esperaRespostaSegundos: 0,", "tela: o tempo de espera por resposta chega ao cartao para a estimativa"),
+    ("src/fila.ts", "t.tentativas >= (opcoes.maximo ?? MAX_TENTATIVAS)", "t.tentativas >= MAX_TENTATIVAS", "fila: midia indisponivel desiste na 3a tentativa, nao na 5a"),
+    ("src/onboarding/fontes.ts", "const semArquivo = q('baixar_midia').indisponivel ?? 0;", "const semArquivo = 0;", "fontes: midia que o WhatsApp nao tem mais nao conta como sem arquivo"),
+    ("src/midia.ts", "ehMidiaIndisponivel(erro) ? { maximo: MAX_TENTATIVAS_INDISPONIVEL } : {}", "{}", "midia: erro de arquivo indisponivel usa o limite menor"),
 ]
 
 falhas = 0

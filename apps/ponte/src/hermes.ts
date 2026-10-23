@@ -51,6 +51,8 @@ export function criarClienteHermes(o: OpcoesHermes): ClienteHermes {
       if (escolha?.finish_reason === 'error' || escolha?.finish_reason === 'cancelled') throw new Error(`hermes_${escolha.finish_reason}`);
       const conteudo = escolha?.message?.content;
       if (typeof conteudo !== 'string' || conteudo.trim() === '') throw new RespostaVazia();
+      // O Hermes sem login devolve este aviso como se fosse resposta (HTTP 200, "stop"): nao e resposta, e o dono nao deve recebe-lo.
+      if (/^\W*Provider authentication failed|not connected to any AI provider/i.test(conteudo)) throw new Error('hermes_sem_provedor');
       return conteudo.trim();
     },
     async saude() {

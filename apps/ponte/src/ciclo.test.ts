@@ -13,7 +13,7 @@ const T = Date.UTC(2025, 9, 10, 15, 0, 0);
 
 test('laco: responde a mensagem nova, espera entre giros e para quando pedido', async () => {
   const db = abrirBanco(); migrar(db);
-  criarEscuta(db, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => T }).mensagens([{ key: { id: 'S1', remoteJid: '5511900000000@s.whatsapp.net', fromMe: true }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(T / 1000) }], 'notify');
+  criarEscuta(db, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => T }).mensagens([{ key: { id: 'S1', remoteJid: '5511900000000@s.whatsapp.net', fromMe: true }, message: { conversation: '/heimdall oi' }, messageTimestamp: Math.floor(T / 1000) }], 'notify');
   const portas: PortasSelfChat = { hermes: { perguntar: async () => 'ola' }, apagarArquivo: () => {} };
   const esperas: number[] = [];
   const p = iniciarPonte({ banco: db, portas, agora: () => T + 1000, intervaloMs: 7000, esperar: async (ms) => { esperas.push(ms); if (esperas.length >= 2) p.parar(); } });

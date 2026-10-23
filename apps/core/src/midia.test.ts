@@ -107,6 +107,27 @@ test('falha ao baixar: reagenda com espera e guarda so o motivo; o arquivo nao e
   assert.match((c.db.prepare('SELECT erro FROM fila').get() as { erro: string }).erro, /410/);
 });
 
+test('midia que o WhatsApp nao tem mais (403/404/410, reenvio sem resposta valida) vira indisponivel na 3a tentativa; erro de rede continua ate a 5a', async () => {
+  const falhas: [string, number][] = [
+    ['Failed to fetch stream from https://exemplo.invalido/arquivo', 3],
+    ['Unsupported state or unable to authenticate data', 3],
+    ['Media re-upload failed by device (NOT_FOUND)', 3],
+    ['ECONNRESET socket hang up', 5]
+  ];
+  for (const [erro, esperado] of falhas) {
+    const c = cenario(); c.entrar('A-1', audio);
+    const portas: PortasBaixar = { ...c.portas, baixar: async () => { throw new Error(erro); } };
+    let agora = T0, tentativas = 0, r = 'reagendada';
+    while (r === 'reagendada' && tentativas < 10) {
+      const j = pegarProximo(c.db, ['baixar_midia'], agora)!;
+      r = await processarBaixarMidia(c.db, j, portas, agora);
+      tentativas++; agora += 3 * 60 * 60_000;
+    }
+    assert.equal(r, 'abandonada', erro);
+    assert.equal(tentativas, esperado, erro);
+  }
+});
+
 test('arquivo vazio ou grande demais: abandono definitivo (sem encher o disco)', async () => {
   const c = cenario(); c.entrar('A-1', audio); c.entrar('P-1', pdf);
   const vazio: PortasBaixar = { ...c.portas, baixar: async () => new Uint8Array(0) };

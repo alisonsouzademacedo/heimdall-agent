@@ -64,6 +64,8 @@ Digite `heimdall` no terminal. Ele pede a senha (se não houver chave), deixa o 
 
 ## 4. O que a tela ainda NÃO faz (manual ou decisão)
 - **Login do modelo:** só pelo terminal (item 5).
+- **Falar com o Heimdall no self-chat:** só o que começa com `/heimdall` vai ao modelo (ex.: `/heimdall quem está esperando minha resposta?`). O resto que você escreve ali (números, lembretes) fica guardado e **não** recebe resposta. Os comandos curtos funcionam sem prefixo: `ok 1 e 3`, `C1 ok, C2 não`, `A1`, `F2`, `P1` e a frase de confirmar apagar. Sem login do ChatGPT no Hermes, nada é enviado a você (a ponte espera).
+- **Conferir o login do modelo:** `ssh heimdall "docker exec heimdall-hermes-1 hermes auth status openai-codex"` (não mostra token); deve dizer que está logado.
 - **Memória com LLM (Hindsight):** a versão instalada (1.0.0) não tem o login do ChatGPT; fica sem LLM (guarda e busca, sem "observações") até o dono decidir atualizar para a 1.1.0.
 - **Cliente ↔ lead no CRM:** nasce pelas propostas do relatório das 08:00 (`C1`, `C2`...), aprovadas no self-chat com "ok 1 e 3", "não, o 2 fica" ou "C1 ok, C2 não". Não há comando livre ("mova a empresa X"). **Ganho** não é proposto sozinho; mover um cartão à mão no Krayin não atualiza o Heimdall.
 

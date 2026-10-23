@@ -3,7 +3,7 @@
 // O mesmo arquivo reenviado em outras conversas e guardado e processado UMA vez (sha256); todas as mensagens ligadas a ele recebem o texto.
 import { createHash } from 'node:crypto';
 import type { Banco } from './db.ts';
-import { concluir, enfileirar, falhar, type Trabalho } from './fila.ts';
+import { concluir, enfileirar, falhar, MAX_TENTATIVAS_INDISPONIVEL, type Trabalho } from './fila.ts';
 
 export class FalhaDefinitiva extends Error {
   constructor(motivo: string) { super(motivo); this.name = 'FalhaDefinitiva'; }
@@ -26,6 +26,12 @@ export type Resultado = 'ok' | 'reagendada' | 'abandonada';
 
 const mensagemDeErro = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
+// Textos de erro de quando o WhatsApp nao tem mais o arquivo (medido em 2026-10-23: status 403 na URL guardada = "Failed to fetch stream";
+// 410 seguido de reenvio cuja resposta nao autentica = "unable to authenticate data"). A tela usa os MESMOS trechos para separar
+// "indisponivel" de falha de verdade (onboarding/painel.ts), por isso ficam aqui, em um lugar so.
+export const TRECHOS_MIDIA_INDISPONIVEL = ['Failed to fetch stream', 'unable to authenticate data', 'Media re-upload failed', 'Failed to re-upload media', 'midia_indisponivel'] as const;
+export const ehMidiaIndisponivel = (erro: string): boolean => TRECHOS_MIDIA_INDISPONIVEL.some((t) => erro.includes(t));
+
 export async function processarBaixarMidia(db: Banco, job: Trabalho, portas: PortasBaixar, agora: number = Date.now()): Promise<Resultado> {
   const mensagemId = Number(job.referencia);
   const m = db.prepare("SELECT id, tipo FROM mensagens WHERE id = ? AND tipo IN ('audio','pdf')").get(mensagemId) as { id: number; tipo: 'audio' | 'pdf' } | undefined;
@@ -37,7 +43,8 @@ export async function processarBaixarMidia(db: Banco, job: Trabalho, portas: Por
   try {
     bytes = await portas.baixar(origem.descritor);
   } catch (e) {
-    return falhar(db, job.id, mensagemDeErro(e), agora);
+    const erro = mensagemDeErro(e);
+    return falhar(db, job.id, erro, agora, ehMidiaIndisponivel(erro) ? { maximo: MAX_TENTATIVAS_INDISPONIVEL } : {});
   }
   if (!bytes || bytes.byteLength === 0) return falhar(db, job.id, 'arquivo_vazio', agora, { definitiva: true });
   if (bytes.byteLength > LIMITE_BYTES[m.tipo]) return falhar(db, job.id, 'arquivo_grande', agora, { definitiva: true });

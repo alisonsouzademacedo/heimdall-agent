@@ -89,12 +89,12 @@ test('fontes: QR pendente, teste falhou, Hindsight sem resposta e midia com falh
   assert.equal(f.crm.estado, 'vermelho');
 });
 
-test('fontes: download que o WhatsApp nao entregou (abandonado) NAO e falha: midia fica verde e conta separado', () => {
+test('fontes: download que o WhatsApp nao tem mais (indisponivel) NAO e falha: midia fica verde e conta separado', () => {
   const p = painel({
     acervo: { mensagens: 10, conversas: 1, audios: 3, pdfs: 0 },
     fila: {
       total: { pendente: 0, em_andamento: 0, ok: 4, erro: 0, abandonada: 5 },
-      porTipo: { baixar_midia: { ok: 2, abandonada: 5 }, transcrever: { ok: 2 } }
+      porTipo: { baixar_midia: { ok: 2, indisponivel: 5 }, transcrever: { ok: 2 } }
     }
   });
   const f = montarFontes(p, { estado: 'nao_feito' }, SEM_CRM);
@@ -102,6 +102,19 @@ test('fontes: download que o WhatsApp nao entregou (abandonado) NAO e falha: mid
   assert.match(f.midia.detalhe, /4 de 4 etapa/);
   assert.match(f.midia.detalhe, /5 sem arquivo/);
   assert.doesNotMatch(f.midia.detalhe, /falha/);
+});
+
+test('fontes: download abandonado por falha de verdade (nao "indisponivel") continua vermelho', () => {
+  const p = painel({
+    acervo: { mensagens: 10, conversas: 1, audios: 3, pdfs: 0 },
+    fila: {
+      total: { pendente: 0, em_andamento: 0, ok: 2, erro: 0, abandonada: 1 },
+      porTipo: { baixar_midia: { ok: 1, abandonada: 1 }, transcrever: { ok: 1 } }
+    }
+  });
+  const f = montarFontes(p, { estado: 'nao_feito' }, SEM_CRM);
+  assert.equal(f.midia.estado, 'vermelho');
+  assert.match(f.midia.detalhe, /1 arquivo/);
 });
 
 test('fontes: CRM conectado mas com funil incompleto fica em andamento, nunca verde', () => {

@@ -6,6 +6,8 @@ export type TipoTrabalho = 'baixar_midia' | 'transcrever' | 'converter_pdf' | 'e
 export interface Trabalho { id: number; tipo: TipoTrabalho; referencia: string; tentativas: number }
 
 export const MAX_TENTATIVAS = 5;
+/** Midia que o WhatsApp nao tem mais (403/404/410, reenvio sem resposta valida): repetir nao muda o resultado, entao desiste antes. */
+export const MAX_TENTATIVAS_INDISPONIVEL = 3;
 export const ESPERAS_RETENTATIVA_MS = [60_000, 5 * 60_000, 30 * 60_000, 2 * 60 * 60_000] as const;
 
 export function enfileirar(db: Banco, tipo: TipoTrabalho, referencia: string, agora: number = Date.now()): boolean {
@@ -61,10 +63,10 @@ function limparErro(erro: string): string {
   return erro.replace(/\s+/g, ' ').trim().slice(0, 300);
 }
 
-export function falhar(db: Banco, id: number, erro: string, agora: number = Date.now(), opcoes: { definitiva?: boolean } = {}): 'reagendada' | 'abandonada' {
+export function falhar(db: Banco, id: number, erro: string, agora: number = Date.now(), opcoes: { definitiva?: boolean; maximo?: number } = {}): 'reagendada' | 'abandonada' {
   const t = db.prepare('SELECT tentativas FROM fila WHERE id = ?').get(id) as { tentativas: number } | undefined;
   if (!t) return 'abandonada';
-  if (opcoes.definitiva || t.tentativas >= MAX_TENTATIVAS) {
+  if (opcoes.definitiva || t.tentativas >= (opcoes.maximo ?? MAX_TENTATIVAS)) {
     db.prepare("UPDATE fila SET estado = 'abandonada', erro = ?, atualizado_em = ? WHERE id = ?").run(limparErro(erro), agora, id);
     return 'abandonada';
   }

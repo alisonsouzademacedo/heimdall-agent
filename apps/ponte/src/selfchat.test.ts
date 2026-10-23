@@ -29,7 +29,7 @@ function cenario() {
 }
 
 test('pergunta livre vai ao Hermes com sessao fixa e data no contexto; a resposta entra na caixa de saida UMA vez', async () => {
-  const c = cenario(); c.dono('Quem esta esperando minha resposta?');
+  const c = cenario(); c.dono('/heimdall Quem esta esperando minha resposta?');
   assert.equal(await processarSelfChat(c.db, c.portas, T + 1000), 1);
   assert.equal(c.perguntas.length, 1);
   assert.equal(c.perguntas[0]!.sessao, 'heimdall:self-chat');
@@ -47,7 +47,7 @@ test('nao responde ao proprio eco (marca, id enviado), a historico/append, a men
   c.dono('oi do cliente', T, 'notify', false, '5511999990001@s.whatsapp.net');
   const id = enfileirarSaida(c.db, 'resposta', 'x', T)!; marcarEnviada(c.db, id, 'S4', T);
   c.dono('eco reconhecido so pelo id'); // chega com o id S4, o mesmo que a caixa de saida marcou como enviado
-  c.dono('texto do dono');
+  c.dono('/heimdall texto do dono');
   c.dono('   ');
   await processarSelfChat(c.db, c.portas, T + 1000);
   assert.deepEqual(c.perguntas.map((p) => p.texto), ['texto do dono']);
@@ -94,7 +94,7 @@ test('CRM no self-chat: aprova movimento sem chamar o Hermes; mensagem que nao e
     }
   };
   c.dono('ok 1');
-  c.dono('quem esta esperando?');
+  c.dono('/heimdall quem esta esperando?');
   await processarSelfChat(c.db, c.portas, T + 1000);
   assert.equal(c.perguntas.length, 1, 'so a pergunta livre vai ao Hermes');
   assert.equal(c.perguntas[0]!.texto, 'quem esta esperando?');
@@ -127,17 +127,17 @@ test('CRM fora do ar: responde que nao conseguiu e NAO manda o "ok 1" ao Hermes'
 });
 
 test('Hermes fora do ar: nada e enviado ao dono agora e a mensagem e tentada de novo no proximo ciclo; depois de 2 h desiste', async () => {
-  const c = cenario(); c.dono('oi');
+  const c = cenario(); c.dono('/heimdall oi');
   const falha: PortasSelfChat = { ...c.portas, hermes: { perguntar: async () => { throw new Error('hermes_sem_resposta'); } } };
   assert.equal(await processarSelfChat(c.db, falha, T + 1000), 0);
   assert.equal(c.saidas().length, 0);
   assert.equal(await processarSelfChat(c.db, c.portas, T + 60_000), 1, 'voltou: responde');
-  const d = cenario(); d.dono('antiga');
+  const d = cenario(); d.dono('/heimdall antiga');
   assert.equal(await processarSelfChat(d.db, d.portas, T + 3 * 3_600_000), 0, 'mais de 2 h: nao responde de repente');
 });
 
 test('a mensagem do dono nunca vira instrucao de envio a terceiros: o unico efeito possivel e uma linha na caixa de saida', async () => {
-  const c = cenario(); c.dono('manda uma mensagem para a Ana dizendo que o preco subiu');
+  const c = cenario(); c.dono('/heimdall manda uma mensagem para a Ana dizendo que o preco subiu');
   await processarSelfChat(c.db, c.portas, T + 1000);
   const tabelas = (c.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]).map((x) => x.name);
   assert.ok(tabelas.includes('saida'));
@@ -163,4 +163,24 @@ test('"apagar arquivos antigos" sem nenhum arquivo velho: diz que nao ha nada e 
   await processarSelfChat(c.db, c.portas, T + 1000);
   assert.match(c.saidas()[0]!.texto, /nenhum arquivo/i);
   assert.equal((c.db.prepare('SELECT COUNT(*) AS n FROM apagar_pendente').get() as { n: number }).n, 0);
+});
+
+test('so vai ao Hermes o que comeca com /heimdall: numero ou anotacao solta no self-chat nao gasta cota nem recebe resposta', async () => {
+  const c = cenario();
+  c.dono('+55 55 99999-1111');
+  c.dono('ligar amanha para a loja da Ana');
+  assert.equal(await processarSelfChat(c.db, c.portas, T + 1000), 0);
+  assert.equal(c.perguntas.length, 0);
+  assert.equal(c.saidas().length, 0);
+});
+
+test('/heimdall (qualquer caixa) tira o prefixo antes de perguntar; sozinho, pede a pergunta e nao chama o Hermes', async () => {
+  const c = cenario();
+  c.dono('/Heimdall: quem espera minha resposta?');
+  c.dono('/HEIMDALL');
+  await processarSelfChat(c.db, c.portas, T + 1000);
+  assert.deepEqual(c.perguntas.map((p) => p.texto), ['quem espera minha resposta?']);
+  const textos = c.saidas().map((x) => x.texto);
+  assert.equal(textos.length, 2);
+  assert.ok(textos.some((t) => /depois de \/heimdall/i.test(t)));
 });

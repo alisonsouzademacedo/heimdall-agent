@@ -1,5 +1,5 @@
 // Ponte Q (docs/plano/fase-1-memoria-hermes.md): o que o DONO escreve no self-chat chega aqui. Em ordem: (1) confirmacao de apagar, (2) correcao por codigo
-// do relatorio, (3) pergunta ao Hermes. A resposta vai SEMPRE para a caixa de saida (core/saida.ts); este arquivo nao envia nada nem fala com a rede:
+// do relatorio, (3) pergunta ao Hermes (so quando comeca com /heimdall). A resposta vai SEMPRE para a caixa de saida (core/saida.ts); este arquivo nao envia nada nem fala com a rede:
 // o Hermes entra por uma porta. Cada mensagem e respondida uma vez (chave "resposta:<id>" na caixa de saida).
 import type { Banco } from '../../core/src/db.ts';
 import { ehMensagemNossa, enfileirarSaida } from '../../core/src/saida.ts';
@@ -40,6 +40,11 @@ function formatarRespostaCrm(r: RespostaCrm): string {
 }
 
 export const SESSAO_SELF_CHAT = 'heimdall:self-chat';
+/** Devolve a pergunta sem o prefixo "/heimdall" (qualquer caixa; aceita ":" ou "," depois), "" se so veio o prefixo, ou null se nao comeca com ele. */
+export function extrairPergunta(texto: string): string | null {
+  const m = /^\/heimdall(?![\p{L}\p{N}_])[\s:,-]*/iu.exec(texto);
+  return m === null ? null : texto.slice(m[0].length).trim();
+}
 /** Mensagens mais antigas que isto e ainda sem resposta nao sao respondidas de repente (o dono ja seguiu em frente). */
 export const JANELA_RESPOSTA_MS = 2 * 60 * 60 * 1000;
 
@@ -115,10 +120,17 @@ export async function processarSelfChat(db: Banco, portas: PortasSelfChat, agora
             })
             .join('\n');
         } else {
-          try {
-            resposta = await portas.hermes.perguntar(texto, { sessao: SESSAO_SELF_CHAT, sistema: contexto(db, agora) });
-          } catch {
-            continue; // Hermes fora do ar ou sem cota: tenta de novo no proximo ciclo (dentro da janela); nada e enviado agora
+          // O dono usa o self-chat tambem para anotar (numeros, lembretes): so o que comeca com /heimdall e conversa com o Hermes.
+          const pergunta = extrairPergunta(texto);
+          if (pergunta === null) continue; // anotacao solta: fica no acervo, sem resposta e sem gastar a cota do modelo
+          if (pergunta === '') {
+            resposta = 'Escreva a sua pergunta depois de /heimdall. Exemplo: /heimdall quem está esperando minha resposta?';
+          } else {
+            try {
+              resposta = await portas.hermes.perguntar(pergunta, { sessao: SESSAO_SELF_CHAT, sistema: contexto(db, agora) });
+            } catch {
+              continue; // Hermes fora do ar, sem login ou sem cota: tenta de novo no proximo ciclo (dentro da janela); nada e enviado agora
+            }
           }
         }
       }
