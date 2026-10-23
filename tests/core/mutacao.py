@@ -93,7 +93,7 @@ MUTACOES = [
     ("src/whatsapp/traduzir.ts", "const STUB_REVOKE = 1;", "const STUB_REVOKE = 2;", "whatsapp: apagada para todos reconhecida pelo codigo do Baileys"),
     ("src/whatsapp/traduzir.ts", "protocolMessage: 'protocolo (apagar/editar chega por messages.update)', ", "", "whatsapp: o envelope de apagar/editar nao vira mensagem nova"),
     ("src/whatsapp/traduzir.ts", "if (tj !== 'pn' && tj !== 'lid' && tj !== 'grupo') return", "if (false) return", "whatsapp: status, transmissao e canais ficam de fora"),
-    ("src/extracao.ts", "if (c.confianca < CONFIANCA_MINIMA) continue;\n      if (c.acao === 'novo')", "if (c.acao === 'novo')", "extracao: compromisso de pouca confianca nao entra"),
+    ("src/extracao.ts", "if (c.confianca < CONFIANCA_MINIMA) continue;\n      // Data ANTERIOR ao dia da conversa", "// Data ANTERIOR ao dia da conversa", "extracao: compromisso de pouca confianca nao entra"),
     ("src/extracao.ts", "if (!m || m.d === 1) continue;", "if (!m) continue;", "extracao: sinal de potencial so vale quando o CLIENTE o produz"),
     ("src/extracao.ts", "if (p.papel !== 'interno') {", "if (true) {", "extracao: pessoa interna nunca gera sinal de potencial"),
     ("src/extracao.ts", "WHERE id = ? AND cliente_id = ?\").run(c.idExistente!, p.clienteId)", "WHERE id = ? AND cliente_id > ?\").run(c.idExistente!, 0)", "extracao: cancelar so mexe em compromisso do MESMO cliente"),
