@@ -374,6 +374,31 @@ CREATE TABLE crm_propostas (
 );
 CREATE INDEX idx_crm_propostas_abertas ON crm_propostas (estado, dia);
 `
+  },
+  {
+    versao: 15,
+    descricao: 'Consumo do modelo por tarefa (so numeros: tokens de entrada e saida, tempo, modelo e dia)',
+    sql: `
+CREATE TABLE consumo_modelo (
+  id INTEGER PRIMARY KEY,
+  em INTEGER NOT NULL,
+  dia TEXT NOT NULL,
+  tarefa TEXT NOT NULL CHECK (tarefa IN ('conversa','extracao','relatorio','teste')),
+  modelo TEXT,
+  entrada INTEGER NOT NULL DEFAULT 0 CHECK (entrada >= 0),
+  saida INTEGER NOT NULL DEFAULT 0 CHECK (saida >= 0),
+  ms INTEGER NOT NULL DEFAULT 0 CHECK (ms >= 0)
+);
+CREATE INDEX idx_consumo_dia ON consumo_modelo (dia, tarefa);
+`
+  },
+  {
+    versao: 16,
+    descricao: 'Clientes: empresa e origem do nome (o nome nasce provisorio e a extracao das conversas pode melhora-lo)',
+    sql: `
+ALTER TABLE clientes ADD COLUMN empresa TEXT;
+ALTER TABLE clientes ADD COLUMN nome_origem TEXT NOT NULL DEFAULT 'cadastro' CHECK (nome_origem IN ('cadastro','provisorio','extraido','dono'));
+`
   }
 ];
 

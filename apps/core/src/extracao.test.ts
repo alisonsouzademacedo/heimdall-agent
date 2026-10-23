@@ -213,3 +213,88 @@ test('trava de processamento: por padrao FECHADA; o dono abre e fecha (config ex
   definirExtracaoLiberada(db, false);
   assert.equal(extracaoLiberada(db), false);
 });
+
+test('ordem: os dias mais NOVOS primeiro (o dono cita nome e empresa nas conversas recentes), em todas as conversas, e a fila entrega nessa ordem', () => {
+  const { db, msg } = cenario();
+  const BETA = '5511999990002@s.whatsapp.net';
+  const D8 = D10 - 2 * 86_400_000, D9 = D10 - 86_400_000;
+  msg('N1', D8, 'oi, aqui e o Joao da Beta', false, BETA);
+  msg('N2', D9, 'segue o contrato', false, BETA);
+  db.prepare('INSERT INTO clientes (id, nome) VALUES (2, ?)').run('Beta');
+  db.prepare("UPDATE contatos SET cliente_id = 2, papel = 'cliente' WHERE id = (SELECT contato_id FROM contato_jids WHERE jid = ?)").run(BETA);
+  const dias = (refs: string[]) => refs.map((r) => r.split(':')[2]);
+  const pend = diasDeExtracaoPendentes(db, HOJE).refs;
+  assert.deepEqual(dias(pend), ['2025-10-10', '2025-10-09', '2025-10-08'], 'do mais novo ao mais antigo, misturando as conversas');
+  const agendados = agendarExtracao(db, HOJE);
+  assert.deepEqual(dias(agendados), ['2025-10-10', '2025-10-09', '2025-10-08']);
+  const ordemDaFila: string[] = [];
+  for (let j = pegarProximo(db, ['extrair'], HOJE); j; j = pegarProximo(db, ['extrair'], HOJE)) ordemDaFila.push(j.referencia.split(':')[2]!);
+  assert.deepEqual(ordemDaFila, ['2025-10-10', '2025-10-09', '2025-10-08'], 'a fila entrega o mais novo primeiro');
+});
+
+// ---- Identificacao do cliente (nome e empresa) pelo que o dono e o cliente escrevem nas conversas (2026-10-23) ----
+const comIdent = (db: Banco, ident: unknown) => ({ ...saidaBase(db), identificacao: ident });
+const ident = (db: Banco, extra: Record<string, unknown> = {}) => ({ nome: 'Ana Souza', empresa: 'Padaria Pão Quente', mensagem_origem: id(db, 'M1'), confianca: 0.9, motivo: 'se apresentou', ...extra });
+const cliente = (db: Banco) => db.prepare('SELECT nome, empresa, nome_origem AS origem FROM clientes WHERE id = 1').get() as { nome: string; empresa: string | null; origem: string };
+async function extrairCom(db: Banco, saida: unknown, quando = HOJE) {
+  agendarExtracao(db, quando);
+  await processarExtrair(db, pegarProximo(db, ['extrair'], quando)!, porta(saida), instr, quando);
+}
+
+test('identificacao valida: so com mensagem de origem existente, confianca e pelo menos nome ou empresa; texto limpo e curto', () => {
+  const ids = new Set([10, 11]);
+  const v = (i: unknown) => validarSaidaDaExtracao(JSON.stringify({ identificacao: i }), ids)?.identificacao ?? null;
+  assert.deepEqual(v({ nome: ' Ana  <b>Souza</b> ', empresa: 'Alfa', mensagem_origem: 10, confianca: 0.8 }), { nome: 'Ana b Souza /b', empresa: 'Alfa', origem: 10, confianca: 0.8 });
+  assert.deepEqual(v({ nome: null, empresa: 'Alfa', mensagem_origem: 10, confianca: 0.8 }), { nome: null, empresa: 'Alfa', origem: 10, confianca: 0.8 });
+  assert.equal(v({ nome: null, empresa: null, mensagem_origem: 10, confianca: 0.9 }), null, 'sem nome nem empresa nao ha o que gravar');
+  assert.equal(v({ nome: 'Ana', mensagem_origem: 999, confianca: 0.9 }), null, 'mensagem que nao existe');
+  assert.equal(v({ nome: 'Ana', mensagem_origem: 10 }), null, 'sem confianca');
+  assert.equal(v({ nome: 'Ana', mensagem_origem: 10, confianca: 7 }), null, 'confianca fora de 0 a 1');
+  assert.equal(v('Ana'), null);
+  assert.equal(v({ nome: 'x'.repeat(500), mensagem_origem: 10, confianca: 0.9 })!.nome!.length, 80, 'limite de tamanho');
+});
+
+test('nome provisorio vira "Nome (Empresa)" quando o modelo acha os dois na conversa, com confianca suficiente', async () => {
+  const { db } = cenario();
+  db.prepare("UPDATE clientes SET nome = 'Contato final 0001', nome_origem = 'provisorio' WHERE id = 1").run();
+  await extrairCom(db, comIdent(db, ident(db)));
+  assert.deepEqual({ ...cliente(db) }, { nome: 'Ana Souza (Padaria Pão Quente)', empresa: 'Padaria Pão Quente', origem: 'extraido' });
+});
+
+test('so empresa: o nome do cliente vira a empresa; so nome: vira o nome; confianca baixa (< 0,7) nao muda nada', async () => {
+  const a = cenario(); a.db.prepare("UPDATE clientes SET nome = 'Contato final 0001', nome_origem = 'provisorio' WHERE id = 1").run();
+  await extrairCom(a.db, comIdent(a.db, ident(a.db, { nome: null })));
+  assert.deepEqual({ ...cliente(a.db) }, { nome: 'Padaria Pão Quente', empresa: 'Padaria Pão Quente', origem: 'extraido' });
+  const b = cenario(); b.db.prepare("UPDATE clientes SET nome = 'Contato final 0001', nome_origem = 'provisorio' WHERE id = 1").run();
+  await extrairCom(b.db, comIdent(b.db, ident(b.db, { empresa: null })));
+  assert.deepEqual({ ...cliente(b.db) }, { nome: 'Ana Souza', empresa: null, origem: 'extraido' });
+  const c = cenario(); c.db.prepare("UPDATE clientes SET nome = 'Contato final 0001', nome_origem = 'provisorio' WHERE id = 1").run();
+  await extrairCom(c.db, comIdent(c.db, ident(c.db, { confianca: 0.69 })));
+  assert.deepEqual({ ...cliente(c.db) }, { nome: 'Contato final 0001', empresa: null, origem: 'provisorio' });
+});
+
+test('nome do cadastro ou definido pelo dono NUNCA e trocado pelo modelo (a empresa so preenche se estiver vazia)', async () => {
+  for (const origem of ['cadastro', 'dono']) {
+    const { db } = cenario();
+    db.prepare("UPDATE clientes SET nome = 'Alfa Ltda', nome_origem = ? WHERE id = 1").run(origem);
+    await extrairCom(db, comIdent(db, ident(db)));
+    assert.deepEqual({ ...cliente(db) }, { nome: 'Alfa Ltda', empresa: 'Padaria Pão Quente', origem }, origem);
+  }
+});
+
+test('o dia mais novo manda: uma identificacao mais antiga nao sobrescreve a ja extraida, mas completa o que faltava', async () => {
+  const { db } = cenario();
+  db.prepare("UPDATE clientes SET nome = 'Contato final 0001', nome_origem = 'provisorio' WHERE id = 1").run();
+  await extrairCom(db, comIdent(db, ident(db, { empresa: null })));            // primeiro (dia mais novo): so o nome
+  assert.equal(cliente(db).nome, 'Ana Souza');
+  db.prepare('UPDATE mensagens SET texto = texto || \' \' WHERE wa_msg_id = ?').run('M1'); // muda o conteudo para a extracao rodar de novo
+  await extrairCom(db, comIdent(db, ident(db, { nome: 'Outro Nome', empresa: 'Padaria Pão Quente' })), HOJE + 1000);
+  assert.deepEqual({ ...cliente(db) }, { nome: 'Ana Souza (Padaria Pão Quente)', empresa: 'Padaria Pão Quente', origem: 'extraido' });
+});
+
+test('contato interno nunca recebe identificacao de cliente', async () => {
+  const { db } = cenario('interno');
+  db.prepare("UPDATE clientes SET nome = 'Colega', nome_origem = 'provisorio' WHERE id = 1").run();
+  await extrairCom(db, comIdent(db, ident(db)));
+  assert.deepEqual({ ...cliente(db) }, { nome: 'Colega', empresa: null, origem: 'provisorio' });
+});

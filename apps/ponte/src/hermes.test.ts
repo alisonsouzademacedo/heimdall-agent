@@ -41,6 +41,51 @@ test('resposta que nao terminou bem nao vira mensagem para o dono: erro, interro
   }
 });
 
+test('modelo por pedido: model, provider e model_options.reasoning_effort vao no corpo; sem escolha, nada disso vai', async () => {
+  const s = await servidor((res) => json(res, 200, ok('ok')));
+  try {
+    const escolhas: Record<string, { model: string; provider: string; esforco: string | null } | undefined> = {
+      barato: { model: 'gpt-6-luna', provider: 'openai-codex', esforco: 'low' },
+      semEsforco: { model: 'gpt-6-luna', provider: 'openai-codex', esforco: null },
+      padrao: undefined
+    };
+    const c = criarClienteHermes({ url: s.url, chave: 'k-sintetica-123456', escolherModelo: (sessao) => escolhas[sessao] });
+    for (const k of Object.keys(escolhas)) await c.perguntar('oi', { sessao: k });
+    const [barato, semEsforco, padrao] = s.pedidos.map((p) => p.corpo as Record<string, unknown>);
+    assert.equal(barato!.model, 'gpt-6-luna'); assert.equal(barato!.provider, 'openai-codex');
+    assert.deepEqual(barato!.model_options, { reasoning_effort: 'low' });
+    assert.equal(semEsforco!.model, 'gpt-6-luna'); assert.equal('model_options' in semEsforco!, false);
+    assert.equal(padrao!.model, 'hermes-agent'); assert.equal('provider' in padrao!, false); assert.equal('model_options' in padrao!, false);
+  } finally { await s.fechar(); }
+});
+
+test('consumo: cada resposta devolve os tokens reais do campo usage, o tempo e o modelo; erro no registro nunca derruba a resposta; falha de HTTP nao registra', async () => {
+  const visto: { sessao: string; entrada: number; saida: number; modelo: string | null; ms: number }[] = [];
+  const s = await servidor((res) => json(res, 200, { ...ok('ok'), model: 'gpt-6-luna', usage: { prompt_tokens: 2280, completion_tokens: 5, total_tokens: 2285 } }));
+  try {
+    const c = criarClienteHermes({ url: s.url, chave: 'k-sintetica-123456', aoConsumir: (x) => visto.push(x) });
+    assert.equal(await c.perguntar('oi', { sessao: 'heimdall:self-chat' }), 'ok');
+    assert.equal(visto.length, 1);
+    assert.deepEqual({ sessao: visto[0]!.sessao, entrada: visto[0]!.entrada, saida: visto[0]!.saida, modelo: visto[0]!.modelo }, { sessao: 'heimdall:self-chat', entrada: 2280, saida: 5, modelo: 'gpt-6-luna' });
+    assert.ok(visto[0]!.ms >= 0);
+    const quebrado = criarClienteHermes({ url: s.url, chave: 'k-sintetica-123456', aoConsumir: () => { throw new Error('banco travado'); } });
+    assert.equal(await quebrado.perguntar('oi', { sessao: 'x' }), 'ok', 'o registro nao pode derrubar a resposta');
+  } finally { await s.fechar(); }
+  const falho = await servidor((res) => json(res, 500, {}));
+  try {
+    const n = visto.length;
+    await assert.rejects(criarClienteHermes({ url: falho.url, chave: 'k-sintetica-123456', aoConsumir: (x) => visto.push(x) }).perguntar('oi', { sessao: 'x' }), /hermes_http_500/);
+    assert.equal(visto.length, n, 'pedido que falhou nao gasta cota registrada');
+  } finally { await falho.fechar(); }
+  const semUso = await servidor((res) => json(res, 200, ok('ok')));
+  try {
+    const v2: { entrada: number }[] = [];
+    await criarClienteHermes({ url: semUso.url, chave: 'k-sintetica-123456', aoConsumir: (x) => v2.push(x) }).perguntar('oi', { sessao: 'x' });
+    assert.equal(v2.length, 1, 'sem usage: registra a chamada mesmo assim');
+    assert.equal(v2[0]!.entrada, 0, 'com 0 tokens');
+  } finally { await semUso.fechar(); }
+});
+
 test('aviso do proprio Hermes de que nao ha provedor/login NAO e resposta: vira falha (o dono nao recebe esse texto)', async () => {
   const aviso = '⚠️ Provider authentication failed: Hermes is not connected to any AI provider yet. Run `hermes model` to pick one, type `/login` in chat, or add a key with `hermes auth add <provider>`.';
   const s = await servidor((res) => json(res, 200, ok(aviso)));

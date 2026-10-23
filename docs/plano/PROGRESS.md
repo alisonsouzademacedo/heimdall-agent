@@ -21,6 +21,11 @@ Memória do projeto para qualquer IA que continue o trabalho. **Atualize ao fim 
 - **Feito sem o dono:** textos da tela corrigidos (disco e guia do modelo, com testes); `candidatos-cliente.ts` (só leitura, 3 testes): 663 conversas diretas = 261 ida e volta, 76 só eles, 315 só o dono, 11 vazias.
 - **Segurança de segredo:** a senha do SSH do dono foi colada na conversa; não foi gravada em arquivo nenhum. Recomendado trocar (`passwd`) e usar chave.
 
+## Atualização (2026-10-23, noite) — otimização de tokens, tela de Processar completa, clientes e identificação
+- **Feito e testado:** modelo e esforço **por tarefa** (`modelos.ts`; padrão Luna/baixo em conversa, extração e teste); config do Hermes enxuta e **preservando o `model:` do login** (3,2 mil → 2,3 mil tokens por pedido, sem chamada de título); comandos por código (`/heimdall hoje|aguardando|followups|cliente <nome>|ajuda`); consumo real de tokens por tarefa (`consumo.ts`, migração 15) e **teto diário** que pausa a extração; tela de Processar com barra ao vivo, tokens, estimativa, teto e modelos; **cadastro dos contatos que responderam como clientes** (`candidatos-cliente.ts`, migração 16: `clientes.empresa` e `nome_origem`); extração **do dia mais novo para o mais antigo**; **identificação de nome e empresa** pelo modelo (campo `identificacao`, só com confiança ≥ 0,7, nunca sobre nome de cadastro/dono).
+- **Navegador:** Playwright 1.56.1 instalado (ver tabela de dependências); `tests/navegadores/` rodou pela primeira vez aqui e achou 2 testes **velhos** (rótulo "Liberar o processamento" e "5 etapas" do CRM), atualizados para o comportamento atual.
+- **Não verificado:** qualidade do Luna em português para extração e identificação (testar com dias reais); consumo real de cota por token (só o painel de uso do ChatGPT mostra); o que o cache de entrada pesa na cota.
+
 ## Estado anterior (2026-10-22, antes da VPS)
 - Fase: **fase 2 — conclusão do produto e preparação da VPS** (`fase-2-execucao.md`; decisão D31). O projeto é **Linux-only** desde hoje: a camada Windows foi removida (26 arquivos; registro em `pendencias/2026-10-22-revisao-linux-only.md`) e o CI tem um único job Ubuntu.
 - **Onde roda (D31):** validação de ponta a ponta **direto na VPS** (Linux); o Omarchy na máquina do dono fica como desenvolvimento. Sessão única do WhatsApp (D2): VPS e máquina local **nunca** ao mesmo tempo.
@@ -84,6 +89,7 @@ Memória do projeto para qualquer IA que continue o trabalho. **Atualize ao fim 
 ## Dependências adotadas
 | Nome | Versão | Onde | Motivo | Licença |
 |---|---|---|---|---|
+| playwright | 1.56.1 (fora do `package.json`; instalado em `~/.local/share/heimdall-playwright`, só na pasta do usuário, sem `sudo`) + `chromium-headless-shell` em `~/.cache/ms-playwright` (328 MB) | `tests/navegadores/` | teste da tela em navegador real (autorizado pelo dono em 2026-10-23); o Chromium sem janela abre sem nenhuma biblioteca extra nesta VPS | Apache-2.0 (conferido com `npm view`) |
 | typescript | 5.9.3 (`^5.6.0`) | `apps/core`, só desenvolvimento | verificar tipos (`tsc --noEmit`); o Node 22.18+ executa TypeScript sozinho | Apache-2.0 |
 | @types/node | 22.20.5 (`^22.0.0`) | `apps/core`, só desenvolvimento | tipos do Node | MIT |
 | faster-whisper | 1.2.1 | `apps/media-worker` (imagem Docker) | transcrição de áudio em CPU | MIT (conferido no pacote instalado) |

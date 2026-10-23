@@ -1,6 +1,7 @@
-// Primeiro passo da lacuna "ninguem cria os clientes" (diagnostico de 2026-10-22, secao 4): SOMENTE LEITURA. Mostra, para cada conversa direta, o que
-// realmente aconteceu (ida e volta, so eles falaram, so o dono falou, vazia). Nao classifica ninguem como cliente, fornecedor ou pessoal: isso exige
-// revisao do dono (D13: cadastro explicito tem prioridade) e, para fornecedor x pessoal, o modelo. Nenhuma escrita no banco.
+// Lacuna "ninguem cria os clientes" (diagnostico de 2026-10-22, secao 4). resumirContatosDm mostra, para cada conversa direta, o que realmente aconteceu
+// (ida e volta, so eles falaram, so o dono falou, vazia) e NAO escreve nada. cadastrarClientesQueResponderam aplica a regra que o dono decidiu em
+// 2026-10-23: todo contato que RESPONDEU (ida e volta) e ainda nao tem papel vira cliente. O nome nasce provisorio (nome do contato ou "Contato final
+// NNNN"): o dono cita nome e empresa DENTRO das conversas, entao a extracao pelo modelo melhora o nome depois (clientes.nome_origem).
 import type { Banco } from './db.ts';
 
 export type Situacao = 'ida_e_volta' | 'so_eles' | 'so_eu' | 'vazia';
@@ -48,4 +49,41 @@ export function contarPorSituacao(r: ResumoContatoDm[]): Record<Situacao, number
   const t: Record<Situacao, number> = { ida_e_volta: 0, so_eles: 0, so_eu: 0, vazia: 0 };
   for (const x of r) t[x.situacao]++;
   return t;
+}
+
+/** Quantos contatos seriam cadastrados agora (so conta, nao escreve). */
+export function contarCandidatosACliente(db: Banco): number {
+  return resumirContatosDm(db).filter(ehCandidato).length;
+}
+const ehCandidato = (r: ResumoContatoDm): boolean => r.situacao === 'ida_e_volta' && r.papel === 'desconhecido' && r.clienteId === null;
+
+/**
+ * Cadastra como cliente todo contato que respondeu (ida e volta) e ainda esta como "desconhecido". Quem ja e interno, fornecedor, pessoal ou ja cliente
+ * nao muda. papel_fonte fica "inferido" (da para desfazer em lote). Idempotente: rodar de novo so pega quem passou a responder depois.
+ */
+export function cadastrarClientesQueResponderam(db: Banco, agora: number = Date.now()): { criados: number } {
+  const candidatos = resumirContatosDm(db).filter(ehCandidato);
+  let criados = 0;
+  db.exec('SAVEPOINT cadastrar_clientes');
+  try {
+    for (const c of candidatos) {
+      const nome = nomeProvisorio(db, c);
+      const cliente = Number(db.prepare("INSERT INTO clientes (nome, nome_origem, criado_em) VALUES (?, 'provisorio', ?)").run(nome, agora).lastInsertRowid);
+      db.prepare("UPDATE contatos SET cliente_id = ?, papel = 'cliente', papel_fonte = 'inferido' WHERE id = ? AND papel = 'desconhecido' AND cliente_id IS NULL").run(cliente, c.contatoId);
+      criados++;
+    }
+    db.exec('RELEASE cadastrar_clientes');
+  } catch (e) {
+    db.exec('ROLLBACK TO cadastrar_clientes'); db.exec('RELEASE cadastrar_clientes');
+    throw e;
+  }
+  return { criados };
+}
+
+function nomeProvisorio(db: Banco, c: ResumoContatoDm): string {
+  const n = db.prepare('SELECT nome FROM contatos WHERE id = ?').get(c.contatoId) as { nome: string | null };
+  if (n.nome && n.nome.trim() !== '') return n.nome.trim().slice(0, 120);
+  const j = db.prepare("SELECT jid FROM contato_jids WHERE contato_id = ? ORDER BY CASE tipo WHEN 'pn' THEN 0 ELSE 1 END LIMIT 1").get(c.contatoId) as { jid: string } | undefined;
+  const digitos = (j?.jid ?? '').split('@')[0]!.replace(/\D/g, '');
+  return digitos.length >= 4 ? `Contato final ${digitos.slice(-4)}` : `Contato ${c.contatoId}`;
 }

@@ -10,6 +10,7 @@ import { diaLocal } from '../../core/src/calendario.ts';
 import type { RespostaCrm } from '../../core/src/crm/fluxo.ts';
 import type { ClienteHermes } from './hermes.ts';
 import type { PortaCrm } from './crm.ts';
+import { responderComando } from './comandos.ts';
 
 export interface PortasSelfChat {
   hermes: Pick<ClienteHermes, 'perguntar'>;
@@ -123,8 +124,11 @@ export async function processarSelfChat(db: Banco, portas: PortasSelfChat, agora
           // O dono usa o self-chat tambem para anotar (numeros, lembretes): so o que comeca com /heimdall e conversa com o Hermes.
           const pergunta = extrairPergunta(texto);
           if (pergunta === null) continue; // anotacao solta: fica no acervo, sem resposta e sem gastar a cota do modelo
+          const porCodigo = pergunta === '' ? null : responderComando(db, pergunta, agora);
           if (pergunta === '') {
-            resposta = 'Escreva a sua pergunta depois de /heimdall. Exemplo: /heimdall quem está esperando minha resposta?';
+            resposta = 'Escreva a sua pergunta depois de /heimdall. Exemplo: /heimdall quem está esperando minha resposta? (ou /heimdall ajuda)';
+          } else if (porCodigo !== null) {
+            resposta = porCodigo; // comando exato: respondido pelo acervo, sem gastar o modelo
           } else {
             try {
               resposta = await portas.hermes.perguntar(pergunta, { sessao: SESSAO_SELF_CHAT, sistema: contexto(db, agora) });

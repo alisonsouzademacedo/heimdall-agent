@@ -73,7 +73,7 @@ textarea{width:100%;min-height:90px;background:var(--bg);color:var(--fg);border:
 
 export const JS = `
 (function(){
-  var passos=[],atual=0,verifs=[],perfilAtual=null,pn=null,resTeste=null,msgSelf='',timerModelo=null,atualizarSincronizar=null,fontes=null;
+  var passos=[],atual=0,verifs=[],perfilAtual=null,pn=null,resTeste=null,msgSelf='',timerModelo=null,atualizarSincronizar=null,atualizarProcessar=null,fontes=null;
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e}
   function api(m,u,corpo){
     var o={method:m,headers:{'X-Heimdall':'1'},credentials:'same-origin'};
@@ -130,7 +130,7 @@ export const JS = `
   }
   function painel(){
     if(timerModelo){clearInterval(timerModelo);timerModelo=null}
-    atualizarSincronizar=null;
+    atualizarSincronizar=null;atualizarProcessar=null;
     var p=passos[atual],s=document.getElementById('painel');s.textContent='';
     s.appendChild(el('div','rotulo-passo','PASSO '+(atual+1)+' DE '+passos.length));
     s.appendChild(el('h1','',p.titulo));s.appendChild(el('div','mito',p.mito));
@@ -402,53 +402,143 @@ export const JS = `
     s.appendChild(bTestar);
     s.appendChild(resTeste);
   }
+  function fmt(n){return Number(n||0).toLocaleString('pt-BR')}
+  var TAREFAS_UI=[['conversa','Conversa com voce (self-chat)'],['extracao','Extracao de compromissos e sinais'],['relatorio','Relatorios diario e semanal'],['teste','Chamada de teste']];
+  var ESFORCOS_UI=[['','padrao do Hermes'],['none','nenhum'],['minimal','minimo'],['low','baixo'],['medium','medio'],['high','alto']];
   function processar(s,d){
-    s.appendChild(el('p','','A extracao de compromissos e sinais usa o modelo (Hermes) e gasta a cota do plano do ChatGPT. So comeca depois do seu OK.'));
-    var boxDados=el('div');boxDados.setAttribute('aria-live','polite');s.appendChild(boxDados);
-    var boxAviso=el('div','aviso');
-    boxAviso.appendChild(el('div','','Atencao: cada dia processado consulta o modelo. Se voce pausar, o Heimdall para de pegar novos dias; o dia que ja comecou termina antes de parar. Ao liberar de novo, retoma de onde parou.'));
-    s.appendChild(boxAviso);
-
+    s.appendChild(el('p','','Aqui o Heimdall le as conversas dos clientes, um dia por vez, e pede ao modelo para anotar compromissos e sinais de interesse. Cada consulta gasta tokens da cota do seu plano do ChatGPT. So comeca depois do seu OK.'));
+    // Clientes: o botao fica FORA da parte que o relogio redesenha (um clique nao pode se perder no meio de um redesenho).
+    var boxCli=el('div','aviso');var txtCli=el('div','');var bCli=el('button','acao','');bCli.type='button';
+    boxCli.appendChild(txtCli);boxCli.appendChild(bCli);boxCli.style.display='none';s.appendChild(boxCli);
+    var vivo=el('div');vivo.setAttribute('aria-live','polite');s.appendChild(vivo);
     var divBotoes=el('div');divBotoes.style.margin='14px 0';
-    var bLiberar=el('button','acao','Liberar o processamento');bLiberar.type='button';
+    var bLiberar=el('button','acao','Comecar o processamento');bLiberar.type='button';
     var bPausar=el('button','sec','Pausar processamento');bPausar.type='button';bPausar.style.marginLeft='8px';
     divBotoes.appendChild(bLiberar);divBotoes.appendChild(bPausar);
     s.appendChild(divBotoes);
+    var boxCfg=el('div');s.appendChild(boxCfg);
+    var ultimo=null,cfgPronta=false,inputTeto=null,campos={};
 
-    function carregarProc(){
-      boxDados.textContent='Carregando estimativas...';
-      api('GET','/api/processamento').then(function(r){
-        boxDados.textContent='';
-        var st=el('div','aviso');
-        st.appendChild(el('div','',r.liberada?'Estado: Processamento LIBERADO':'Estado: Processamento PAUSADO (trava fechada)'));
-        boxDados.appendChild(st);
-        var g=el('div','kpis');
-        kpi(g,'dias novos para extrair',r.diasNovos);
-        kpi(g,'dias refeitos (mudaram)',r.diasRefeitos);
-        kpi(g,'trabalhos na fila',r.naFila);
-        kpi(g,'consultas previstas ao modelo',r.consultasPrevistas);
-        boxDados.appendChild(g);
-        bLiberar.disabled=r.liberada;
-        bPausar.disabled=!r.liberada;
-      }).catch(function(e){boxDados.textContent='Erro ao carregar dados: '+e.message});
+    // Parte que muda a cada 3 s: e redesenhada inteira. Os campos de configuracao ficam FORA dela (senao o que o dono digita seria apagado).
+    function pintar(r){
+      ultimo=r;vivo.textContent='';
+      if(r.candidatos>0){
+        boxCli.style.display='';
+        txtCli.textContent=fmt(r.candidatos)+' contatos responderam as suas mensagens e ainda nao estao cadastrados como clientes. O Heimdall cria um cliente para cada um; o nome e a empresa sao descobertos depois, lendo as conversas (do dia mais novo para o mais antigo).';
+        bCli.textContent='Cadastrar como clientes os '+fmt(r.candidatos)+' contatos que responderam';
+      }else{
+        boxCli.style.display='none';bCli.textContent='';
+      }
+      if(r.clientes===0&&r.candidatos===0){
+        var av=el('div','aviso');
+        av.appendChild(el('div','','Ainda nao ha clientes cadastrados e nenhum contato respondeu as suas mensagens. O Heimdall so le conversas de clientes, entao por enquanto nao ha o que processar (0 de 0).'));
+        vivo.appendChild(av);
+      }
+      var st=el('div','aviso');
+      st.appendChild(el('div','',r.liberada?(r.teto.atingido?'Estado: LIBERADO, mas em pausa ate amanha: o teto diario de tokens foi atingido.':'Estado: processamento LIBERADO'):'Estado: processamento PAUSADO (trava fechada)'));
+      vivo.appendChild(st);
+      if(r.rodada){
+        barra(vivo,'Progresso desta rodada',r.rodada.percentual,fmt(r.rodada.concluidas)+' de '+fmt(r.rodada.total)+' dias concluidos'+(r.rodada.falhas>0?' ('+fmt(r.rodada.falhas)+' sem conseguir)':'')+'.');
+      }else{
+        barra(vivo,'Progresso desta rodada',0,'Nenhuma rodada ainda: clique em Comecar.');
+      }
+      var g=el('div','kpis');
+      kpi(g,'dias novos para extrair',r.diasNovos);
+      kpi(g,'dias refeitos (mudaram)',r.diasRefeitos);
+      kpi(g,'trabalhos na fila',r.naFila);
+      kpi(g,'clientes',r.clientes);
+      vivo.appendChild(g);
+
+      vivo.appendChild(el('h2','','Gasto de tokens'));
+      var t=el('div','kpis');
+      kpi(t,'tokens hoje (entrada + saida)',fmt(r.consumo.hoje.todas.entrada+r.consumo.hoje.todas.saida));
+      kpi(t,'tokens nos ultimos 7 dias',fmt(r.consumo.semana.todas.entrada+r.consumo.semana.todas.saida));
+      kpi(t,'tokens no total',fmt(r.consumo.total.todas.entrada+r.consumo.total.todas.saida));
+      kpi(t,'consultas ao modelo (total)',fmt(r.consumo.total.todas.chamadas));
+      vivo.appendChild(t);
+      if(r.media.amostras>0){
+        vivo.appendChild(el('div','det','Media por consulta de extracao: '+fmt(r.media.entrada)+' tokens de entrada e '+fmt(r.media.saida)+' de saida, cerca de '+(r.media.ms/1000).toFixed(1).replace('.',',')+' s (sobre as ultimas '+r.media.amostras+').'));
+      }
+      if(r.estimativa){
+        vivo.appendChild(el('div','det','Estimativa do que falta: cerca de '+fmt(r.estimativa.consultasRestantes)+' consultas, '+fmt(r.estimativa.tokens)+' tokens e '+fmt(r.estimativa.minutos)+' min de modelo. Com o teto diario atual, uns '+fmt(r.estimativa.diasDeTeto)+' dia(s). E uma conta sobre a media medida, nao uma garantia.'));
+      }else{
+        vivo.appendChild(el('div','det','A estimativa aparece depois de 3 consultas medidas (antes disso seria chute).'));
+      }
+      barra(vivo,'Teto de hoje para a extracao',r.teto.diario>0?Math.min(100,(r.teto.usadoHoje*100)/r.teto.diario):0,fmt(r.teto.usadoHoje)+' de '+fmt(r.teto.diario)+' tokens. Ao chegar no teto o Heimdall pausa sozinho e volta amanha.');
+
+      vivo.appendChild(el('h2','','Gasto por tarefa'));
+      var ul=el('ul');
+      TAREFAS_UI.forEach(function(x){
+        var h=r.consumo.hoje[x[0]],tt=r.consumo.total[x[0]];
+        ul.appendChild(el('li','',x[1]+': hoje '+fmt(h.chamadas)+' consulta(s), '+fmt(h.entrada+h.saida)+' tokens; total '+fmt(tt.chamadas)+' consulta(s), '+fmt(tt.entrada+tt.saida)+' tokens.'));
+      });
+      vivo.appendChild(ul);
+      bLiberar.disabled=r.liberada;
+      bPausar.disabled=!r.liberada;
+      if(!cfgPronta){cfgPronta=true;montarConfig(r)}
     }
 
+    // Teto e modelo por tarefa: montados UMA vez (nao sao redesenhados pelo relogio).
+    function montarConfig(r){
+      boxCfg.appendChild(el('h2','','Ajustes'));
+      boxCfg.appendChild(el('label','','Teto diario de tokens da extracao:'));
+      var linhaTeto=el('div');linhaTeto.style.margin='6px 0 14px';
+      inputTeto=document.createElement('input');inputTeto.type='number';inputTeto.min='10000';inputTeto.step='10000';inputTeto.value=String(r.teto.diario);inputTeto.style.width='140px';
+      var bTeto=el('button','sec','Salvar teto');bTeto.type='button';bTeto.style.marginLeft='8px';
+      var msgTeto=el('span','det','');msgTeto.style.marginLeft='8px';
+      linhaTeto.appendChild(inputTeto);linhaTeto.appendChild(bTeto);linhaTeto.appendChild(msgTeto);
+      bTeto.addEventListener('click',function(){
+        msgTeto.textContent='';
+        api('POST','/api/processamento/teto',{tokens:Number(inputTeto.value)}).then(function(){msgTeto.textContent='Salvo.';return atualizarProcessar()}).catch(function(e){msgTeto.textContent=e.message});
+      });
+      boxCfg.appendChild(linhaTeto);
+      boxCfg.appendChild(el('label','','Modelo e esforco de raciocinio por tarefa (modelos menores gastam bem menos da cota; vazio = padrao do Hermes):'));
+      TAREFAS_UI.forEach(function(x){
+        var cfg=r.modelos[x[0]]||{model:null,esforco:null};
+        var linha=el('div');linha.style.margin='6px 0';
+        var rot=el('span','det',x[1]+': ');rot.style.display='inline-block';rot.style.minWidth='250px';
+        var inM=document.createElement('input');inM.type='text';inM.value=cfg.model||'';inM.placeholder='ex.: gpt-6-luna';inM.style.width='160px';
+        var selE=document.createElement('select');selE.style.marginLeft='6px';
+        ESFORCOS_UI.forEach(function(o){var op=document.createElement('option');op.value=o[0];op.textContent=o[1];if((cfg.esforco||'')===o[0])op.selected=true;selE.appendChild(op)});
+        var bS=el('button','sec','Salvar');bS.type='button';bS.style.marginLeft='6px';
+        var msg=el('span','det','');msg.style.marginLeft='8px';
+        bS.addEventListener('click',function(){
+          msg.textContent='';
+          api('POST','/api/modelos',{tarefa:x[0],model:inM.value.trim()===''?null:inM.value.trim(),esforco:selE.value===''?null:selE.value}).then(function(){msg.textContent='Salvo.'}).catch(function(e){msg.textContent=e.message});
+        });
+        linha.appendChild(rot);linha.appendChild(inM);linha.appendChild(selE);linha.appendChild(bS);linha.appendChild(msg);
+        boxCfg.appendChild(linha);
+      });
+      boxCfg.appendChild(el('div','det','O modelo vale a partir do proximo pedido, sem reiniciar nada. A qualidade de cada modelo em portugues so se confirma testando com dias reais.'));
+    }
+
+    atualizarProcessar=function(){
+      return api('GET','/api/processamento').then(pintar).catch(function(){});
+    };
+
+    bCli.addEventListener('click',function(){
+      if(!window.confirm('Cadastrar como cliente cada contato que respondeu as suas mensagens? Contatos da equipe, fornecedores e quem so recebeu mensagem sua ficam de fora. O nome provisorio e melhorado depois lendo as conversas.'))return;
+      bCli.disabled=true;
+      api('POST','/api/clientes/cadastrar-respondidos',{confirmar:true}).then(function(){return atualizarPainel()}).catch(function(e){alert(e.message)}).then(function(){bCli.disabled=false;return atualizarProcessar()});
+    });
+
     bLiberar.addEventListener('click',function(){
-      if(!window.confirm('Deseja liberar o processamento pelo modelo? Isso vai iniciar a extracao dos dias previstos e consumir cota do seu plano.'))return;
+      var est=ultimo&&ultimo.estimativa?(' Estimativa: cerca de '+fmt(ultimo.estimativa.tokens)+' tokens.'):'';
+      if(!window.confirm('Deseja comecar o processamento pelo modelo? Isso consulta o modelo dia por dia e consome cota do seu plano.'+est))return;
       bLiberar.disabled=true;
       api('POST','/api/processamento/liberar',{liberar:true,confirmar:true}).then(function(){
         return atualizarPainel();
-      }).catch(function(e){alert(e.message)}).then(function(){carregarProc()});
+      }).catch(function(e){alert(e.message)}).then(function(){return atualizarProcessar()});
     });
 
     bPausar.addEventListener('click',function(){
       bPausar.disabled=true;
       api('POST','/api/processamento/liberar',{liberar:false}).then(function(){
         return atualizarPainel();
-      }).catch(function(e){alert(e.message)}).then(function(){carregarProc()});
+      }).catch(function(e){alert(e.message)}).then(function(){return atualizarProcessar()});
     });
 
-    carregarProc();
+    atualizarProcessar();
   }
   function selfchat(s,d){
     var T={nao_feito:'Ainda nao testei.',aguardando_envio:'Mensagem de teste na fila; sai quando o listener estiver conectado.',aguardando_resposta:'Enviei. Agora responda a mensagem no seu WhatsApp (conversa com voce mesmo) com qualquer texto.',ok:'Ida e volta funcionando.',falhou:'Nao consegui enviar. Confira o listener.'};
@@ -575,6 +665,8 @@ export const JS = `
     if(!document.hidden){
       if(p&&p.id==='sincronizar'){
         if(atualizarSincronizar)atualizarSincronizar();else atualizarMenu();
+      }else if(p&&p.id==='processar'){
+        if(atualizarProcessar)atualizarProcessar().then(atualizarMenu);else atualizarMenu();
       }else if(p&&(p.id==='cadastro'||p.id==='modelo'||p.id==='backup'||p.id==='ambiente'||p.id==='crm')){
         atualizarMenu();
       }else if(p&&p.pronto){

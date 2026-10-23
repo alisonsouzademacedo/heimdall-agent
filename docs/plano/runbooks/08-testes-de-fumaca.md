@@ -70,7 +70,7 @@ Servidor compartilhado (Ubuntu 24.04, 4 vCPUs sem AVX, 7,8 GB). Tudo com dados *
 - **Relatórios às 08:00** (diário ter–sex, semanal seg) e a **ponte direta** no self-chat com o WhatsApp real (resposta livre, confirmação de apagar, correções por código, aprovação do CRM); só os testes automáticos cobrem.
 - **Entrega de relatório como `.md` anexo** no WhatsApp (hoje sai como texto).
 - **Reinício do servidor inteiro** (o `linger` do usuário está ativo e os contêineres têm `restart: unless-stopped`, mas não reiniciei a máquina: ela hospeda sites de clientes).
-- **Teste da tela em navegador real** (`tests/navegadores/tela.mjs`): não há Playwright nem navegador neste servidor; instalar é decisão do dono.
+- **Teste da tela em navegador real** (`tests/navegadores/tela.mjs`): **Playwright 1.56.1 instalado na VPS em 2026-10-23** (só na pasta do usuário, sem `sudo`; Chromium sem janela). Rodar: `PLAYWRIGHT_MODULE=$HOME/.local/share/heimdall-playwright/node_modules/playwright nice -n 19 sh tests/navegadores/check_navegadores.sh` (com `HEIMDALL_CAPTURAS=<pasta>` salva uma captura do passo Processar). Firefox, WebKit, Edge e Chrome: não instalados (`[NAO EXECUTADO]`).
 - **Hindsight com modelo** (1.1.0 + `chatgpt`) e o reprocessamento de documentos guardados em modo `chunks`.
 - **Krayin:** o funil de 3 etapas do dono criado por ele na tela; kanban; mover cartão à mão.
 - Itens de Windows (16 a 20) e `smoke_docker.sh` (recusa rodar com as portas reais ocupadas): não se aplicam a esta máquina.

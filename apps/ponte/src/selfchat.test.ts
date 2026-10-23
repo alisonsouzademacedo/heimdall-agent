@@ -184,3 +184,13 @@ test('/heimdall (qualquer caixa) tira o prefixo antes de perguntar; sozinho, ped
   assert.equal(textos.length, 2);
   assert.ok(textos.some((t) => /depois de \/heimdall/i.test(t)));
 });
+
+test('/heimdall com comando exato responde por codigo e NAO chama o Hermes; com palavras a mais e pergunta livre', async () => {
+  const c = cenario();
+  c.dono('/heimdall ajuda');
+  c.dono('/heimdall hoje quem espera minha resposta?');
+  assert.equal(await processarSelfChat(c.db, c.portas, T + 1000), 2);
+  assert.deepEqual(c.perguntas.map((p) => p.texto), ['hoje quem espera minha resposta?']);
+  assert.match(c.saidas()[0]!.texto, /hoje/);
+  assert.match(c.saidas()[1]!.texto, /resposta para: hoje quem espera/);
+});

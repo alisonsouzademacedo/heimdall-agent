@@ -18,7 +18,11 @@ import { montarFontes } from './fontes.ts';
 import { lerConfigHistorico, gravarConfigHistorico, resumoHistoricoAntigo } from '../historico-antigo.ts';
 import { cadastrarMembro, listarEquipe, normalizarTelefone } from '../cadastro.ts';
 import { lerTesteDoModelo, pedirTesteDoModelo } from '../modelo-teste.ts';
-import { diasDeExtracaoPendentes, extracaoLiberada, definirExtracaoLiberada } from '../extracao.ts';
+import { extracaoLiberada, definirExtracaoLiberada } from '../extracao.ts';
+import { estadoDoProcessamento, iniciarRodada } from '../processamento.ts';
+import { definirTetoDiario } from '../consumo.ts';
+import { cadastrarClientesQueResponderam } from '../candidatos-cliente.ts';
+import { definirModelo, TAREFAS, type Esforco, type Tarefa } from '../modelos.ts';
 import { lerConfigCrm, salvarConfigCrm, type ConfigCrm } from '../crm/config.ts';
 import { listarFunis, verificarFunil } from '../crm/krayin.ts';
 import { gravarStatusCrm, lerStatusCrm } from '../crm/estado.ts';
@@ -179,11 +183,7 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
             'O Hindsight guarda e busca trechos; a extracao de compromissos usa o Hermes.'
           ] });
         }
-        if (url.pathname === '/api/processamento') {
-          const c = diasDeExtracaoPendentes(op.banco, agora());
-          const naFila = (op.banco.prepare("SELECT COUNT(*) AS n FROM fila WHERE tipo = 'extrair' AND estado IN ('pendente','em_andamento')").get() as { n: number }).n;
-          return json(res, 200, { liberada: extracaoLiberada(op.banco), diasNovos: c.novos, diasRefeitos: c.refeitos, naFila, consultasPrevistas: c.novos + c.refeitos + naFila });
-        }
+        if (url.pathname === '/api/processamento') return json(res, 200, estadoDoProcessamento(op.banco, agora()));
         if (url.pathname === '/api/painel') {
           const painel = montarPainel(op.banco, agora());
           atualizarEtapas(op.banco, painel, agora());
@@ -245,8 +245,27 @@ export function iniciarServidor(op: OpcoesServidor, porta: number = 0): Promise<
         if (url.pathname === '/api/processamento/liberar') {
           if (typeof dados.liberar !== 'boolean') return json(res, 400, { erro: 'Informe liberar: true ou false.' });
           if (dados.liberar && dados.confirmar !== true) return json(res, 400, { erro: 'Para liberar o processamento a confirmacao e obrigatoria.' });
+          if (dados.liberar) iniciarRodada(op.banco, agora()); // retoma a rodada que nao terminou ou abre outra (para a barra de progresso)
           definirExtracaoLiberada(op.banco, dados.liberar);
           return json(res, 200, { liberada: extracaoLiberada(op.banco) });
+        }
+        if (url.pathname === '/api/clientes/cadastrar-respondidos') {
+          if (dados.confirmar !== true) return json(res, 400, { erro: 'Para cadastrar os clientes a confirmacao e obrigatoria.' });
+          return json(res, 200, cadastrarClientesQueResponderam(op.banco, agora()));
+        }
+        if (url.pathname === '/api/processamento/teto') {
+          const r = definirTetoDiario(op.banco, dados.tokens as number);
+          return r.ok ? json(res, 200, { ok: true }) : json(res, 400, { erro: r.motivo });
+        }
+        if (url.pathname === '/api/modelos') {
+          const tarefa = dados.tarefa as Tarefa;
+          const model = dados.model === null ? null : dados.model;
+          const esforco = dados.esforco === null ? null : dados.esforco;
+          if (!TAREFAS.includes(tarefa)) return json(res, 400, { erro: 'Tarefa desconhecida.' });
+          if (model !== null && typeof model !== 'string') return json(res, 400, { erro: 'Nome de modelo invalido.' });
+          if (esforco !== null && typeof esforco !== 'string') return json(res, 400, { erro: 'Esforco invalido.' });
+          const r = definirModelo(op.banco, tarefa, { model, esforco: esforco as Esforco | null });
+          return r.ok ? json(res, 200, { ok: true }) : json(res, 400, { erro: r.motivo });
         }
         if (url.pathname === '/api/agenda/testar') {
           const relatorios = gerarRelatorioDeTeste(op.banco, agora());

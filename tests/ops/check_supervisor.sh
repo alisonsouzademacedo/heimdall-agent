@@ -28,7 +28,7 @@ cat > "$B/node" <<'FAKE'
 #!/bin/sh
 if [ "$1" = "--version" ]; then echo "${FAKE_NODE_VERSION:-v24.22.1}"; exit 0; fi
 case "$1" in
-  *scripts/gerar-config.ts) echo "timezone: x"; exit 0;;
+  *scripts/gerar-config.ts) echo "$@" >> "$FAKE_ARGS_GERAR"; [ -f "$3" ] && cat "$3" >> "$FAKE_CONFIG_ANTIGO_VISTO"; echo "timezone: x"; exit 0;;
   *onboarding/iniciar.ts) echo "Se o navegador nao abrir sozinho, copie este endereco: http://127.0.0.1:8765/?codigo=c$$";;
   *trabalhos/src/iniciar.ts) echo x >> "$FAKE_CONTADOR"; [ -n "$FAKE_EXECUTOR_MORRE" ] && exit 1;;
 esac
@@ -43,11 +43,12 @@ case "\$*" in
   *"ps -aq hermes"*) [ -n "\$FAKE_SEM_HERMES" ] || echo cont123;;
   *"ps -q hindsight"*) echo hind123;;
   inspect*) echo "\${FAKE_SAUDE:-healthy}";;
+  "cp cont123:/opt/data/config.yaml "*) printf 'timezone: "x"\\nmodel:\\n  provider: openai-codex\\n  default: gpt-falso\\n' > "\${3}";;
 esac
 exit 0
 FAKE
 chmod +x "$B/node" "$B/docker"
-export FAKE_CONTADOR="$T/contador.txt"
+export FAKE_CONTADOR="$T/contador.txt" FAKE_ARGS_GERAR="$T/args-gerar.txt" FAKE_CONFIG_ANTIGO_VISTO="$T/config-antigo-visto.txt"
 roda() { (cd "$R" && PATH="$B:$PATH" HEIMDALL_INTERVALO_S=1 sh "$R/scripts/heimdall.sh" "$@" > "$T/saida.txt" 2>&1); return $?; }
 pids_do_registro() { grep -oE '"pid": *[0-9]+' "$R/data/processos.json" | grep -oE '[0-9]+' | tr '\n' ' '; }
 
@@ -170,6 +171,8 @@ for p in $(pids_do_registro); do kill "$p" 2>/dev/null; done; sleep 1; rm -f "$T
 # 10) config-hermes
 : > "$T/docker-chamadas.txt"
 roda config-hermes; grep -q 'cp .*:/opt/data/config.yaml' "$T/docker-chamadas.txt" && grep -q 'restart hermes' "$T/docker-chamadas.txt" && pass "config-hermes copia o config para o volume e reinicia o Hermes" || { fail "config-hermes nao fez o combinado"; cat "$T/docker-chamadas.txt"; }
+# O login do modelo (secao model: do config VIVO) tem de sobreviver: o script le o config atual do conteiner e o entrega ao gerador.
+{ grep -q 'provider: openai-codex' "$T/config-antigo-visto.txt" 2>/dev/null && grep -q 'heimdall' "$T/args-gerar.txt"; } && pass "config-hermes entrega o config atual do Hermes ao gerador (a secao model: do login nao se perde)" || { fail "config-hermes nao passou o config atual ao gerador"; cat "$T/args-gerar.txt" 2>/dev/null; }
 # Licao de 2026-10-22: "compose create hermes" RECRIOU o Postgres e o Hindsight sem inicia-los (a memoria ficou parada).
 grep -qE 'compose .* (create|up) ' "$T/docker-chamadas.txt" && fail "config-hermes chamou create/up (pode recriar o Postgres e o Hindsight)" || pass "config-hermes nao chama create nem up (nao recria os outros servicos)"
 # O Hermes so liga o MCP da memoria na partida: so reinicia depois de o Hindsight estar saudavel.

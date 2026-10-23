@@ -149,6 +149,14 @@ MUTACOES = [
     ("src/fila.ts", "t.tentativas >= (opcoes.maximo ?? MAX_TENTATIVAS)", "t.tentativas >= MAX_TENTATIVAS", "fila: midia indisponivel desiste na 3a tentativa, nao na 5a"),
     ("src/onboarding/fontes.ts", "const semArquivo = q('baixar_midia').indisponivel ?? 0;", "const semArquivo = 0;", "fontes: midia que o WhatsApp nao tem mais nao conta como sem arquivo"),
     ("src/midia.ts", "ehMidiaIndisponivel(erro) ? { maximo: MAX_TENTATIVAS_INDISPONIVEL } : {}", "{}", "midia: erro de arquivo indisponivel usa o limite menor"),
+    ("src/consumo.ts", "return e.entrada + e.saida >= tetoDiario(db);", "return false;", "consumo: teto diario atingido pausa a extracao"),
+    ("src/processamento.ts", "if (atual && atual.concluidas + atual.falhas < atual.total) return;", "", "processamento: liberar de novo retoma a rodada que nao terminou"),
+    ("src/modelos.ts", "if (sessao.startsWith('heimdall:extracao:')) return 'extracao';", "", "modelos: o pedido de extracao usa a tarefa extracao"),
+    ("src/onboarding/servidor.ts", "if (dados.liberar) iniciarRodada(op.banco, agora());", "", "tela: liberar abre a rodada do progresso"),
+    ("src/candidatos-cliente.ts", "r.situacao === 'ida_e_volta' && r.papel === 'desconhecido' && r.clienteId === null", "r.situacao !== 'vazia' && r.papel === 'desconhecido' && r.clienteId === null", "clientes: so quem respondeu (ida e volta) vira cliente"),
+    ("src/extracao.ts", "if (c.origem === 'provisorio') {", "if (true) {", "identificacao: nome do cadastro ou do dono nunca e trocado pelo modelo"),
+    ("src/extracao.ts", "(diaDe(a) < diaDe(b) ? 1 : diaDe(a) > diaDe(b) ? -1 : a < b ? -1 : 1)", "(diaDe(a) < diaDe(b) ? -1 : diaDe(a) > diaDe(b) ? 1 : a < b ? -1 : 1)", "extracao: do dia mais novo para o mais antigo"),
+    ("src/extracao.ts", "v.identificacao.confianca >= CONFIANCA_IDENTIFICACAO", "true", "identificacao: confianca baixa nao troca o nome"),
 ]
 
 falhas = 0

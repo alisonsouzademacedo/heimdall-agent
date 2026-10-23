@@ -6,7 +6,11 @@ export class RespostaVazia extends Error {
   constructor() { super('hermes_resposta_vazia'); this.name = 'RespostaVazia'; }
 }
 
-export interface OpcoesHermes { url: string; chave: string; tempoLimiteMs?: number; fetchImpl?: typeof fetch }
+/** Modelo pedido a UM pedido (docs/hermes-agent/user-guide/features/api-server.md, "Per-request model selection"). */
+export interface EscolhaDeModelo { model: string; provider: string; esforco: string | null }
+/** Uma chamada que o modelo respondeu: so numeros (tokens do campo "usage" da API, tempo e modelo), nunca texto. */
+export interface ConsumoDaChamada { sessao: string; entrada: number; saida: number; modelo: string | null; ms: number }
+export interface OpcoesHermes { url: string; chave: string; tempoLimiteMs?: number; fetchImpl?: typeof fetch; escolherModelo?: (sessao: string) => EscolhaDeModelo | undefined; aoConsumir?: (c: ConsumoDaChamada) => void }
 export interface OpcoesPergunta { sessao: string; sistema?: string }
 export interface ClienteHermes {
   perguntar(texto: string, opcoes: OpcoesPergunta): Promise<string>;
@@ -14,6 +18,11 @@ export interface ClienteHermes {
 }
 
 const LOCAL = new Set(['127.0.0.1', 'localhost']);
+
+function pedidoDeModelo(e: EscolhaDeModelo | undefined): Record<string, unknown> {
+  if (!e) return {};
+  return { model: e.model, provider: e.provider, ...(e.esforco ? { model_options: { reasoning_effort: e.esforco } } : {}) };
+}
 
 export function criarClienteHermes(o: OpcoesHermes): ClienteHermes {
   let base: URL;
@@ -31,21 +40,26 @@ export function criarClienteHermes(o: OpcoesHermes): ClienteHermes {
       const messages: { role: string; content: string }[] = [];
       if (op.sistema) messages.push({ role: 'system', content: op.sistema });
       messages.push({ role: 'user', content: texto });
+      const inicio = Date.now();
       let r: Response;
       try {
         r = await f(new URL('/v1/chat/completions', base), {
           method: 'POST',
           headers: { ...cab, 'content-type': 'application/json', 'x-hermes-session-key': op.sessao },
-          body: JSON.stringify({ model: 'hermes-agent', stream: false, messages }),
+          body: JSON.stringify({ model: 'hermes-agent', stream: false, messages, ...pedidoDeModelo(o.escolherModelo?.(op.sessao)) }),
           signal: AbortSignal.timeout(limite)
         });
       } catch {
         throw new Error('hermes_sem_resposta');
       }
       if (!r.ok) throw new Error(`hermes_http_${r.status}`);
-      type Corpo = { choices?: { message?: { content?: unknown }; finish_reason?: string }[] };
+      type Corpo = { model?: unknown; usage?: { prompt_tokens?: unknown; completion_tokens?: unknown }; choices?: { message?: { content?: unknown }; finish_reason?: string }[] };
       let j: Corpo;
       try { j = (await r.json()) as Corpo; } catch { throw new Error('hermes_resposta_ilegivel'); }
+      if (o.aoConsumir) {
+        const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.round(v) : 0);
+        try { o.aoConsumir({ sessao: op.sessao, entrada: num(j?.usage?.prompt_tokens), saida: num(j?.usage?.completion_tokens), modelo: typeof j?.model === 'string' ? j.model : null, ms: Math.max(0, Date.now() - inicio) }); } catch { /* o registro nunca derruba a resposta */ }
+      }
       const escolha = j?.choices?.[0];
       // "cancelled" (turno interrompido) e "error" (falha) nao sao respostas: nada disso vai ao dono.
       if (escolha?.finish_reason === 'error' || escolha?.finish_reason === 'cancelled') throw new Error(`hermes_${escolha.finish_reason}`);

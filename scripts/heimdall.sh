@@ -256,8 +256,12 @@ acao_config_hermes() {
   _cont=$(compose ps -aq hermes 2>/dev/null | head -1)
   [ -n "$_cont" ] || { aviso "Nao achei o conteiner do Hermes. Rode antes: sh scripts/heimdall.sh iniciar"; return 1; }
   _tmp=$(mktemp "${TMPDIR:-/tmp}/heimdall-hermes.XXXXXX") || return 1
-  node apps/ponte/scripts/gerar-config.ts heimdall > "$_tmp" 2>/dev/null
-  [ -s "$_tmp" ] || { aviso "Nao consegui gerar o config.yaml."; rm -f "$_tmp"; return 1; }
+  # O login do modelo (`hermes model`) mora na secao "model:" do config VIVO: le o atual do conteiner e o gerador a preserva (senao o modelo se perderia).
+  _old=$(mktemp "${TMPDIR:-/tmp}/heimdall-hermes-atual.XXXXXX") || { rm -f "$_tmp"; return 1; }
+  docker cp "$_cont:/opt/data/config.yaml" "$_old" >/dev/null 2>&1 || : > "$_old"
+  node apps/ponte/scripts/gerar-config.ts heimdall "$_old" > "$_tmp" 2>/dev/null
+  rm -f "$_old"
+  [ -s "$_tmp" ] || { aviso "Nao consegui gerar o config.yaml (se o Hermes ja tem login, a secao model: do config atual pode estar fora do formato esperado). Nada foi alterado."; rm -f "$_tmp"; return 1; }
   docker cp "$_tmp" "$_cont:/opt/data/config.yaml" 2>&1 | while IFS= read -r l; do info "$l"; done
   rm -f "$_tmp"
   # O Hermes so liga o MCP da memoria na partida: o Hindsight precisa estar saudavel antes de reiniciar.

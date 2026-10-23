@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { abrirBanco, migrar } from '../db.ts';
 import { iniciarServidor, MAX_CORPO, MAX_ERROS_CODIGO, type Servidor } from './servidor.ts';
 import { PASSOS } from './passos.ts';
+import { criarEscuta } from '../whatsapp/escuta.ts';
 import { escolherPerfil } from './perfil.ts';
 import { HTML, JS, CSS } from './recursos.ts';
 import type { Verificacao } from './ambiente.ts';
@@ -561,4 +562,64 @@ test('interface: recursos.ts contem renderizadores de cadastro, modelo, processa
   assert.doesNotMatch(JS, /docs\/plano\//, 'texto de passo nao ligado nao deve exibir caminhos de documentacao interna');
   assert.doesNotMatch(JS, /innerHTML|outerHTML|document\.write|eval\(/, 'so textContent e DOM seguro');
   assert.match(CSS, /\.no\.processando/, 'CSS deve conter classe para passo em processamento');
+});
+
+// Tela "Processar" completa (2026-10-23): progresso, consumo de tokens, teto diario e modelo por tarefa.
+test('/api/processamento traz progresso, consumo, teto e modelos; liberar abre a rodada; teto e modelos se ajustam com validacao; tudo exige sessao', async () => {
+  const c = await subir();
+  try {
+    assert.equal((await req(c, 'POST', '/api/processamento/teto', POST('hm=' + 'a'.repeat(64)), '{"tokens":50000}')).status, 401);
+    assert.equal((await req(c, 'POST', '/api/modelos', POST('hm=' + 'a'.repeat(64)), '{"tarefa":"conversa","model":"gpt-6-luna","esforco":"low"}')).status, 401);
+    const h = POST(await entrar(c));
+    const ler = async () => JSON.parse((await req(c, 'GET', '/api/processamento', { Cookie: h.Cookie })).texto);
+    const g0 = await ler();
+    assert.equal(g0.clientes, 0); assert.equal(g0.rodada, null); assert.equal(g0.estimativa, null);
+    assert.deepEqual(Object.keys(g0.consumo.hoje).sort(), ['conversa', 'extracao', 'relatorio', 'teste', 'todas']);
+    assert.equal(g0.teto.diario, 300000); assert.equal(g0.teto.atingido, false);
+    assert.equal(g0.modelos.extracao.model, 'gpt-6-luna'); assert.equal(g0.modelos.relatorio.model, null);
+
+    assert.equal((await req(c, 'POST', '/api/processamento/liberar', h, '{"liberar":true,"confirmar":true}')).status, 200);
+    assert.notEqual((await ler()).rodada, null, 'liberar abre a rodada (mesmo com 0 dias)');
+
+    assert.equal((await req(c, 'POST', '/api/processamento/teto', h, '{"tokens":50000}')).status, 200);
+    assert.equal((await ler()).teto.diario, 50000);
+    for (const ruim of ['{"tokens":5}', '{"tokens":"muito"}', '{}', '{"tokens":1e15}']) assert.equal((await req(c, 'POST', '/api/processamento/teto', h, ruim)).status, 400, ruim);
+    assert.equal((await ler()).teto.diario, 50000, 'recusado nao grava');
+
+    assert.equal((await req(c, 'POST', '/api/modelos', h, '{"tarefa":"relatorio","model":"gpt-6.1-sol","esforco":"medium"}')).status, 200);
+    assert.deepEqual((await ler()).modelos.relatorio, { model: 'gpt-6.1-sol', esforco: 'medium' });
+    assert.equal((await req(c, 'POST', '/api/modelos', h, '{"tarefa":"relatorio","model":null,"esforco":null}')).status, 200, 'null volta ao padrao do Hermes');
+    for (const ruim of ['{"tarefa":"outra","model":"x","esforco":"low"}', '{"tarefa":"conversa","model":"com espaco","esforco":"low"}', '{"tarefa":"conversa","model":"gpt-6-luna","esforco":"altissimo"}', '{"model":"gpt-6-luna"}']) {
+      assert.equal((await req(c, 'POST', '/api/modelos', h, ruim)).status, 400, ruim);
+    }
+    assert.equal((await ler()).modelos.conversa.model, 'gpt-6-luna', 'recusado nao grava');
+  } finally { await c.fim(); }
+});
+
+test('interface do passo Processar: barra de progresso ao vivo, tokens, teto, modelo por tarefa; JS valido e sem innerHTML', () => {
+  assert.doesNotThrow(() => new Function(JS), 'o JS da tela precisa compilar (nenhum erro de sintaxe)');
+  for (const trecho of ['/api/processamento"', '/api/processamento/teto', '/api/modelos', 'atualizarProcessar', 'Comecar o processamento', 'tokens', 'Teto']) assert.ok(JS.includes(trecho) || JS.includes(trecho.replace('"', "'")), trecho);
+  assert.match(JS, /p\.id==='processar'/, 'o relogio da tela atualiza o passo Processar ao vivo');
+  assert.match(JS, /clientes===0|r\.clientes/, 'avisa quando nao ha clientes');
+  assert.doesNotMatch(JS, /innerHTML|outerHTML|document\.write|eval\(/);
+  assert.doesNotMatch(JS, /`/, 'sem template literal dentro do JS da tela');
+});
+
+test('/api/clientes/cadastrar-respondidos: exige sessao e confirmacao; cadastra so quem respondeu; segunda vez nao cria nada', async () => {
+  const c = await subir();
+  try {
+    const hEscuta = criarEscuta(c.banco, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => Date.UTC(2026, 9, 23, 15) });
+    hEscuta.mensagens([{ key: { id: 'R1', remoteJid: '5511999990011@s.whatsapp.net', fromMe: true }, message: { conversation: 'oi' }, messageTimestamp: 1_792_000_000 }], 'notify');
+    hEscuta.mensagens([{ key: { id: 'R2', remoteJid: '5511999990011@s.whatsapp.net', fromMe: false }, message: { conversation: 'oi, sou a Bia' }, messageTimestamp: 1_792_000_100 }], 'notify');
+    hEscuta.mensagens([{ key: { id: 'R3', remoteJid: '5511999990012@s.whatsapp.net', fromMe: true }, message: { conversation: 'oi' }, messageTimestamp: 1_792_000_000 }], 'notify'); // so o dono falou
+    assert.equal((await req(c, 'POST', '/api/clientes/cadastrar-respondidos', POST('hm=' + 'a'.repeat(64)), '{"confirmar":true}')).status, 401);
+    const h = POST(await entrar(c));
+    assert.equal(JSON.parse((await req(c, 'GET', '/api/processamento', { Cookie: h.Cookie })).texto).candidatos, 1);
+    assert.equal((await req(c, 'POST', '/api/clientes/cadastrar-respondidos', h, '{}')).status, 400, 'sem confirmar nao cadastra');
+    const r = JSON.parse((await req(c, 'POST', '/api/clientes/cadastrar-respondidos', h, '{"confirmar":true}')).texto);
+    assert.equal(r.criados, 1);
+    const g = JSON.parse((await req(c, 'GET', '/api/processamento', { Cookie: h.Cookie })).texto);
+    assert.deepEqual({ clientes: g.clientes, candidatos: g.candidatos }, { clientes: 1, candidatos: 0 });
+    assert.equal(JSON.parse((await req(c, 'POST', '/api/clientes/cadastrar-respondidos', h, '{"confirmar":true}')).texto).criados, 0, 'idempotente');
+  } finally { await c.fim(); }
 });

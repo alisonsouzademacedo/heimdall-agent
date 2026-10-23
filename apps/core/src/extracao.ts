@@ -64,7 +64,9 @@ function diasPendentes(db: Banco, agora: number, fuso: string): { ref: string; j
   const refs = new Set<string>();
   for (const m of msgs) { const dia = diaLocal(m.t, fuso); if (dia < hoje) refs.add(`ext:${m.c}:${dia}`); }
   const saida: { ref: string; jaExtraido: boolean }[] = [];
-  for (const ref of [...refs].sort()) {
+  // Do dia mais NOVO para o mais antigo (o dono cita nome e empresa do cliente nas conversas recentes); empate de dia: pela referencia.
+  const diaDe = (ref: string): string => ref.split(':')[2]!;
+  for (const ref of [...refs].sort((a, b) => (diaDe(a) < diaDe(b) ? 1 : diaDe(a) > diaDe(b) ? -1 : a < b ? -1 : 1))) {
     const c = carregar(db, ref, fuso);
     if (!c) continue;
     const s = db.prepare("SELECT hash_conteudo AS h FROM sync_hindsight WHERE tipo = 'ext' AND referencia = ?").get(ref) as { h: string } | undefined;
@@ -104,7 +106,11 @@ export interface SaidaExtracao {
   sinais: { tipo: string; origem: number; confianca: number }[];
   aguardando: { valor: boolean; origem: number } | null;
   duvidas: string[];
+  /** Nome e empresa do CLIENTE, quando estao escritos na conversa (o dono cita nome e empresa nas mensagens). */
+  identificacao: { nome: string | null; empresa: string | null; origem: number; confianca: number } | null;
 }
+/** Abaixo disto o modelo nao troca o nome do cliente (um nome errado em todo relatorio custa mais que um nome provisorio). */
+export const CONFIANCA_IDENTIFICACAO = 0.7;
 
 const limpar = (t: unknown, max: number): string => (typeof t === 'string' ? t.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : '');
 function dataValida(v: unknown): string | null {
@@ -126,7 +132,7 @@ export function validarSaidaDaExtracao(texto: string, idsValidos: ReadonlySet<nu
   if (typeof j !== 'object' || j === null || Array.isArray(j)) return null;
   const o = j as Record<string, unknown>;
   const lista = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x)) : []);
-  const saida: SaidaExtracao = { compromissos: [], sinais: [], aguardando: null, duvidas: [] };
+  const saida: SaidaExtracao = { compromissos: [], sinais: [], aguardando: null, duvidas: [], identificacao: null };
   for (const c of lista(o.compromissos)) {
     const acao = c.acao;
     if (acao !== 'novo' && acao !== 'atualizar' && acao !== 'cancelar') continue;
@@ -147,6 +153,12 @@ export function validarSaidaDaExtracao(texto: string, idsValidos: ReadonlySet<nu
   }
   const a = o.aguardando_resposta_do_dono as Record<string, unknown> | undefined;
   if (a && typeof a.valor === 'boolean' && typeof a.mensagem_origem === 'number' && idsValidos.has(a.mensagem_origem)) saida.aguardando = { valor: a.valor, origem: a.mensagem_origem };
+  const idt = o.identificacao as Record<string, unknown> | null | undefined;
+  if (idt && typeof idt === 'object' && !Array.isArray(idt) && typeof idt.mensagem_origem === 'number' && idsValidos.has(idt.mensagem_origem)) {
+    const confianca = conf(idt.confianca);
+    const nome = limpar(idt.nome, 80), empresa = limpar(idt.empresa, 80);
+    if (confianca !== null && (nome !== '' || empresa !== '')) saida.identificacao = { nome: nome === '' ? null : nome, empresa: empresa === '' ? null : empresa, origem: idt.mensagem_origem, confianca };
+  }
   if (Array.isArray(o.duvidas)) saida.duvidas = o.duvidas.map((d) => limpar(d, 300)).filter((d) => d !== '').slice(0, 3);
   return saida;
 }
@@ -186,6 +198,7 @@ export async function processarExtrair(db: Banco, job: Trabalho, porta: PortaExt
       }
     }
     if (v.aguardando) { const m = dadosMsg(v.aguardando.origem); if (m && m.d === 0) db.prepare('UPDATE mensagens SET pede_resposta = ? WHERE id = ?').run(v.aguardando.valor ? 1 : 0, v.aguardando.origem); }
+    if (p.papel !== 'interno' && v.identificacao && v.identificacao.confianca >= CONFIANCA_IDENTIFICACAO) aplicarIdentificacao(db, p.clienteId, v.identificacao);
     for (const d of v.duvidas) db.prepare('INSERT OR IGNORE INTO duvidas (cliente_id, texto, criada_em) VALUES (?, ?, ?)').run(p.clienteId, d, agora);
     db.prepare("INSERT INTO sync_hindsight (tipo, referencia, document_id, hash_conteudo, sincronizado_em) VALUES ('ext', ?, ?, ?, ?) ON CONFLICT (tipo, referencia) DO UPDATE SET hash_conteudo = excluded.hash_conteudo, sincronizado_em = excluded.sincronizado_em").run(job.referencia, job.referencia, p.hash, agora);
     db.exec('RELEASE extrair');
@@ -195,4 +208,24 @@ export async function processarExtrair(db: Banco, job: Trabalho, porta: PortaExt
   }
   concluir(db, job.id, agora);
   return 'ok';
+}
+
+/**
+ * Grava nome e empresa que o modelo achou NA CONVERSA. Regras: nome do cadastro ou definido pelo dono nunca muda; so o nome "provisorio" e trocado;
+ * como a extracao anda do dia mais novo para o mais antigo, o que ja foi extraido nao e sobrescrito por um dia mais velho (so completa o que faltava).
+ */
+function aplicarIdentificacao(db: Banco, clienteId: number, i: { nome: string | null; empresa: string | null }): void {
+  const c = db.prepare('SELECT nome, empresa, nome_origem AS origem FROM clientes WHERE id = ?').get(clienteId) as { nome: string; empresa: string | null; origem: string } | undefined;
+  if (!c) return;
+  const empresa = c.empresa ?? i.empresa;
+  if (c.origem === 'provisorio') {
+    const nome = i.nome && empresa ? `${i.nome} (${empresa})` : (i.nome ?? empresa);
+    if (nome) db.prepare("UPDATE clientes SET nome = ?, empresa = ?, nome_origem = 'extraido' WHERE id = ?").run(nome, empresa, clienteId);
+    return;
+  }
+  if (c.empresa === null && i.empresa !== null) {
+    // Completa so o que faltava. Nome extraido sem empresa ganha "(Empresa)"; nome do cadastro/dono nao muda.
+    const nome = c.origem === 'extraido' && !c.nome.includes('(') && c.nome !== i.empresa ? `${c.nome} (${i.empresa})` : c.nome;
+    db.prepare('UPDATE clientes SET empresa = ?, nome = ? WHERE id = ?').run(i.empresa, nome, clienteId);
+  }
 }

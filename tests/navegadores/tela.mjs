@@ -171,31 +171,43 @@ for (const [nome, abrir] of MOTORES) {
       } catch (e) { falhou(`${nome}: Modelo incompleto: ${String(e).slice(0, 140)}`); }
     }
 
-    // Processar: liberar com confirmacao e pausar de novo.
+    // Processar (tela completa, 2026-10-23): comecar com confirmacao, barra de progresso, tokens, teto, ajustes de modelo; pausar de novo.
     if (await exigirPasso('Processar')) {
       try {
-        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('Liberar o processamento'), { timeout: 10000 });
+        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('Comecar o processamento'), { timeout: 10000 });
         pagina.once('dialog', (d) => d.accept());
-        await pagina.locator('#painel').getByRole('button', { name: 'Liberar o processamento', exact: true }).click();
-        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('Processamento LIBERADO'), { timeout: 10000 });
-        passou(`${nome}: Processar libera depois da confirmacao`);
+        await pagina.locator('#painel').getByRole('button', { name: 'Comecar o processamento', exact: true }).click();
+        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('processamento LIBERADO'), { timeout: 10000 });
+        passou(`${nome}: Processar comeca depois da confirmacao`);
+        const txtProc = await pagina.innerText('#painel');
+        const barrasProc = await pagina.locator('#painel [role="progressbar"]').count();
+        (['Progresso desta rodada', 'Gasto de tokens', 'Teto de hoje para a extracao', 'Gasto por tarefa', 'Modelo e esforco de raciocinio por tarefa'].every((x) => txtProc.includes(x)) && barrasProc >= 2)
+          ? passou(`${nome}: Processar mostra progresso, tokens, teto, gasto por tarefa e modelos (${barrasProc} barras)`)
+          : falhou(`${nome}: Processar sem progresso, tokens, teto ou modelos`);
+        // O que o dono digita nos ajustes nao pode ser apagado pelo relogio da tela (licao de 2026-10-21).
+        const campoTeto = pagina.locator('#painel input[type="number"]');
+        await campoTeto.fill('123000');
+        await pagina.waitForTimeout(7000);
+        (await campoTeto.inputValue()) === '123000' ? passou(`${nome}: Processar nao apaga o teto digitado`) : falhou(`${nome}: Processar apagou o teto digitado`);
+        if (process.env.HEIMDALL_CAPTURAS) await pagina.screenshot({ path: join(process.env.HEIMDALL_CAPTURAS, `processar-${nome.replace(/\W+/g, '_')}.png`), fullPage: true });
         await pagina.locator('#painel').getByRole('button', { name: 'Pausar processamento', exact: true }).click();
-        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('Processamento PAUSADO'), { timeout: 10000 });
+        await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('processamento PAUSADO'), { timeout: 10000 });
         passou(`${nome}: Processar pausa de novo`);
       } catch (e) { falhou(`${nome}: Processar incompleto: ${String(e).slice(0, 140)}`); }
     }
 
-    // CRM: passo guiado, token em campo de senha (nunca em texto) e as 5 etapas explicadas.
+    // CRM: passo guiado, token em campo de senha (nunca em texto) e as 3 etapas que o dono cria explicadas.
     if (await exigirPasso('CRM (Krayin)')) {
       try {
         await pagina.waitForSelector('input[aria-label="Token da API do Krayin"]', { timeout: 10000 });
         const tipoToken = await pagina.getAttribute('input[aria-label="Token da API do Krayin"]', 'type');
         await pagina.waitForFunction(() => document.getElementById('painel').innerText.includes('Ainda não configurado'), { timeout: 10000 });
         const txtCrm = await pagina.innerText('#painel');
-        const etapas = ['Contato iniciado', '1ª Reunião Agendada', '2ª Reunião Agendada', 'Fechamento / Ganho', 'Perdido / Arquivado'];
-        (tipoToken === 'password' && txtCrm.includes('Settings >> Pipeline >> Create Pipeline') && etapas.every((x) => txtCrm.includes(x)))
-          ? passou(`${nome}: CRM guia o funil, pede o token em campo de senha e mostra as 5 etapas`)
-          : falhou(`${nome}: CRM sem token protegido, sem o caminho do funil ou sem as 5 etapas`);
+        // O Krayin ja traz Novo, Ganho e Perdido (fixas): o dono cria so tres etapas do meio (mudanca aprovada em 2026-10-22; servidor.test.ts confere o texto).
+        const etapas = ['Contato iniciado', '1ª Reunião Agendada', '2ª Reunião Agendada'];
+        (tipoToken === 'password' && txtCrm.includes('Settings >> Pipeline >> Create Pipeline') && etapas.every((x) => txtCrm.includes(x)) && /fixas/.test(txtCrm))
+          ? passou(`${nome}: CRM guia o funil, pede o token em campo de senha e mostra as 3 etapas que o dono cria`)
+          : falhou(`${nome}: CRM sem token protegido, sem o caminho do funil ou sem as 3 etapas (e a explicacao das fixas)`);
       } catch (e) { falhou(`${nome}: CRM incompleto: ${String(e).slice(0, 140)}`); }
     }
 

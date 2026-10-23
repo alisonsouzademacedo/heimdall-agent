@@ -166,6 +166,35 @@ test('trava de processamento: fechada (padrao) a ponte nao pergunta nada ao mode
   assert.deepEqual(vistas, [0, 0, EXTRACOES_POR_GIRO, EXTRACOES_POR_GIRO, EXTRACOES_POR_GIRO], 'giros 1-2 fechada: zero; giro 3 aberta: dois; depois de pausar: nenhuma consulta nova');
 });
 
+// Teto diario de tokens da extracao (tela, passo Processar): atingido = nenhuma consulta nova ate o dia seguinte, sem o dono precisar pausar.
+test('teto diario de tokens: atingido pausa a extracao sozinho; no dia seguinte volta a rodar', async () => {
+  const { definirTetoDiario, registrarConsumo } = await import('../../core/src/consumo.ts');
+  const db = abrirBanco(); migrar(db);
+  const D10 = Date.UTC(2025, 9, 10, 15, 0, 0);
+  let agora = D10 + 30 * 3_600_000; // 2025-10-11 21:00 em Sao Paulo, dia seguinte ao das mensagens
+  const escuta = criarEscuta(db, { pn: '5511900000000@s.whatsapp.net' }, { agora: () => agora });
+  db.prepare('INSERT INTO clientes (id, nome) VALUES (1, ?)').run('Alfa');
+  for (const [i, jid] of ['5511999990001', '5511999990002', '5511999990003'].entries()) {
+    escuta.mensagens([{ key: { id: `M${i}`, remoteJid: `${jid}@s.whatsapp.net`, fromMe: false }, message: { conversation: 'oi' }, messageTimestamp: Math.floor(D10 / 1000) }], 'notify');
+    db.prepare("UPDATE contatos SET cliente_id = 1, papel = 'cliente' WHERE id = (SELECT contato_id FROM contato_jids WHERE jid = ?)").run(`${jid}@s.whatsapp.net`);
+  }
+  definirExtracaoLiberada(db, true);
+  definirTetoDiario(db, 10_000);
+  registrarConsumo(db, { tarefa: 'extracao', modelo: 'gpt-6-luna', entrada: 9_500, saida: 600, ms: 1 }, agora); // 10.100 >= 10.000 hoje
+  let consultas = 0;
+  const extracao = { instrucoes: 'REGRAS', porta: { extrair: async () => { consultas++; return '{}'; } } };
+  const vistas: number[] = []; let giros = 0;
+  const p = iniciarPonte({ banco: db, portas: { hermes: { perguntar: async () => 'x' }, apagarArquivo: () => {} }, extracao, agora: () => agora, intervaloMs: 1, esperar: async () => {
+    giros++; vistas.push(consultas);
+    if (giros === 2) agora += 24 * 3_600_000; // virou o dia: o consumo de ontem nao conta
+    if (giros >= 3) p.parar();
+  } });
+  await p.terminou;
+  assert.equal(vistas[0], 0, 'teto atingido: nenhuma consulta');
+  assert.equal(vistas[1], 0, 'ainda no mesmo dia');
+  assert.ok(vistas[2]! > 0, 'dia seguinte: volta a consultar');
+});
+
 // C (2026-10-21): a tela pede o teste do modelo; a ponte (que ja fala com o Hermes) executa. Sem pedido, nenhuma chamada.
 test('laco: executa o teste do modelo pedido pela tela uma vez so, e sem pedido nao chama o modelo', async () => {
   const { pedirTesteDoModelo, lerTesteDoModelo } = await import('../../core/src/modelo-teste.ts');

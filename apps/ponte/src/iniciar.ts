@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { abrirBanco, migrar } from '../../core/src/db.ts';
 import { iniciarPonte, lerChaveDoEnv } from './ciclo.ts';
 import { criarClienteHermes } from './hermes.ts';
+import { escolhaDeModelo, consumoParaBanco } from './modelo-por-tarefa.ts';
 import type { PortasAgenda } from './agenda.ts';
 import { criarApagadorDeMidia } from './apagar-arquivo.ts';
 import { apagarBackup } from './apagar-backup.ts';
@@ -20,7 +21,7 @@ export function iniciar(raiz: string = process.cwd()) {
   const envArquivo = join(raiz, 'infra', 'compose', '.env');
   const chave = process.env.HERMES_API_KEY ?? (existsSync(envArquivo) ? lerChaveDoEnv(readFileSync(envArquivo, 'utf8')) : null);
   if (!chave) throw new Error('Falta a chave da API do Hermes (HERMES_API_KEY ou API_SERVER_KEY em infra/compose/.env)');
-  const hermes = criarClienteHermes({ url: process.env.HERMES_URL ?? 'http://127.0.0.1:8642', chave });
+  const hermes = criarClienteHermes({ url: process.env.HERMES_URL ?? 'http://127.0.0.1:8642', chave, escolherModelo: escolhaDeModelo(banco), aoConsumir: consumoParaBanco(banco) });
   const crm = criarPortaCrm(raiz);
   const ler = (nome: string): string => readFileSync(join(raiz, 'prompts', 'relatorios', nome), 'utf8');
   const agenda: PortasAgenda = {
