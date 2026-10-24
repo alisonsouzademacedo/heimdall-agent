@@ -4,6 +4,8 @@
 # quando o Docker existe (REQUIRE_DOCKER=1 faz a falta contar como falha). Construir as imagens e subir os servicos e um teste a parte: tests/infra/smoke_docker.sh.
 # Uso: sh tests/infra/check_infra.sh
 cd "$(dirname "$0")/../.." || exit 2
+# Saidas dos testes numa pasta temporaria PROPRIA, apagada ao sair (antes ficavam arquivos fixos em /tmp para sempre; LICOES.md, 2026-10-23).
+SAIDAS=$(mktemp -d "${TMPDIR:-/tmp}/heimdall-saidas.XXXXXX"); trap 'rm -rf "$SAIDAS"' EXIT
 FAIL=0
 pass() { echo "  [PASSOU] $1"; }
 fail() { echo "  [FALHOU] $1"; FAIL=$((FAIL+1)); }
@@ -140,7 +142,7 @@ PY
 
 # ---- Compose: o proprio Docker valida (portas, interpolacao, redes) ----
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-  CFG=$(docker compose --env-file "$ENVX" -f "$DC" --profile trabalho config --format json 2>/tmp/heimdall-compose-erro.txt)
+  CFG=$(docker compose --env-file "$ENVX" -f "$DC" --profile trabalho config --format json 2>$SAIDAS/compose-erro.txt)
   if [ -n "$CFG" ]; then
     pass "docker compose config aceita o arquivo"
     echo "$CFG" | "$PY" -I -c "
@@ -155,14 +157,14 @@ for nome, s in c['services'].items():
     if not (s.get('mem_limit') or s.get('deploy', {}).get('resources', {}).get('limits', {}).get('memory')): bad.append(nome + ' sem limite de memoria')
     if not (s.get('cpus') or s.get('deploy', {}).get('resources', {}).get('limits', {}).get('cpus')): bad.append(nome + ' sem teto de CPU (servidor compartilhado com sites de clientes)')
 if bad: print('\n'.join(bad))
-" > /tmp/heimdall-compose-regras.txt
-    if [ -s /tmp/heimdall-compose-regras.txt ]; then fail "regras do Compose violadas:"; cat /tmp/heimdall-compose-regras.txt; else pass "portas so em 127.0.0.1; sem pasta do computador (exceto a entrada do audio); todo servico com limite de memoria"; fi
+" > $SAIDAS/compose-regras.txt
+    if [ -s $SAIDAS/compose-regras.txt ]; then fail "regras do Compose violadas:"; cat $SAIDAS/compose-regras.txt; else pass "portas so em 127.0.0.1; sem pasta do computador (exceto a entrada do audio); todo servico com limite de memoria"; fi
     echo "$CFG" | "$PY" -I -c "
 import sys, json
 c = json.load(sys.stdin)
 ok = c['networks'].get('isolada', {}).get('internal') is True and list(c['services']['media-worker']['networks']) == ['isolada']
 sys.exit(0 if ok else 1)" && pass "o trabalhador de audio so esta na rede 'isolada' (internal: true)" || fail "o trabalhador de audio nao esta so na rede interna"
-  else fail "docker compose config recusou o arquivo:"; head -5 /tmp/heimdall-compose-erro.txt; fi
+  else fail "docker compose config recusou o arquivo:"; head -5 $SAIDAS/compose-erro.txt; fi
 else
   echo "  [NAO EXECUTADO] docker compose config: Docker nao encontrado"; [ "${REQUIRE_DOCKER:-0}" = 1 ] && FAIL=$((FAIL+1))
 fi

@@ -2,6 +2,8 @@
 # Testes do nucleo (apps/core): unidade, tipos e "teste dos testes" (mutacao).
 # Uso: sh tests/core/check_core.sh        (REQUIRE_NODE=1 faz a falta do Node 22.18+ contar como falha)
 cd "$(dirname "$0")/../.." || exit 2
+# Saidas dos testes numa pasta temporaria PROPRIA, apagada ao sair (antes ficavam arquivos fixos em /tmp para sempre; LICOES.md, 2026-10-23).
+SAIDAS=$(mktemp -d "${TMPDIR:-/tmp}/heimdall-saidas.XXXXXX"); trap 'rm -rf "$SAIDAS"' EXIT
 FAIL=0
 pass() { echo "  [PASSOU] $1"; }
 fail() { echo "  [FALHOU] $1"; FAIL=$((FAIL+1)); }
@@ -20,18 +22,18 @@ if node -e "const p=require('./apps/core/package.json'); process.exit(p.dependen
 
 cd apps/core || exit 2
 [ -d node_modules ] || npm ci --no-audit --no-fund >/dev/null 2>&1
-if node --test "src/**/*.test.ts" >/tmp/heimdall-core-test.txt 2>&1; then pass "testes de unidade ($(grep -E '^(# |ℹ )pass ' /tmp/heimdall-core-test.txt | awk '{print $NF}') passaram)"; else fail "testes de unidade"; grep -E "^not ok" /tmp/heimdall-core-test.txt | head; fi
-if npx tsc --noEmit >/tmp/heimdall-core-tsc.txt 2>&1; then pass "tipos (tsc sem erros)"; else fail "tipos"; head -10 /tmp/heimdall-core-tsc.txt; fi
+if node --test "src/**/*.test.ts" >$SAIDAS/core-test.txt 2>&1; then pass "testes de unidade ($(grep -E '^(# |ℹ )pass ' $SAIDAS/core-test.txt | awk '{print $NF}') passaram)"; else fail "testes de unidade"; grep -E "^not ok" $SAIDAS/core-test.txt | head; fi
+if npx tsc --noEmit >$SAIDAS/core-tsc.txt 2>&1; then pass "tipos (tsc sem erros)"; else fail "tipos"; head -10 $SAIDAS/core-tsc.txt; fi
 cd ../..
 # No Windows "python3" costuma ser o atalho falso da Loja: usa o primeiro interpretador que RODA de verdade (LICOES.md, 2026-10-19).
 PY=""; for c in python3 python py; do if "$c" -c "import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)" >/dev/null 2>&1; then PY="$c"; break; fi; done
 [ -n "$PY" ] || { fail "Python 3 nao encontrado (o teste dos testes precisa dele)"; PY=false; }
-if "$PY" tests/core/mutacao.py >/tmp/heimdall-core-mut.txt 2>&1; then pass "teste dos testes ($(grep -c PEGOU /tmp/heimdall-core-mut.txt) mutacoes detectadas)"; else fail "teste dos testes"; grep -E "SOBREVIVEU|DESATUALIZADA" /tmp/heimdall-core-mut.txt; fi
+if "$PY" tests/core/mutacao.py >$SAIDAS/core-mut.txt 2>&1; then pass "teste dos testes ($(grep -c PEGOU $SAIDAS/core-mut.txt) mutacoes detectadas)"; else fail "teste dos testes"; grep -E "SOBREVIVEU|DESATUALIZADA" $SAIDAS/core-mut.txt; fi
 
 # O "teste dos testes" so vale se os testes PASSAM sem estrago: numa copia com um teste quebrado ele deve recusar (linha de base), nao dizer que pegou tudo.
 TMPC=$(mktemp -d); cp -r apps/core "$TMPC/core"; rm -rf "$TMPC/core/node_modules"
 printf "import test from 'node:test';\nimport assert from 'node:assert/strict';\ntest('quebrado de proposito', () => assert.equal(1, 2));\n" > "$TMPC/core/src/zz-quebrado.test.ts"
-if [ -n "$PY" ] && [ "$PY" != false ] && HEIMDALL_CORE_DIR="$TMPC/core" "$PY" tests/core/mutacao.py >/tmp/heimdall-core-mut-base.txt 2>&1; then fail "mutacao.py aceitou uma copia com teste quebrado (linha de base nao conferida)"; else grep -q "LINHA DE BASE" /tmp/heimdall-core-mut-base.txt && pass "mutacao.py recusa rodar quando os testes ja falham (linha de base)" || fail "mutacao.py nao explicou a falha da linha de base"; fi
+if [ -n "$PY" ] && [ "$PY" != false ] && HEIMDALL_CORE_DIR="$TMPC/core" "$PY" tests/core/mutacao.py >$SAIDAS/core-mut-base.txt 2>&1; then fail "mutacao.py aceitou uma copia com teste quebrado (linha de base nao conferida)"; else grep -q "LINHA DE BASE" $SAIDAS/core-mut-base.txt && pass "mutacao.py recusa rodar quando os testes ja falham (linha de base)" || fail "mutacao.py nao explicou a falha da linha de base"; fi
 rm -rf "$TMPC"
 
 [ "$FAIL" -eq 0 ] && echo "RESULTADO: tudo passou" || echo "RESULTADO: $FAIL falha(s)"

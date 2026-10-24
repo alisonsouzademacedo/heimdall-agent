@@ -56,4 +56,4 @@ Windows Home com Docker Desktop; a conta Plus do usuário no fluxo do Hindsight;
 - **Caminho real da API do Krayin:** `/api/v1` (`04-krayin.md`). **Persistência do Krayin:** sim (MySQL próprio em volume; `restart` e recriação). **Motivo de perda:** campo nativo `lost_reason`. **Etapas fixas do funil:** Novo, Ganho e Perdido.
 - **`hindsight-admin` na slim:** vem, mas sem `chatgpt`; o provedor `chatgpt` só existe a partir da 1.1.0 (`02-hindsight.md`).
 - **Whisper nesta CPU (sem AVX):** ~5× o tempo real, pico 1,4 GB (`06-media-worker.md`).
-- **Supervisor Linux e reinício automático:** `11-supervisor-linux.md`. **Primeiro acesso do dono:** `12-primeiro-acesso-vps.md`.
+- **Supervisor Linux e reinício automático:** `11-supervisor-linux.md`. **Primeiro acesso do dono:** `12-primeiro-acesso-vps.md`. **Operação diária (comandos, o que roda sozinho, como pausar, testar e restaurar):** `13-operacao-na-vps.md`.
